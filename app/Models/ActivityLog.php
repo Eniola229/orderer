@@ -7,6 +7,8 @@ use App\Traits\HasUuid;
 
 class ActivityLog extends Model
 {
+    use HasUuid;
+    
     public $timestamps = false;
 
     protected $table = 'activity_logs';

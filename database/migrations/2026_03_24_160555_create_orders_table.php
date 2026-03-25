@@ -32,7 +32,7 @@ return new class extends Migration
             $table->string('shipping_state');
             $table->string('shipping_country');
             $table->string('shipping_zip')->nullable();
-            $table->string('korapay_reference')->nullable();
+            $table->string('payment_reference')->nullable();
             $table->text('notes')->nullable();
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('completed_at')->nullable();

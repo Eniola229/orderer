@@ -10,11 +10,8 @@ class AuthenticateSeller
     public function handle(Request $request, Closure $next)
     {
         if (!auth('seller')->check()) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
             return redirect()->route('seller.login')
-                ->with('error', 'Please login to access your Orderer seller dashboard.');
+                ->with('error', 'Please login to access your seller dashboard.');
         }
 
         $seller = auth('seller')->user();
@@ -24,12 +21,12 @@ class AuthenticateSeller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             return redirect()->route('seller.login')
-                ->with('error', 'Your seller account has been suspended. Contact support@Orderer.');
+                ->with('error', 'Your seller account has been suspended.');
         }
 
-        if (!$seller->is_approved) {
+        if (!$seller->is_approved && !$request->routeIs('seller.pending')) { // ← add this check
             return redirect()->route('seller.pending')
-                ->with('info', 'Your account is awaiting approval from our team.');
+                ->with('info', 'Your account is awaiting approval.');
         }
 
         return $next($request);

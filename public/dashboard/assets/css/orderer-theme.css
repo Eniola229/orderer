@@ -1,0 +1,283 @@
+/* ================================================
+   Orderer — Brand Green Override
+   Replaces all template blue (#0d6efd) with green
+   ================================================ */
+
+:root {
+    --bs-primary:           #2ECC71;
+    --bs-primary-rgb:       46, 204, 113;
+    --bs-primary-dark:      #27AE60;
+    --bs-link-color:        #2ECC71;
+    --bs-link-hover-color:  #27AE60;
+    --orderer-green:        #2ECC71;
+    --orderer-dark-green:   #27AE60;
+    --orderer-deeper:       #1E8449;
+    --orderer-light-green:  #D5F5E3;
+    --orderer-pale:         #f0faf5;
+}
+
+/* Primary buttons */
+.btn-primary {
+    background-color: #2ECC71 !important;
+    border-color: #2ECC71 !important;
+    color: #fff !important;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #27AE60 !important;
+    border-color: #27AE60 !important;
+}
+
+/* Outline primary */
+.btn-outline-primary {
+    border-color: #2ECC71 !important;
+    color: #2ECC71 !important;
+}
+.btn-outline-primary:hover {
+    background-color: #2ECC71 !important;
+    color: #fff !important;
+}
+
+/* Links */
+a { color: #2ECC71; }
+a:hover { color: #27AE60; }
+
+/* Badges */
+.bg-primary { background-color: #2ECC71 !important; }
+.text-primary { color: #2ECC71 !important; }
+.border-primary { border-color: #2ECC71 !important; }
+
+/* Sidebar active */
+.nxl-navigation .nxl-item.active > .nxl-link,
+.nxl-navigation .nxl-item > .nxl-link:hover,
+.nxl-navigation .nxl-item > .nxl-link.active {
+    color: #2ECC71 !important;
+}
+
+.nxl-navigation .nxl-item.active > .nxl-link::before,
+.nxl-navigation .nxl-item > .nxl-link:hover::before {
+    background-color: #2ECC71 !important;
+}
+
+/* Progress bars */
+.progress-bar { background-color: #2ECC71 !important; }
+
+/* Form focus */
+.form-control:focus,
+.form-select:focus {
+    border-color: #2ECC71 !important;
+    box-shadow: 0 0 0 0.2rem rgba(46, 204, 113, 0.2) !important;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+    background-color: #2ECC71 !important;
+    border-color: #2ECC71 !important;
+}
+.page-link { color: #2ECC71 !important; }
+.page-link:hover { color: #27AE60 !important; }
+
+/* Checkboxes / radios */
+.form-check-input:checked {
+    background-color: #2ECC71 !important;
+    border-color: #2ECC71 !important;
+}
+
+/* Nav tabs */
+.nav-tabs .nav-link.active {
+    border-bottom-color: #2ECC71 !important;
+    color: #2ECC71 !important;
+}
+
+/* Notification badge */
+.nxl-h-badge { background-color: #E74C3C !important; }
+
+/* Support float button */
+.support-float-btn {
+    background: #2ECC71 !important;
+}
+.support-float-btn:hover {
+    background: #27AE60 !important;
+}
+
+/* Support option hover */
+.support-option:hover {
+    border-color: #2ECC71 !important;
+    background: #f0faf5 !important;
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15) !important;
+}
+
+.support-option-icon {
+    background: #2ECC71 !important;
+}
+
+/* Footer links hover */
+.footer-link:hover {
+    color: #2ECC71 !important;
+}
+
+/* Alert info override */
+.alert-info {
+    background-color: #D5F5E3;
+    border-color: #2ECC71;
+    color: #1E8449;
+}
+
+/* Orderer-specific stat card icon bg */
+.stat-icon-green  { background: #D5F5E3; color: #2ECC71; }
+.stat-icon-orange { background: #FEF9E7; color: #F39C12; }
+.stat-icon-red    { background: #FADBD8; color: #E74C3C; }
+.stat-icon-blue   { background: #D6EAF8; color: #2980B9; }
+
+/* Status badges */
+.badge-pending   { background: #FEF9E7; color: #B7950B; border: 1px solid #F9CA24; }
+.badge-approved  { background: #D5F5E3; color: #1E8449; border: 1px solid #2ECC71; }
+.badge-rejected  { background: #FADBD8; color: #A93226; border: 1px solid #E74C3C; }
+.badge-active    { background: #D5F5E3; color: #1E8449; border: 1px solid #2ECC71; }
+.badge-suspended { background: #EAECEE; color: #626567; border: 1px solid #ccc; }
+.badge-draft     { background: #EBF5FB; color: #1A5276; border: 1px solid #85C1E9; }
+.badge-shipped   { background: #EBF5FB; color: #1A5276; border: 1px solid #85C1E9; }
+.badge-delivered { background: #D5F5E3; color: #1E8449; border: 1px solid #2ECC71; }
+.badge-completed { background: #D5F5E3; color: #1E8449; border: 1px solid #2ECC71; }
+.badge-held      { background: #FEF9E7; color: #B7950B; border: 1px solid #F9CA24; }
+.badge-released  { background: #D5F5E3; color: #1E8449; border: 1px solid #2ECC71; }
+.badge-refunded  { background: #D6EAF8; color: #1A5276; border: 1px solid #85C1E9; }
+
+/* Auth pages */
+.auth-main {
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+}
+
+.auth-left-panel {
+    width: 45%;
+    background: #27AE60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 48px;
+    min-height: 100vh;
+}
+
+.auth-left-panel .content { color: #fff; max-width: 400px; }
+.auth-left-panel h1 { font-size:32px; font-weight:800; margin-bottom:16px; }
+.auth-left-panel p  { font-size:15px; opacity:.92; line-height:1.75; }
+.auth-left-panel ul li { margin-bottom:10px; font-size:14px; }
+
+.auth-right-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    background: #fff;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.auth-form-box { width: 100%; max-width: 460px; }
+
+.auth-logo-img { height: 38px; margin-bottom: 28px; display: block; }
+
+.auth-form-box h2 {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+}
+
+.auth-form-box .subtitle {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 28px;
+}
+
+.auth-link { color: #2ECC71; font-weight: 600; text-decoration: none; }
+.auth-link:hover { color: #1E8449; }
+
+.auth-step-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 26px;
+}
+
+.auth-step-bar span {
+    flex: 1;
+    height: 4px;
+    background: #eee;
+    border-radius: 2px;
+    transition: background .3s;
+}
+
+.auth-step-bar span.active { background: #2ECC71; }
+.auth-step-bar span.done   { background: #27AE60; }
+
+.seller-type-grid { display:flex; gap:14px; margin-bottom:22px; }
+
+.seller-type-card {
+    flex:1;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+}
+
+.seller-type-card:hover,
+.seller-type-card.selected {
+    border-color: #2ECC71;
+    background: #f0faf5;
+}
+
+.seller-type-card i { font-size:24px; color:#2ECC71; margin-bottom:8px; display:block; }
+.seller-type-card h6 { font-size:13px; font-weight:700; margin:0 0 4px; }
+.seller-type-card p  { font-size:11px; color:#888; margin:0; line-height:1.5; }
+
+@media (max-width: 768px) {
+    .auth-left-panel { display: none; }
+    .auth-right-panel { padding: 30px 20px; width: 100%; }
+    .seller-type-grid { flex-direction: column; }
+}
+
+.orderer-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Orderer Alert styles (keep from original) */
+.alert-orderer {
+    padding: 12px 0;
+    margin: 0;
+}
+.alert-success-orderer {
+    background: #D5F5E3;
+    border-bottom: 2px solid #2ECC71;
+}
+.alert-error-orderer {
+    background: #FADBD8;
+    border-bottom: 2px solid #E74C3C;
+}
+.alert-info-orderer {
+    background: #D6EAF8;
+    border-bottom: 2px solid #3498DB;
+}
+.alert-orderer p {
+    margin: 0;
+    color: #1a1a1a;
+    font-size: 14px;
+}
+.alert-close-btn {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+}
