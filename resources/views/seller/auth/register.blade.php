@@ -2,27 +2,89 @@
 @section('title', 'Seller Registration')
 
 @section('content')
+@push('styles')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.css"/>
+@endpush
 <div class="auth-main">
 
     <div class="auth-left-panel">
-        <div class="content">
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
-                 style="height:40px;margin-bottom:28px;filter:brightness(0) invert(1);" alt="Orderer">
-            <h1>Sell on Orderer</h1>
-            <p>Reach thousands of buyers across Nigeria and the world. List products, services or properties in minutes.</p>
-            <ul style="padding-left:18px;margin-top:20px;">
-                <li>USD wallet — withdraw anytime</li>
-                <li>Escrow protection on every order</li>
-                <li>Powerful ads system to grow faster</li>
-                <li>Dedicated seller dashboard</li>
-            </ul>
+        <div class="auth-left-inner">
+
+            <div class="auth-panel-logo">
+                <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
+                     style="height:32px;filter:brightness(0) invert(1);" alt="Orderer">
+                <span>Orderer</span>
+            </div>
+
+            <div class="auth-panel-tag">For Sellers</div>
+
+            <h1>Sell to thousands<br>across Nigeria</h1>
+            <p>List products, services or properties in minutes and start earning today.</p>
+
+            <div class="auth-panel-features">
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-dollar-sign"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>USD wallet</strong>
+                        <span>Withdraw your earnings anytime, no delays</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-lock"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Escrow protection</strong>
+                        <span>Every order is secured until delivery confirmed</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-trending-up"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Powerful ads system</strong>
+                        <span>Boost listings and grow your sales faster</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-grid"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Seller dashboard</strong>
+                        <span>Full analytics, orders &amp; inventory in one place</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="auth-trust-bar">
+                <div class="auth-trust-avatars">
+                    <span>AO</span>
+                    <span>KF</span>
+                    <span>BN</span>
+                    <span>+</span>
+                </div>
+                <div class="auth-trust-text">
+                    <strong>4,200+ active sellers</strong>
+                    <span>Join the fastest-growing marketplace</span>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div class="auth-right-panel">
         <div class="auth-form-box">
 
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
+            <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
                  class="auth-logo-img" alt="Orderer">
 
             <h2>Create seller account</h2>
@@ -41,7 +103,7 @@
             <form action="{{ route('seller.register') }}"
                   method="POST"
                   enctype="multipart/form-data"
-                  id="sellerRegForm">
+                  id="sellerRegForm" class="">
                 @csrf
 
                 {{-- Step 1 --}}
@@ -74,9 +136,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Phone <span class="text-danger">*</span></label>
-                        <input type="tel" name="phone" class="form-control"
-                               value="{{ old('phone') }}" placeholder="+234 800 000 0000">
+                        <label class="form-label fw-bold">Phone <span class="text-danger">*</span></label><br>
+                        <input type="tel" name="phone" id="phone" class="form-control"
+                               value="{{ old('phone') }}" >
                     </div>
 
                     <div class="mb-3">
@@ -215,6 +277,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
 <script>
 function goStep(n) {
     [1,2,3].forEach(i => {
@@ -240,6 +303,19 @@ function pickType(type) {
         document.getElementById('docSection').style.display = 'none';
     }
 }
+
+const input = document.querySelector("#phone");
+const iti = window.intlTelInput(input, {
+    initialCountry: "ng",
+    separateDialCode: true,
+    preferredCountries: ["ng", "us", "gb"],
+    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+});
+
+const form = input.closest("form");
+form.addEventListener("submit", function () {
+    input.value = iti.getNumber();
+});
 </script>
 @endpush
 @endsection

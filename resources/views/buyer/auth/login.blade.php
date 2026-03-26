@@ -1,94 +1,138 @@
 @extends('layouts.auth')
 @section('title', 'Sign In')
-
 @section('content')
-<div class="auth-wrapper">
+<div class="auth-main">
 
-    <div class="auth-left">
-        <div class="auth-left-content">
-            <a href="{{ route('home') }}">
+    <div class="auth-left-panel">
+        <div class="auth-left-inner">
+
+            <div class="auth-panel-logo">
                 <img src="{{ asset('img/core-img/logo.png') }}"
-                     alt="Orderer"
-                     style="height:40px; margin-bottom:30px;">
-            </a>
-            <h1>Welcome back to Orderer</h1>
-            <p>
-                Sign in to track your orders, manage your wishlist,
-                and continue shopping from where you left off.
-            </p>
+                     style="height:32px;filter:brightness(0) invert(1);" alt="Orderer">
+                <span>Orderer</span>
+            </div>
+
+            <div class="auth-panel-tag">Welcome Back</div>
+
+            <h1>Good to see<br>you again</h1>
+            <p>Sign in to track your orders, manage your wishlist, and continue shopping from where you left off.</p>
+
+            <div class="auth-panel-features">
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-package"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Track your orders</strong>
+                        <span>Real-time updates on every delivery</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-heart"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Your wishlist</strong>
+                        <span>Save items and come back anytime</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-shield"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Secure checkout</strong>
+                        <span>Escrow protection on every purchase</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="auth-trust-bar">
+                <div class="auth-trust-avatars">
+                    <span>TI</span>
+                    <span>AM</span>
+                    <span>CO</span>
+                    <span>+</span>
+                </div>
+                <div class="auth-trust-text">
+                    <strong>50,000+ happy buyers</strong>
+                    <span>Trusted across the world</span>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <div class="auth-right">
-        <div class="auth-box">
+    <div class="auth-right-panel">
+        <div class="auth-form-box">
 
-            <a href="{{ route('home') }}" class="auth-logo">
-                <img src="{{ asset('img/core-img/logo.png') }}" alt="Orderer">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('img/core-img/logo.png') }}"
+                     class="auth-logo-img" alt="Orderer">
             </a>
 
             <h2>Sign in</h2>
-            <p class="auth-subtitle">
+            <p class="subtitle">
                 New to Orderer?
-                <a href="{{ route('register') }}" class="orderer-auth-link">Create account</a>
+                <a href="{{ route('register') }}" class="auth-link">Create account</a>
             </p>
 
             <form action="{{ route('login') }}" method="POST" autocomplete="off">
                 @csrf
 
-                <div class="auth-form-group">
-                    <label>Email address</label>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Email address</label>
                     <input type="email"
                            name="email"
                            value="{{ old('email') }}"
                            placeholder="john@example.com"
-                           class="{{ $errors->has('email') ? 'input-error' : '' }}"
+                           class="form-control form-control-lg @error('email') is-invalid @enderror"
                            required>
                     @error('email')
-                        <span class="error-msg">{{ $message }}</span>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 
-                <div class="auth-form-group">
-                    <label style="display:flex; justify-content:space-between; text-transform:none;">
-                        <span style="text-transform:uppercase; font-size:13px; font-weight:600;">Password</span>
-                        <a href="{{ route('password.request') }}"
-                           class="orderer-auth-link"
-                           style="font-size:12px; font-weight:400;">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="form-label fw-bold mb-0">Password</label>
+                        <a href="{{ route('password.request') }}" class="auth-link fs-13">
                             Forgot password?
                         </a>
-                    </label>
+                    </div>
                     <input type="password"
                            name="password"
                            placeholder="Your password"
+                           class="form-control form-control-lg @error('password') is-invalid @enderror mt-2"
                            required>
                     @error('password')
-                        <span class="error-msg">{{ $message }}</span>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
 
-                <div class="auth-form-group">
-                    <label style="display:flex; align-items:center; gap:8px; text-transform:none;">
-                        <input type="checkbox"
-                               name="remember"
-                               style="width:auto;">
-                        <span style="font-size:13px; color:#555; font-weight:400;">
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input type="checkbox" name="remember" class="form-check-input" id="remember">
+                        <label class="form-check-label text-muted" for="remember">
                             Keep me signed in
-                        </span>
-                    </label>
+                        </label>
+                    </div>
                 </div>
 
-                <button type="submit" class="orderer-auth-btn">
-                    Sign In
+                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="feather-log-in me-2"></i> Sign In
                 </button>
 
                 <div class="auth-divider">or</div>
 
-                <div style="display:flex; gap:12px; flex-direction:column;">
-                    <a href="{{ route('seller.login') }}"
-                       style="display:block; text-align:center; padding:11px; border:1px solid #2ECC71; color:#27AE60; border-radius:4px; font-size:14px; text-decoration:none;">
-                        Sign in as a Seller
-                    </a>
-                </div>
+                <a href="{{ route('seller.login') }}"
+                   class="btn btn-outline-secondary w-100 mt-3">
+                    Sign in as a Seller
+                </a>
 
             </form>
         </div>

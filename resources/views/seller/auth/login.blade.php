@@ -1,28 +1,86 @@
 @extends('layouts.auth')
 @section('title', 'Seller Sign In')
-
 @section('content')
 <div class="auth-main">
 
     <div class="auth-left-panel">
-        <div class="content">
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
-                 style="height:40px;margin-bottom:28px;filter:brightness(0) invert(1);" alt="Orderer">
-            <h1>Seller Dashboard</h1>
-            <p>Manage your products, track orders, run ads and grow your business all in one place.</p>
-            <ul style="padding-left:18px;margin-top:20px;">
-                <li>USD wallet — withdraw anytime</li>
-                <li>Escrow protection on every sale</li>
-                <li>Powerful ads system</li>
-                <li>Full analytics dashboard</li>
-            </ul>
+        <div class="auth-left-inner">
+
+            <div class="auth-panel-logo">
+                <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
+                     style="height:32px;filter:brightness(0) invert(1);" alt="Orderer">
+                <span>Orderer</span>
+            </div>
+
+            <div class="auth-panel-tag">Seller Dashboard</div>
+
+            <h1>Welcome back,<br>let's get selling</h1>
+            <p>Manage your products, track orders, run ads and grow your business — all in one place.</p>
+
+            <div class="auth-panel-features">
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-dollar-sign"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>USD wallet</strong>
+                        <span>Withdraw your earnings anytime, no delays</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-lock"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Escrow protection</strong>
+                        <span>Every sale is secured until delivery confirmed</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-trending-up"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Powerful ads system</strong>
+                        <span>Boost listings and grow your sales faster</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-bar-chart-2"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Full analytics</strong>
+                        <span>Track revenue, orders and store performance</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="auth-trust-bar">
+                <div class="auth-trust-avatars">
+                    <span>AO</span>
+                    <span>KF</span>
+                    <span>BN</span>
+                    <span>+</span>
+                </div>
+                <div class="auth-trust-text">
+                    <strong>4,200+ active sellers</strong>
+                    <span>Join the fastest-growing marketplace</span>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div class="auth-right-panel">
         <div class="auth-form-box">
 
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
+            <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
                  class="auth-logo-img" alt="Orderer">
 
             <h2>Seller sign in</h2>
@@ -48,15 +106,15 @@
                 </div>
 
                 <div class="mb-4">
-                    <div class="d-flex justify-content-between">
-                        <label class="form-label fw-bold">Password</label>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="form-label fw-bold mb-0">Password</label>
                         <a href="{{ route('seller.password.request') }}" class="auth-link fs-13">
                             Forgot password?
                         </a>
                     </div>
                     <input type="password"
                            name="password"
-                           class="form-control form-control-lg @error('password') is-invalid @enderror"
+                           class="form-control form-control-lg @error('password') is-invalid @enderror mt-2"
                            placeholder="Your password"
                            required>
                     @error('password')
@@ -74,13 +132,12 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
-                    Sign In to Dashboard
+                    <i class="feather-log-in me-2"></i> Sign In to Dashboard
                 </button>
 
-                <div class="text-center text-muted my-3">or</div>
+                <div class="auth-divider">or</div>
 
-                <a href="{{ route('login') }}"
-                   class="btn btn-outline-secondary w-100">
+                <a href="{{ route('login') }}" class="btn btn-outline-secondary w-100">
                     Sign in as a Buyer instead
                 </a>
 

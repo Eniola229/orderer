@@ -1,7 +1,10 @@
+{{-- resources/views/layouts/auth.blade.php --}}
 @include('components.g-header')
 
+{{-- Alerts outside auth-main so they don't break the flex row --}}
+@include('layouts.partials.alerts')
+
 <div class="auth-main">
-    @include('layouts.partials.alerts')
     @yield('content')
 </div>
 

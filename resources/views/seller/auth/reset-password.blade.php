@@ -1,23 +1,67 @@
 @extends('layouts.auth')
 @section('title', 'Set New Password')
-
 @section('content')
 <div class="auth-main">
+
     <div class="auth-left-panel">
-        <div class="content">
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
-                 style="height:40px;margin-bottom:28px;filter:brightness(0) invert(1);" alt="">
-            <h1>Set new password</h1>
-            <p>Choose a strong password for your seller account.</p>
+        <div class="auth-left-inner">
+
+            <div class="auth-panel-logo">
+                <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
+                     style="height:32px;filter:brightness(0) invert(1);" alt="Orderer">
+                <span>Orderer</span>
+            </div>
+
+            <div class="auth-panel-tag">Account Recovery</div>
+
+            <h1>Set a strong<br>new password</h1>
+            <p>Choose a password that's hard to guess. We recommend mixing letters, numbers and symbols.</p>
+
+            <div class="auth-panel-features">
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-check-circle"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>At least 8 characters</strong>
+                        <span>The longer the better for security</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-lock"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Mix it up</strong>
+                        <span>Use uppercase, numbers and special characters</span>
+                    </div>
+                </div>
+
+                <div class="auth-feat-item">
+                    <div class="auth-feat-icon">
+                        <i class="feather-shield"></i>
+                    </div>
+                    <div class="auth-feat-text">
+                        <strong>Keep it unique</strong>
+                        <span>Don't reuse passwords from other sites</span>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </div>
+
     <div class="auth-right-panel">
         <div class="auth-form-box">
 
-            <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
+            <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
                  class="auth-logo-img" alt="Orderer">
 
-            <h2>New password</h2>
+            <h2>Set new password</h2>
+            <p class="subtitle">Enter and confirm your new password below.</p>
 
             <form action="{{ route('seller.password.update') }}" method="POST">
                 @csrf
@@ -28,7 +72,8 @@
                     <label class="form-label fw-bold">New password</label>
                     <input type="password" name="password"
                            class="form-control form-control-lg @error('password') is-invalid @enderror"
-                           placeholder="Min. 8 characters" required>
+                           placeholder="Min. 8 characters"
+                           required>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -38,14 +83,17 @@
                     <label class="form-label fw-bold">Confirm password</label>
                     <input type="password" name="password_confirmation"
                            class="form-control form-control-lg"
-                           placeholder="Repeat password" required>
+                           placeholder="Repeat password"
+                           required>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100">
                     <i class="feather-lock me-2"></i> Reset Password
                 </button>
+
             </form>
         </div>
     </div>
+
 </div>
 @endsection

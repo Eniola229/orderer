@@ -5,7 +5,7 @@
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;background:#f8f9fa;">
     <div style="max-width:520px;width:100%;text-align:center;">
 
-        <img src="{{ asset('dashboard/assets/images/orderer-logo.png') }}"
+        <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
              style="height:40px;margin-bottom:32px;" alt="Orderer">
 
         <div class="avatar-text avatar-xl rounded mx-auto mb-4"
