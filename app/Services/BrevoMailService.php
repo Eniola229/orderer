@@ -17,7 +17,7 @@ class BrevoMailService
         $this->fromName  = config('mail.from.name');
     }
 
-    protected function send(string $toEmail, string $toName, string $subject, string $htmlContent): bool
+    public function send(string $toEmail, string $toName, string $subject, string $htmlContent): bool
     {
         $response = Http::withHeaders([
             'api-key'      => $this->apiKey,

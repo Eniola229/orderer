@@ -139,7 +139,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Phone number <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">Phone number <span class="text-danger">*</span></label><br>
                     <input type="tel"
                            id="phone"
                            name="phone"

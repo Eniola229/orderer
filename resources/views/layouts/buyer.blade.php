@@ -6,6 +6,7 @@
 <main class="nxl-container">
     <div class="nxl-content">
 
+        {{-- Page Header --}}
         <div class="page-header">
             <div class="page-header-left d-flex align-items-center">
                 <div class="page-header-title">
@@ -23,8 +24,10 @@
             </div>
         </div>
 
+        {{-- Alerts --}}
         @include('layouts.partials.alerts')
 
+        {{-- Main content --}}
         <div class="main-content">
             @yield('content')
         </div>
