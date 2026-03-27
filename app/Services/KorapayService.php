@@ -131,4 +131,134 @@ class KorapayService
             'status'       => 'pending',
         ]);
     }
+
+    /**
+     * Fetch list of banks for a given country code.
+     * countryCode: NG, KE, ZA, GH, etc.
+     */
+    public function getBanks(string $countryCode): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->publicKey,
+        ])->get($this->baseUrl . '/misc/banks', ['countryCode' => $countryCode]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Failed to fetch banks: ' . $response->body());
+        }
+
+        return $response->json('data');
+    }
+
+    /**
+     * Fetch mobile money operators for a given country code.
+     * countryCode: KE, GH, etc.
+     */
+    public function getMobileMoneyOperators(string $countryCode): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->secretKey,
+        ])->get($this->baseUrl . '/misc/mobile-money', ['countryCode' => $countryCode]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Failed to fetch MMOs: ' . $response->body());
+        }
+
+        return $response->json('data');
+    }
+
+    /**
+     * Resolve (verify) a bank account before payout — optional but recommended.
+     * currency: NG or KE
+     */
+    public function resolveBankAccount(string $bankCode, string $accountNumber, string $currency): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->secretKey,
+            'Content-Type'  => 'application/json',
+        ])->post($this->baseUrl . '/misc/banks/resolve', [
+            'bank'     => $bankCode,
+            'account'  => $accountNumber,
+            'currency' => $currency,
+        ]);
+
+        if (!$response->successful()) {
+            throw new \Exception('Bank resolve failed: ' . $response->body());
+        }
+
+        return $response->json('data');
+    }
+
+    /**
+     * Disburse a payout to a seller's bank account.
+     *
+     * For local currency payouts (NGN, KES, GHS, ZAR, etc.) funded from your USD balance,
+     * Korapay handles the FX automatically.
+     *
+     * $destination shape:
+     * [
+     *   'type'         => 'bank_account',          // or 'mobile_money'
+     *   'amount'       => 50.00,                   // amount in destination currency
+     *   'currency'     => 'NGN',                   // destination currency
+     *   'narration'    => 'Withdrawal payout',
+     *   'bank_account' => [
+     *       'bank'    => '044',                    // bank code from getBanks()
+     *       'account' => '0123456789',
+     *   ],
+     *   // OR for mobile money:
+     *   'mobile_money' => [
+     *       'operator'      => 'safaricom-ke',     // slug from getMobileMoneyOperators()
+     *       'mobile_number' => '254712345678',
+     *   ],
+     *   'customer' => [
+     *       'name'  => 'John Doe',
+     *       'email' => 'john@example.com',
+     *   ],
+     * ]
+     */
+    public function disbursePayout(string $reference, array $destination, array $metadata = []): array
+    {
+        $payload = [
+            'reference'   => $reference,
+            'destination' => $destination,
+        ];
+
+        if (!empty($metadata)) {
+            $payload['metadata'] = $metadata;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->secretKey,
+            'Content-Type'  => 'application/json',
+        ])->post($this->baseUrl . '/transactions/disburse', $payload);
+
+        // IMPORTANT: Do NOT treat 502/503/504/500 as failed — always verify first.
+        if ($response->serverError()) {
+            // Re-check status via verifyPayout() before marking failed
+            throw new \Exception('Korapay server error — verify payout before marking failed: ' . $response->body());
+        }
+
+        if (!$response->successful()) {
+            throw new \Exception('Korapay payout failed: ' . $response->body());
+        }
+
+        // Returns: { status, message, data: { amount, fee, currency, status, reference, ... } }
+        return $response->json('data');
+    }
+
+    /**
+     * Query a payout's current status by reference.
+     * Always call this after any server error before treating as failed.
+     */
+    public function verifyPayout(string $reference): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->secretKey,
+        ])->get($this->baseUrl . '/transactions/' . $reference);
+
+        if (!$response->successful()) {
+            throw new \Exception('Korapay payout verification failed: ' . $response->body());
+        }
+
+        return $response->json('data');
+    }
 }

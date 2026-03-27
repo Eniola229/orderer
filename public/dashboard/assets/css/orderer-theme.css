@@ -987,7 +987,9 @@ html, body {
         height: 36px;
         padding: 4px;
     }
-
+    .ord-sell-btn {
+        display: none;
+    }
     /* Navigation drawer */
     .ord-nav {
         width: 100%;

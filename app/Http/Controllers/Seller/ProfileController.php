@@ -68,4 +68,22 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Profile updated successfully.');
     }
+
+        public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required'],
+            'password'         => ['required', 'confirmed', Password::min(8)],
+        ]);
+ 
+        $seller = auth('seller')->user();
+ 
+        if (!Hash::check($request->current_password, $seller->password)) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+        }
+ 
+        $seller->update(['password' => Hash::make($request->password)]);
+ 
+        return back()->with('success', 'Password updated successfully.');
+    }
 }

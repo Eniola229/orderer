@@ -302,7 +302,7 @@
                         <div class="cta--text">
                             <h6>Seamless delivery, anywhere</h6>
                             <h2>We deliver</h2>
-                            <p style="color:#fff;opacity:.85;margin-bottom:16px;">
+                            <p style="color:black;opacity:.85;margin-bottom:16px;">
                                 Local or international — we deliver anywhere
                             </p>
                             <a href="{{ route('rider.booking') }}" class="btn essence-btn">Book Now</a>

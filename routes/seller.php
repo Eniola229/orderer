@@ -78,6 +78,8 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/withdrawals',         [WithdrawalController::class, 'index'])->name('withdrawals.index');
         Route::get('/withdrawals/create',  [WithdrawalController::class, 'create'])->name('withdrawals.create');
         Route::post('/withdrawals',        [WithdrawalController::class, 'store'])->name('withdrawals.store');
+        Route::post('/withdrawals/banks', [WithdrawalController::class, 'getBanks'])->name('withdrawals.banks');
+        Route::post('/withdrawals/resolve-account', [WithdrawalController::class, 'resolveAccount'])->name('withdrawals.resolve-account');
 
         // Ads
         Route::get('/ads',               [SellerAdController::class, 'index'])->name('ads.index');

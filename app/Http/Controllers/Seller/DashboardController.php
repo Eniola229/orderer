@@ -5,40 +5,42 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\Wallet;
+use App\Services\WalletService;
 
 class DashboardController extends Controller
 {
+    public function __construct(protected WalletService $walletService) {}
+
     public function index()
     {
         $seller = auth('seller')->user();
+        $wallet = $this->walletService->getOrCreate($seller);
 
         $stats = [
-            'wallet_balance'   => $seller->wallet_balance,
-            'ads_balance'      => $seller->ads_balance,
+            'wallet_balance'   => $wallet->balance,
+            'ads_balance'      => $wallet->ads_balance,
             'total_orders'     => OrderItem::where('seller_id', $seller->id)->count(),
-            'pending_orders'   => OrderItem::where('seller_id', $seller->id)
-                                           ->where('status', 'pending')->count(),
+            'pending_orders'   => OrderItem::where('seller_id', $seller->id)->where('status', 'pending')->count(),
             'total_products'   => Product::where('seller_id', $seller->id)->count(),
-            'approved_products'=> Product::where('seller_id', $seller->id)
-                                         ->where('status', 'approved')->count(),
-            'active_ads'       => \App\Models\Ad::where('seller_id', $seller->id)
-                                                 ->where('status', 'active')->count(),
+            'approved_products'=> Product::where('seller_id', $seller->id)->where('status', 'approved')->count(),
+            'active_ads'       => \App\Models\Ad::where('seller_id', $seller->id)->where('status', 'active')->count(),
         ];
 
-        $recentOrders = OrderItem::with('order')
-            ->where('seller_id', $seller->id)
+        $recentOrders = OrderItem::where('seller_id', $seller->id)
+            ->with('order.user')
             ->latest()
-            ->take(8)
+            ->take(5)
             ->get();
 
-        $recentProducts = Product::with('images')
-            ->where('seller_id', $seller->id)
+        $recentProducts = Product::where('seller_id', $seller->id)
+            ->with('images')
             ->latest()
-            ->take(6)
+            ->take(5)
             ->get();
 
         return view('seller.dashboard.index', compact(
-            'seller', 'stats', 'recentOrders', 'recentProducts'
+            'seller', 'stats', 'recentOrders', 'recentProducts', 'wallet'
         ));
     }
 }
