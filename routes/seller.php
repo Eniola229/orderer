@@ -43,15 +43,7 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Products
-        Route::resource('products', ProductController::class)->names([
-            'index'   => 'seller.products.index',
-            'create'  => 'seller.products.create',
-            'store'   => 'seller.products.store',
-            'show'    => 'seller.products.show',
-            'edit'    => 'seller.products.edit',
-            'update'  => 'seller.products.update',
-            'destroy' => 'seller.products.destroy',
-        ]);
+        Route::resource('products', ProductController::class);
         Route::delete('/products/image/{image}',
             [ProductController::class, 'deleteImage'])->name('products.image.delete');
 

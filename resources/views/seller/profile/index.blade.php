@@ -89,46 +89,94 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Business Information</h5>
+            <div class="mb-4">
+                <label class="form-label fw-bold">Business Name</label>
+                <input type="text"
+                       name="business_name"
+                       class="form-control @error('business_name') is-invalid @enderror"
+                       value="{{ old('business_name', auth('seller')->user()->business_name) }}">
+                @error('business_name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Business Description</label>
+                <textarea name="business_description"
+                          class="form-control @error('business_description') is-invalid @enderror"
+                          rows="4"
+                          placeholder="Tell buyers about your business...">{{ old('business_description', auth('seller')->user()->business_description) }}</textarea>
+                @error('business_description')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- Address display row --}}
+            <div class="mb-3">
+                <label class="form-label fw-bold">Business Address</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text"
+                           name="business_address"
+                           id="profileAddress"
+                           class="form-control @error('business_address') is-invalid @enderror"
+                           value="{{ old('business_address', auth('seller')->user()->business_address) }}"
+                           placeholder="House number, street name">
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm text-nowrap"
+                            onclick="toggleAddressFields()">
+                        <i class="feather-map-pin me-1"></i> Validate
+                    </button>
                 </div>
-                <div class="card-body">
+                @if(auth('seller')->user()->address_code)
+                    <small class="text-success mt-1 d-block">
+                        <i class="feather-check-circle me-1"></i> Address previously validated
+                    </small>
+                @endif
+                @error('business_address')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+            </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Business Name</label>
-                        <input type="text"
-                               name="business_name"
-                               class="form-control @error('business_name') is-invalid @enderror"
-                               value="{{ old('business_name', auth('seller')->user()->business_name) }}">
-                        @error('business_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+            {{-- Hidden address fields — only shown when validating --}}
+            <div id="addressFieldsPanel" style="display:none;">
+                <div class="p-3 mb-3 border rounded" style="background:#f9f9f9;">
+                    <p class="fs-13 text-muted mb-3">
+                        <i class="feather-info me-1"></i>
+                        Fill in city, state and country to validate your address with our courier network.
+                    </p>
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label fw-bold fs-13">City</label>
+                            <input type="text" id="profileCity" class="form-control form-control-sm"
+                                   placeholder="e.g. Lagos">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-bold fs-13">State</label>
+                            <input type="text" id="profileState" class="form-control form-control-sm"
+                                   placeholder="e.g. Lagos">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-bold fs-13">Country</label>
+                            <input type="text" id="profileCountry" class="form-control form-control-sm"
+                                   placeholder="e.g. Nigeria" value="Nigeria">
+                        </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Business Description</label>
-                        <textarea name="business_description"
-                                  class="form-control @error('business_description') is-invalid @enderror"
-                                  rows="4"
-                                  placeholder="Tell buyers about your business...">{{ old('business_description', auth('seller')->user()->business_description) }}</textarea>
-                        @error('business_description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    {{-- Hidden address code saved to DB --}}
+                    <input type="hidden" name="address_code" id="profileAddressCode" value="">
 
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Business Address</label>
-                        <input type="text"
-                               name="business_address"
-                               class="form-control @error('business_address') is-invalid @enderror"
-                               value="{{ old('business_address', auth('seller')->user()->business_address) }}"
-                               placeholder="Street, City, State">
-                        @error('business_address')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <div id="profileAddrFeedback" class="mb-2" style="display:none;"></div>
 
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-sm" id="validateAddrBtn"
+                                onclick="validateProfileAddress()">
+                            <i class="feather-check me-1"></i> Validate Address
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                onclick="toggleAddressFields()">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -226,5 +274,85 @@
     </div>
 
 </form>
+@push('scripts')
+<script>
+function toggleAddressFields() {
+    const panel = document.getElementById('addressFieldsPanel');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
 
+    // Clear feedback when closing
+    if (!isHidden) {
+        document.getElementById('profileAddrFeedback').style.display = 'none';
+    }
+}
+
+async function validateProfileAddress() {
+    const btn      = document.getElementById('validateAddrBtn');
+    const feedback = document.getElementById('profileAddrFeedback');
+
+    const address = document.getElementById('profileAddress').value.trim();
+    const city    = document.getElementById('profileCity').value.trim();
+    const state   = document.getElementById('profileState').value.trim();
+    const country = document.getElementById('profileCountry').value.trim();
+    const name    = '{{ auth("seller")->user()->first_name }} {{ auth("seller")->user()->last_name }}';
+    const email   = '{{ auth("seller")->user()->email }}';
+    const phone   = '{{ auth("seller")->user()->phone }}';
+
+    if (!address || !city || !state || !country) {
+        feedback.style.display = 'block';
+        feedback.innerHTML = '<div class="alert alert-danger py-2 mb-0">Please fill in address, city, state and country.</div>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Validating…';
+    feedback.style.display = 'none';
+
+    try {
+        const res = await fetch('{{ route("address.validate") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ name, email, phone, address, city, state, country }),
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            // Save address_code into the hidden form field
+            document.getElementById('profileAddressCode').value = data.address_code;
+
+            // Update address field with validated address if returned
+            if (data.address) {
+                document.getElementById('profileAddress').value = data.address;
+            }
+
+            feedback.style.display = 'block';
+            feedback.innerHTML = `<div class="alert alert-success py-2 mb-0">
+                <i class="feather-check-circle me-1"></i> Address validated! Save your profile to confirm.
+            </div>`;
+
+            // Hide the panel after short delay
+            setTimeout(() => toggleAddressFields(), 1500);
+
+        } else {
+            feedback.style.display = 'block';
+            feedback.innerHTML = `<div class="alert alert-danger py-2 mb-0">
+                <i class="feather-alert-circle me-1"></i> ${data.message}
+            </div>`;
+        }
+
+    } catch (err) {
+        feedback.style.display = 'block';
+        feedback.innerHTML = `<div class="alert alert-danger py-2 mb-0">Something went wrong. Please try again.</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="feather-check me-1"></i> Validate Address';
+    }
+}
+</script>
+@endpush
 @endsection

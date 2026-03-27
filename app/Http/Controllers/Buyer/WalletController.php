@@ -42,9 +42,11 @@ class WalletController extends Controller
 
         $checkoutData = $this->korapay->initializeCheckout(
             $user->email,
+            $user->full_name,
             $amount,
             $reference,
             route('buyer.wallet.callback'),
+            '',
             ['type' => 'wallet_topup', 'user_id' => $user->id]
         );
 

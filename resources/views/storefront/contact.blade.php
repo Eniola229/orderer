@@ -1,16 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Contact Us — Orderer</title>
-    <link rel="icon" href="{{ asset('img/core-img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/orderer.css') }}">
-</head>
-<body>
-@auth('web')@include('layouts.storefront.header-auth')@else@include('layouts.storefront.header-guest')@endauth
+@auth('web')@include('layouts.storefront.header-auth')@else @include('layouts.storefront.header-guest')@endauth
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
@@ -86,7 +74,7 @@
                             <textarea name="message" class="form-control" rows="5"
                                       placeholder="Write your message here..." required>{{ old('message') }}</textarea>
                         </div>
-                        <button type="submit" class="btn essence-btn w-100" style="font-size:15px;padding:13px;">
+                        <button type="submit" class="btn essence-btn w-100" style="">
                             <i class="fa fa-send mr-2"></i> Send Message
                         </button>
                     </form>

@@ -33,6 +33,7 @@ class ProfileController extends Controller
             'business_name'        => ['required', 'string', 'max:200'],
             'business_description' => ['nullable', 'string'],
             'business_address'     => ['nullable', 'string'],
+            'address_code'     => ['nullable', 'string'],
             'avatar'               => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
             'current_password'     => ['nullable', 'string'],
             'password'             => ['nullable', 'confirmed', Password::min(8)],
@@ -40,7 +41,7 @@ class ProfileController extends Controller
 
         $data = $request->only([
             'first_name', 'last_name', 'phone',
-            'business_name', 'business_description', 'business_address',
+            'business_name', 'business_description', 'business_address', 'address_code'
         ]);
 
         // Handle avatar upload

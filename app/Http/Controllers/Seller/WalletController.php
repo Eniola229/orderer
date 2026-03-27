@@ -48,9 +48,11 @@ class WalletController extends Controller
 
         $checkoutData = $this->korapay->initializeCheckout(
             $seller->email,
+            $seller->full_name,
             $amount,
             $reference,
             route('seller.wallet.topup.callback'),
+            '',
             ['type' => 'ads_topup', 'seller_id' => $seller->id]
         );
 
@@ -74,9 +76,11 @@ class WalletController extends Controller
 
         $checkoutData = $this->korapay->initializeCheckout(
             $seller->email,
+            $seller->full_name,
             $amount,
             $reference,
             route('seller.wallet.topup.callback'),
+            '',
             ['type' => 'wallet_topup', 'seller_id' => $seller->id]
         );
 

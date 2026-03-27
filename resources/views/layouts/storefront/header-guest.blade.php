@@ -1,87 +1,141 @@
-<header class="header_area">
-    <div class="classy-nav-container breakpoint-off d-flex align-items-center justify-content-between">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="description" content="Orderer — Buy, sell and deliver anything, anywhere in the world." />
+    <meta name="keywords" content="ecommerce Nigeria, buy online, sell online, orderer, marketplace, delivery" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <nav class="classy-navbar" id="ordererNav">
-            <a class="nav-brand" href="{{ route('home') }}">
-                <img src="{{ asset('img/core-img/logo.png') }}" alt="Orderer">
-            </a>
-            <div class="classy-navbar-toggler">
-                <span class="navbarToggler"><span></span><span></span><span></span></span>
-            </div>
-            <div class="classy-menu">
-                <div class="classycloseIcon">
-                    <div class="cross-wrap"><span class="top"></span><span class="bottom"></span></div>
-                </div>
-                <div class="classynav">
-                    <ul>
-                        <li><a href="{{ route('home') }}">Home</a></li>
-                        <li><a href="#">Shop</a>
-                            <div class="megamenu">
-                                @foreach(\App\Models\Category::where('is_active',true)->with('subcategories')->take(3)->get() as $cat)
-                                <ul class="single-mega cn-col-4">
-                                    <li class="title">{{ $cat->name }}</li>
-                                    @foreach($cat->subcategories->where('is_active',true)->take(6) as $sub)
-                                    <li><a href="{{ route('shop.category', $sub->slug) }}">{{ $sub->name }}</a></li>
-                                    @endforeach
-                                </ul>
-                                @endforeach
-                                <div class="single-mega cn-col-4">
-                                    <img src="{{ asset('img/bg-img/bg-6.jpg') }}" alt="">
-                                </div>
-                            </div>
-                        </li>
-                        <li><a href="{{ route('brands.index') }}">Brands</a></li>
-                        <li><a href="{{ route('services.index') }}">Services</a></li>
-                        <li><a href="{{ route('houses.index') }}">Properties</a></li>
-                        <li><a href="{{ route('rider.booking') }}">Book Rider</a></li>
-                        <li><a href="{{ route('contact') }}">Contact</a></li>
-                    </ul>
-                </div>
-            </div>
+    {{-- Dynamic Title & Favicon Variables --}}
+    @php
+        $routeName = Route::currentRouteName();
+        if ($routeName === 'home' || request()->is('/')) {
+            $pageTitle = 'Home';
+        } elseif ($routeName === 'shop' || request()->is('shop*')) {
+            $pageTitle = 'Shop';
+        } elseif (isset($product)) {
+            $pageTitle = $product->name;
+        } elseif (isset($brand)) {
+            $pageTitle = $brand->name;
+        } elseif (request()->is('brands*')) {
+            $pageTitle = 'Brands';
+        } else {
+            $pageTitle = 'Global E-commerce Marketplace';
+        }
+
+        $primaryProductImage = isset($product) ? $product->images->where('is_primary', true)->first() : null;
+        $faviconUrl = $primaryProductImage
+            ? asset($primaryProductImage->image)
+            : (isset($brand) && $brand->logo ? asset($brand->logo) : asset('dashboard/assets/images/favicon.png'));
+
+        $ogImage = $primaryProductImage
+            ? asset($primaryProductImage->image)
+            : (isset($brand) && $brand->logo ? asset($brand->logo) : asset('dashboard/assets/images/favicon.png'));
+    @endphp
+
+    <title>{{ $pageTitle }} — Orderer</title>
+
+    {{-- Dynamic Favicon --}}
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $faviconUrl }}" />
+    <link rel="icon" href="{{ $faviconUrl }}">
+
+    {{-- OG Meta --}}
+    <meta property="og:title" content="{{ $pageTitle }} — Orderer" />
+    <meta property="og:description" content="Buy, sell and deliver anything anywhere in the world." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:image" content="{{ $ogImage }}" />
+    <meta property="og:site_name" content="Orderer" />
+
+    <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/css/orderer-theme.css') }}" />
+</head>
+<body>
+
+<header class="ord-header">
+    <div class="ord-header-inner">
+
+        <!-- Logo -->
+        <a class="ord-logo" href="{{ route('home') }}">
+            <img src="{{ asset('img/core-img/logo.png') }}" alt="Orderer">
+        </a>
+
+        <!-- Nav -->
+        <nav class="ord-nav" id="ordNav">
+            <ul>
+                <li><a href="{{ route('home') }}">Home</a></li>
+                <li class="has-mega">
+                    <a href="{{ route('shop.index') }}">Shop <i class="fa fa-angle-down"></i></a>
+                    <div class="ord-megamenu">
+                        @foreach(\App\Models\Category::where('is_active',true)->with('subcategories')->take(3)->get() as $cat)
+                        <ul class="mega-col">
+                            <li class="mega-title">{{ $cat->name }}</li>
+                            @foreach($cat->subcategories->where('is_active',true)->take(6) as $sub)
+                            <li><a href="{{ route('shop.category', $sub->slug) }}">{{ $sub->name }}</a></li>
+                            @endforeach
+                        </ul>
+                        @endforeach
+                    </div>
+                </li>
+                <li><a href="{{ route('brands.index') }}">Brands</a></li>
+                <li><a href="{{ route('services.index') }}">Services</a></li>
+                <li><a href="{{ route('houses.index') }}">Properties</a></li>
+                <li><a href="{{ route('rider.booking') }}">Book a Delivery</a></li>
+                <li><a href="{{ route('contact') }}">Contact</a></li>
+            </ul>
         </nav>
 
-        <div class="header-meta d-flex clearfix align-items-center gap-2">
+        <!-- Actions -->
+        <div class="ord-actions">
 
-            {{-- Search --}}
-            <div class="search-area">
-                <form action="{{ route('search') }}" method="GET">
-                    <input type="search" name="q" placeholder="Search products…"
-                           value="{{ request('q') }}">
-                    <button type="submit"><i class="fa fa-search"></i></button>
-                </form>
-            </div>
+            <!-- Search -->
+            <form class="ord-search" action="{{ route('search') }}" method="GET">
+                <input type="search" name="q" placeholder="Search products…" value="{{ request('q') }}">
+                <button type="submit"><i class="fa fa-search"></i></button>
+            </form>
 
-            {{-- Wishlist --}}
-            <div class="favourite-area">
-                <a href="{{ route('login') }}" title="Wishlist">
-                    <img src="{{ asset('img/core-img/heart.svg') }}" alt="Wishlist">
-                </a>
-            </div>
+            <!-- Wishlist -->
+            <a href="{{ route('login') }}" class="ord-icon-btn" title="Wishlist">
+                <img src="{{ asset('img/core-img/heart.svg') }}" alt="Wishlist">
+            </a>
 
-            {{-- Account --}}
-            <div class="user-login-info">
-                <a href="{{ route('login') }}" title="Sign in">
-                    <img src="{{ asset('img/core-img/user.svg') }}" alt="Login">
-                </a>
-            </div>
+            <!-- Login -->
+            <a href="{{ route('login') }}" class="ord-icon-btn" title="Sign in">
+                <img src="{{ asset('img/core-img/user.svg') }}" alt="Login">
+            </a>
 
-            {{-- Cart --}}
-            <div class="cart-area">
-                <a href="#" id="essenceCartBtn" title="Cart">
-                    <img src="{{ asset('img/core-img/bag.svg') }}" alt="Cart">
-                    <span id="cart-count">{{ session('cart') ? count(session('cart')) : 0 }}</span>
-                </a>
-            </div>
+            <!-- Cart -->
+            <a href="#" id="essenceCartBtn" class="ord-icon-btn ord-cart" title="Cart">
+                <img src="{{ asset('img/core-img/bag.svg') }}" alt="Cart">
+                <span id="cart-count">{{ session('cart') ? count(session('cart')) : 0 }}</span>
+            </a>
 
-            {{-- Start Selling CTA --}}
-            <div class="ms-1">
-                <a href="{{ route('seller.register') }}"
-                   class="btn essence-btn"
-                   style="padding:9px 20px; font-size:13px; font-weight:700; border-radius:8px; white-space:nowrap; letter-spacing:0.3px;">
-                    Start Selling
-                </a>
-            </div>
+            <!-- Start Selling CTA -->
+            <a href="{{ route('seller.register') }}" class="ord-sell-btn">
+                Start Selling
+            </a>
+
+            <!-- Mobile hamburger -->
+            <button class="ord-hamburger" id="ordHamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
 
         </div>
     </div>
 </header>
+
+<script>
+// Mobile hamburger toggle
+const ordHamburger = document.getElementById('ordHamburger');
+const ordNav       = document.getElementById('ordNav');
+
+if (ordHamburger && ordNav) {
+    ordHamburger.addEventListener('click', () => {
+        ordHamburger.classList.toggle('open');
+        ordNav.classList.toggle('open');
+    });
+}
+</script>

@@ -24,6 +24,7 @@ class Seller extends Authenticatable
         'business_slug',
         'business_description',
         'business_address',
+        'address_code',
         'avatar',
         'banner_image',
         'is_verified_business',

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('business_slug')->unique();
             $table->text('business_description')->nullable();
             $table->text('business_address')->nullable();
+            $table->string('address_code')->nullable();
             $table->string('avatar')->nullable();
             $table->string('banner_image')->nullable();
             $table->boolean('is_verified_business')->default(false);

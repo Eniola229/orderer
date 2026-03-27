@@ -45,4 +45,9 @@ return [
         'base_url'   => env('KORAPAY_BASE_URL', 'https://api.korapay.com/merchant/api/v1'),
     ],
 
+    'shipbubble' => [
+        'api_key'  => env('SHIPBUBBLE_API_KEY'),
+        'base_url' => env('SHIPBUBBLE_BASE_URL', 'https://api.shipbubble.com/v1'),
+    ],
+
 ];

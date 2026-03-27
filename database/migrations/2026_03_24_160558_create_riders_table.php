@@ -50,7 +50,7 @@ return new class extends Migration
                   ->default('pending');
             $table->enum('status', [
                 'pending', 'accepted', 'picked_up',
-                'in_transit', 'delivered', 'cancelled'
+                'in_transit', 'delivered', 'cancelled', 'confirmed'
             ])->default('pending');
             $table->string('shiprocket_order_id')->nullable();
             $table->string('tracking_number')->nullable();

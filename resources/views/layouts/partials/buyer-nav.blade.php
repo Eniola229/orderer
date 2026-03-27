@@ -41,6 +41,13 @@
                     </ul>
                 </li>
 
+                <li class="nxl-item {{ request()->routeIs('buyer.bookings*') ? 'active' : '' }}">
+                    <a href="{{ route('buyer.bookings') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-truck"></i></span>
+                        <span class="nxl-mtext">My Deliveries</span>
+                    </a>
+                </li>
+
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('buyer.wallet*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-credit-card"></i></span>

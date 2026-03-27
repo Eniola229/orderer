@@ -1,17 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Orderer — Global E-commerce Marketplace</title>
-    <link rel="icon" href="{{ asset('img/core-img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/orderer.css') }}">
-</head>
-<body>
-
 {{-- Header --}}
 @auth('web')
     @include('layouts.storefront.header-auth')
@@ -27,12 +13,12 @@
 
 {{-- Hero Banner Slider --}}
 <section class="welcome_area bg-img background-overlay"
-         style="background-image: url({{ $heroBanner ?? asset('img/bg-img/bg-1.jpg') }});">
+         style="background-image: url({{ $heroBanner ?? asset('img/bg-img/bg-1.png') }});">
     <div class="container h-100">
         <div class="row h-100 align-items-center">
             <div class="col-12">
                 <div class="hero-content">
-                    <h6>New Arrivals</h6>
+                    <h6>Orderer</h6>
                     <h2>Shop Everything, <br>Delivered Everywhere</h2>
                     <a href="{{ route('shop.index') }}" class="btn essence-btn">Shop Now</a>
                 </div>
@@ -201,24 +187,59 @@
         </div>
     </div>
 </section>
-
-{{-- Brands strip --}}
+{{-- Brands Strip --}}
 @if($brands->count())
-<div class="brands-area d-flex align-items-center justify-content-between">
-    @foreach($brands->take(6) as $brand)
-    <div class="single-brands-logo">
-        <a href="{{ route('brands.show', $brand->slug) }}">
-            @if($brand->logo)
-                <img src="{{ $brand->logo }}" alt="{{ $brand->name }}" style="height:40px;object-fit:contain;">
-            @else
-                <span style="font-weight:700;color:#555;font-size:16px;">{{ $brand->name }}</span>
-            @endif
-        </a>
-    </div>
-    @endforeach
-</div>
-@endif
+<section class="ord-brands-strip">
+    <div class="container">
+        <div class="ord-brands-header">
+            <span class="ord-brands-label">Trusted Brands</span>
+            <a href="{{ route('brands.index') }}" class="ord-brands-viewall">
+                View all brands <i class="fa fa-arrow-right"></i>
+            </a>
+        </div>
 
+        @php $brandList = $brands->take(8); @endphp
+
+        @if($brandList->count() >= 5)
+        {{-- Enough brands: animated scrolling strip --}}
+        <div class="ord-brands-track-wrap">
+            <div class="ord-brands-track">
+                @foreach($brandList as $brand)
+                <a href="{{ route('brands.show', $brand->slug) }}" class="ord-brand-item" title="{{ $brand->name }}">
+                    @if($brand->logo)
+                        <img src="{{ $brand->logo }}" alt="{{ $brand->name }}">
+                    @endif
+                    <span class="ord-brand-name">{{ $brand->name }}</span>
+                </a>
+                @endforeach
+                {{-- Duplicate set for seamless infinite loop --}}
+                @foreach($brandList as $brand)
+                <a href="{{ route('brands.show', $brand->slug) }}" class="ord-brand-item" title="{{ $brand->name }}" aria-hidden="true" tabindex="-1">
+                    @if($brand->logo)
+                        <img src="{{ $brand->logo }}" alt="">
+                    @endif
+                    <span class="ord-brand-name">{{ $brand->name }}</span>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @else
+        {{-- Few brands: simple centered static row --}}
+        <div class="ord-brands-static">
+            @foreach($brandList as $brand)
+            <a href="{{ route('brands.show', $brand->slug) }}" class="ord-brand-item" title="{{ $brand->name }}">
+                @if($brand->logo)
+                    <img src="{{ $brand->logo }}" alt="{{ $brand->name }}">
+                @endif
+                <span class="ord-brand-name">{{ $brand->name }}</span>
+            </a>
+            @endforeach
+        </div>
+        @endif
+
+    </div>
+</section>
+@endif
 {{-- New Arrivals --}}
 <section class="new_arrivals_area section-padding-80 clearfix" style="background:#f8f8f8;">
     <div class="container">
@@ -276,11 +297,11 @@
         <div class="row">
             <div class="col-12">
                 <div class="cta-content bg-img background-overlay"
-                     style="background-image: url({{ asset('img/bg-img/bg-5.jpg') }});">
+                     style="background-image: url({{ asset('img/bg-img/l-banner.png') }});">
                     <div class="h-100 d-flex align-items-center justify-content-end">
                         <div class="cta--text">
-                            <h6>Fast Delivery</h6>
-                            <h2>Book a Rider</h2>
+                            <h6>Seamless delivery, anywhere</h6>
+                            <h2>We deliver</h2>
                             <p style="color:#fff;opacity:.85;margin-bottom:16px;">
                                 Local or international — we deliver anywhere
                             </p>

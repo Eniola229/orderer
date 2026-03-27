@@ -47,11 +47,11 @@ class PasswordResetController extends Controller
         }
 
         // Delete any existing token for this email
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        DB::table('user_password_reset_tokens')->where('email', $request->email)->delete();
 
         $token = Str::random(64);
 
-        DB::table('password_reset_tokens')->insert([
+        DB::table('user_password_reset_tokens')->insert([
             'email'      => $request->email,
             'token'      => Hash::make($token),
             'created_at' => Carbon::now(),
@@ -96,7 +96,7 @@ class PasswordResetController extends Controller
             'password'              => ['required', 'min:8', 'confirmed'],
         ]);
 
-        $record = DB::table('password_reset_tokens')
+        $record = DB::table('user_password_reset_tokens')
             ->where('email', $request->email)
             ->first();
 
@@ -106,7 +106,7 @@ class PasswordResetController extends Controller
 
         // Expire tokens older than 60 minutes
         if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
-            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            DB::table('user_password_reset_tokens')->where('email', $request->email)->delete();
             return back()->withErrors(['email' => 'This password reset link has expired. Please request a new one.']);
         }
 
@@ -121,7 +121,7 @@ class PasswordResetController extends Controller
         ]);
 
         // Clean up the used token
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        DB::table('user_password_reset_tokens')->where('email', $request->email)->delete();
 
         return redirect()->route('login')->with('status', 'Your password has been reset successfully. Please sign in.');
     }

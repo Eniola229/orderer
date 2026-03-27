@@ -1,17 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $product->name }} — Orderer</title>
-    <link rel="icon" href="{{ asset('img/core-img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/orderer.css') }}">
-</head>
-<body>
-
 @auth('web')
     @include('layouts.storefront.header-auth')
 @else

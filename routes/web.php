@@ -48,7 +48,55 @@ Route::get('/properties',    [App\Http\Controllers\StorefrontController::class, 
 
 // Services (storefront)
 Route::get('/services',      [App\Http\Controllers\StorefrontController::class, 'services'])->name('services.index');
+//Validate address
+Route::post('/address/validate', function (\Illuminate\Http\Request $request, \App\Services\ShipbubbleService $shipbubble) {
+    $request->validate([
+        'name'    => ['required', 'string'],
+        'phone'   => ['required', 'string'],
+        'address' => ['required', 'string'],
+        'country' => ['required', 'string'],
+    ]);
 
+    try {
+        $result = $shipbubble->validateAddress([
+            'name'    => $request->name,
+            'email'   => $request->email ?? 'noreply@orderer.com',
+            'phone'   => $request->phone,
+            'address' => $request->address,
+            'city'    => $request->city ?? $request->state,
+            'state'   => $request->state ?? $request->city,
+            'country' => $request->country,  // ← now dynamic
+        ]);
+
+        $addressCode = $result['data']['address_code'] ?? null;
+
+        if (!$addressCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not validate this address. Please provide more detail.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success'      => true,
+            'address_code' => $addressCode,
+            'address'      => $result['data']['address'] ?? $request->address,
+        ]);
+
+    } catch (\Exception $e) {
+        $raw = $e->getMessage();
+        $msg = null;
+        if (preg_match('/\{.*\}/s', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+            $msg = $decoded['message'] ?? null;
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $msg ?? 'Address validation failed. Please check and try again.',
+        ], 422);
+    }
+})->name('address.validate');
 
 // Cart (session-based, no auth required to add)
 Route::post('/cart/add',    [CartController::class, 'add'])->name('cart.add');
@@ -86,6 +134,24 @@ Route::post('/logout', [BuyerLoginController::class, 'logout'])
      ->middleware('auth')
      ->name('logout');
 
+    Route::post('/rider/rates',   [App\Http\Controllers\RiderBookingController::class, 'getRates'])
+         ->middleware('auth')
+         ->name('rider.rates');
+    Route::post('/rider/book',    [App\Http\Controllers\RiderBookingController::class, 'book'])
+         ->middleware('auth')
+         ->name('rider.book');
+    Route::get('/rider/callback', [App\Http\Controllers\RiderBookingController::class, 'callback'])
+         ->middleware('auth')
+         ->name('rider.callback');
+    Route::get('/rider/track/{booking}', [App\Http\Controllers\RiderBookingController::class, 'track'])
+         ->middleware('auth')
+         ->name('rider.track');
+
+    // ── Checkout rates ───────────────────────────────────
+    Route::post('/checkout/rates', [App\Http\Controllers\CheckoutController::class, 'getRates'])
+         ->middleware('auth')
+         ->name('checkout.rates');
+         
 // -------------------------------------------------------
 // BUYER DASHBOARD (authenticated)
 // -------------------------------------------------------
@@ -98,6 +164,9 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::get('/orders',                    [BuyerOrders::class, 'index'])->name('orders');
     Route::get('/orders/{order}',            [BuyerOrders::class, 'show'])->name('orders.show');
     Route::put('/orders/{order}/confirm',    [BuyerOrders::class, 'confirmDelivery'])->name('orders.confirm');
+    // ── Rider booking ────────────────────────────────────
+    Route::get('/rider',          fn() => view('storefront.rider'))->name('rider.booking');
+
 
     // Wallet
     Route::get('/wallet',           [BuyerWallet::class, 'index'])->name('wallet');
@@ -123,6 +192,11 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::post('/support',             [BuyerSupport::class, 'store'])->name('support.store');
     Route::get('/support/{ticket}',     [BuyerSupport::class, 'show'])->name('support.show');
     Route::post('/support/{ticket}/reply', [BuyerSupport::class, 'reply'])->name('support.reply');
+
+    // Bookings
+    Route::get('/bookings',           [App\Http\Controllers\RiderBookingController::class, 'myBookings'])->name('bookings');
+    Route::get('/bookings/{booking}', [App\Http\Controllers\RiderBookingController::class, 'showBooking'])->name('bookings.show');
+    Route::get('/bookings/{booking}/track', [App\Http\Controllers\RiderBookingController::class, 'track'])->name('bookings.track');
 });
 
 // -------------------------------------------------------
