@@ -7,12 +7,15 @@
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
-<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpg') }});">
+<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }});">
     <div class="container h-100">
         <div class="row h-100 align-items-center">
             <div class="col-12">
                 <div class="page-title text-center">
                     <h2>{{ Str::limit($product->name, 40) }}</h2>
+                    <button onclick="shareProduct()" style="background: none; border: 1px solid #2ECC71; border-radius: 50px; padding: 6px 20px; margin-top: 10px; font-size: 13px; color: #2ECC71; cursor: pointer;">
+                        <i class="fa fa-share-alt mr-1"></i> Share
+                    </button>
                 </div>
             </div>
         </div>
@@ -386,6 +389,12 @@ document.querySelectorAll('.add-to-cart').forEach(function(btn) {
         addToCart(this.dataset.product);
     });
 });
+function shareProduct() {
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent("{{ $product->name }}");
+    const whatsappUrl = `https://wa.me/?text=${title}%20${url}`;
+    window.open(whatsappUrl, '_blank', 'width=600,height=400');
+}
 </script>
 </body>
 </html>

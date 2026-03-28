@@ -146,7 +146,7 @@
                                style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
                         <i class="feather-upload-cloud mb-2 d-block text-muted" style="font-size:32px;"></i>
                         <p class="text-muted mb-1">Upload samples of your work</p>
-                        <small class="text-muted">JPG, PNG — max 4MB each</small>
+                        <small class="text-muted">JPG, PNG — max 10MB each</small>
                     </div>
                     <div class="d-flex flex-wrap gap-2 mt-3" id="portfolioPreviewGrid"></div>
                 </div>

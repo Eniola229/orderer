@@ -19,7 +19,7 @@
                     <h1 style="font-size: 120px; font-weight: 800; margin-bottom: 20px; color: #2ECC71;">402</h1>
                     <h3 style="font-weight: 600; margin-bottom: 20px;">Payment Required</h3>
                     <p style="color: #888; margin-bottom: 30px;">Payment is required to access this content. Please complete your payment to continue.</p>
-                    <a href="{{ url('/') }}" class="btn essence-btn" style="min-width: 200px; background-color: #2ECC71; color: white; padding: 12px 30px; border-radius: 50px;">
+                    <a href="{{ url('/') }}" class="btn essence-btn" >
                         <i class="fa fa-home mr-2"></i> Back to Home
                     </a>
                 </div>

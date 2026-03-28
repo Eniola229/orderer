@@ -12,7 +12,7 @@ class CategoryController extends Controller
     public function index()
     {
         if (!auth('admin')->user()->canManageCategories()) abort(403);
-        $categories = Category::withCount(['products', 'subcategories'])->get();
+        $categories = Category::with('subcategories')->withCount(['products', 'subcategories'])->get();
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -44,11 +44,13 @@ class CategoryController extends Controller
         $request->validate([
             'name'            => ['required', 'string', 'max:100'],
             'commission_rate' => ['nullable', 'numeric', 'min:0', 'max:50'],
+            'icon' => ['nullable', 'required'],
         ]);
 
         $category->update([
             'name'            => $request->name,
             'commission_rate' => $request->commission_rate ?? $category->commission_rate,
+            'icon' => $request->icon,
             'is_active'       => $request->boolean('is_active', true),
         ]);
 
@@ -59,7 +61,21 @@ class CategoryController extends Controller
     {
         if (!auth('admin')->user()->canManageCategories()) abort(403);
 
-        $request->validate(['name' => ['required', 'string', 'max:100']]);
+        $request->validate([
+            'name' => [
+                'required', 
+                'string', 
+                'max:100',
+                function ($attribute, $value, $fail) use ($category) {
+                    $exists = Subcategory::where('name', $value)
+                        ->exists();
+                    
+                    if ($exists) {
+                        $fail('Subcategory "' . $value . '" already exists under a category.');
+                    }
+                }
+            ]
+        ]);
 
         Subcategory::create([
             'category_id' => $category->id,

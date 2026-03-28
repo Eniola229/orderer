@@ -109,6 +109,9 @@
                             <a class="nxl-link" href="{{ route('seller.wallet.index') }}">My Wallet</a>
                         </li>
                         <li class="nxl-item">
+                            <a class="nxl-link" href="{{ route('seller.withdrawals.index') }}">All Withdrawals</a>
+                        </li>
+                        <li class="nxl-item">
                             <a class="nxl-link" href="{{ route('seller.withdrawals.create') }}">Withdraw</a>
                         </li>
                     </ul>

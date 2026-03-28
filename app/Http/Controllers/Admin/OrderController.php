@@ -18,25 +18,42 @@ class OrderController extends Controller
 
         $query = Order::with(['user', 'items']);
 
+        // Filter by order status
         if ($request->status && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        if ($request->search) {
-            $s = $request->search;
-            $query->where(fn($q) =>
-                $q->where('order_number', 'like', "%{$s}%")
-                  ->orWhereHas('user', fn($r) => $r->where('email', 'like', "%{$s}%"))
-            );
+        // Filter by payment status
+        if ($request->payment_status) {
+            $query->where('payment_status', $request->payment_status);
         }
 
+        // Filter by date range
+        if ($request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Search by order number or user email
+        if ($request->search) {
+            $s = $request->search;
+            $query->where(function($q) use ($s) {
+                $q->where('order_number', 'like', "%{$s}%")
+                  ->orWhereHas('user', fn($r) => $r->where('email', 'like', "%{$s}%"));
+            });
+        }
+     
         $orders = $query->latest()->paginate(20)->withQueryString();
 
+        // Calculate stats based on the same filters (excluding pagination)
+        $statsQuery = clone $query;
         $stats = [
-            'total'     => Order::count(),
-            'pending'   => Order::where('status', 'pending')->count(),
-            'completed' => Order::where('status', 'completed')->count(),
-            'revenue'   => Order::where('payment_status', 'paid')->sum('total'),
+            'total'     => $statsQuery->count(),
+            'pending'   => (clone $statsQuery)->where('status', 'pending')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'revenue'   => (clone $statsQuery)->where('payment_status', 'paid')->sum('total'),
         ];
 
         return view('admin.orders.index', compact('orders', 'stats'));

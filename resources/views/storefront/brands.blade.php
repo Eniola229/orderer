@@ -2,7 +2,7 @@
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
-<div class="breadcumb_area bg-img" style="background-image:url({{ asset('img/bg-img/breadcumb.jpg') }});">
+<div class="breadcumb_area bg-img" style="background-image:url({{ asset('img/bg-img/breadcumb.jpeg') }});">
     <div class="container h-100"><div class="row h-100 align-items-center"><div class="col-12">
         <div class="page-title text-center"><h2>All Brands</h2></div>
     </div></div></div>
@@ -10,6 +10,46 @@
 
 <section class="section-padding-80">
     <div class="container">
+
+        {{-- ── BANNER AD ──────────────────────────────────────────────
+             Shown between breadcrumb and brand cards.
+             Uses search_results slot (most general available slot).
+             ────────────────────────────────────────────────────────── --}}
+        @php
+            $brandsBannerAd = \App\Helpers\AdHelper::forSlot('search_results', 1)->first();
+            if ($brandsBannerAd) {
+                \App\Helpers\AdHelper::recordImpression($brandsBannerAd->id, auth('web')->id());
+            }
+        @endphp
+
+        @if($brandsBannerAd)
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="{{ $brandsBannerAd->clickTrackingUrl() }}"
+                   style="display:block;position:relative;border-radius:10px;overflow:hidden;">
+                    @if($brandsBannerAd->media_type === 'image' && $brandsBannerAd->media_url)
+                    <img src="{{ $brandsBannerAd->media_url }}"
+                         alt="{{ $brandsBannerAd->title }}"
+                         style="width:100%;max-height:130px;object-fit:cover;border-radius:10px;">
+                    @else
+                    <div style="background:linear-gradient(135deg,#1a1a2e,#2ECC71);border-radius:10px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;">
+                        <span style="color:#fff;font-size:17px;font-weight:700;">{{ $brandsBannerAd->title }}</span>
+                        <span style="background:#fff;color:#2ECC71;padding:7px 16px;border-radius:18px;font-size:13px;font-weight:700;">
+                            View
+                        </span>
+                    </div>
+                    @endif
+                    <span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 8px;border-radius:8px;">
+                        Sponsored
+                    </span>
+                </a>
+            </div>
+        </div>
+        @endif
+        {{-- END BANNER AD --}}
+
+
+        {{-- Brand cards (unchanged) --}}
         <div class="row">
             @forelse($brands as $brand)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
@@ -40,6 +80,7 @@
             @endforelse
         </div>
         <div class="mt-4">{{ $brands->links() }}</div>
+
     </div>
 </section>
 

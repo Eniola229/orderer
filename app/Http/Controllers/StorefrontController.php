@@ -7,6 +7,9 @@ use App\Models\Category;
 use App\Models\Brand;
 use App\Models\FlashSale;
 use App\Models\Wishlist;
+use App\Models\HouseListing;
+use App\Models\ProductReview;
+use App\Helpers\AdHelper;
 use Illuminate\Http\Request;
 
 class StorefrontController extends Controller
@@ -43,9 +46,19 @@ class StorefrontController extends Controller
             ->take(6)
             ->get();
 
+        // ── Ads ──────────────────────────────────────────────────
+        $heroBannerAds  = AdHelper::forSlot('homepage_hero', 5);   // rotating hero
+        $topListingAds  = AdHelper::topListings(4);                 // sponsored products
+
+        // Record impressions for hero ads (they are always visible)
+        foreach ($heroBannerAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
         return view('storefront.home', compact(
             'categories', 'featuredProducts', 'newArrivals',
-            'flashSales', 'brands'
+            'flashSales', 'brands',
+            'heroBannerAds', 'topListingAds'
         ));
     }
 
@@ -85,8 +98,22 @@ class StorefrontController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        // ── Ads ──────────────────────────────────────────────────
+        // Search results banner (shows on shop/search pages)
+        $searchBannerAds = AdHelper::forSlot('search_results', 1);
+        // Top listing sponsored products
+        $topListingAds   = AdHelper::topListings(4);
+
+        foreach ($searchBannerAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+        foreach ($topListingAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
         return view('storefront.shop', compact(
-            'products', 'allCategories', 'currentCategory', 'brands'
+            'products', 'allCategories', 'currentCategory', 'brands',
+            'searchBannerAds', 'topListingAds'
         ));
     }
 
@@ -114,8 +141,20 @@ class StorefrontController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        // ── Ads ──────────────────────────────────────────────────
+        $categoryBannerAds = AdHelper::forSlot('category_page', 1);
+        $topListingAds     = AdHelper::topListings(4, $currentCategory->id);
+
+        foreach ($categoryBannerAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+        foreach ($topListingAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
         return view('storefront.shop', compact(
-            'products', 'allCategories', 'currentCategory', 'brands'
+            'products', 'allCategories', 'currentCategory', 'brands',
+            'categoryBannerAds', 'topListingAds'
         ));
     }
 
@@ -144,7 +183,17 @@ class StorefrontController extends Controller
                 ->exists();
         }
 
-        return view('storefront.product', compact('product', 'relatedProducts', 'inWishlist'));
+        // ── Ads ──────────────────────────────────────────────────
+        $sidebarAds = AdHelper::forSlot('product_page_sidebar', 2);
+
+        foreach ($sidebarAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
+        return view('storefront.product', compact(
+            'product', 'relatedProducts', 'inWishlist',
+            'sidebarAds'
+        ));
     }
 
     public function search(Request $request)
@@ -170,18 +219,154 @@ class StorefrontController extends Controller
 
     public function services(Request $request)
     {
-        $services = \App\Models\ServiceListing::where('status', 'approved')
-            ->with(['seller', 'category'])
-            ->paginate(12);
-        return view('storefront.services', compact('services'));
+        $query = \App\Models\ServiceListing::where('status', 'approved')
+            ->with(['seller', 'category']);
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhereHas('category', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filters
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('pricing_type')) {
+            $query->where('pricing_type', $request->pricing_type);
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        if ($request->filled('delivery_time')) {
+            switch($request->delivery_time) {
+                case '24h':
+                    $query->where('delivery_time', '<=', '24 hours');
+                    break;
+                case '3days':
+                    $query->where('delivery_time', 'LIKE', '%3 days%')
+                          ->orWhere('delivery_time', 'LIKE', '%1-3 days%');
+                    break;
+                case 'week':
+                    $query->where('delivery_time', 'LIKE', '%1 week%');
+                    break;
+                case '2weeks':
+                    $query->where('delivery_time', 'LIKE', '%2 week%')
+                          ->orWhere('delivery_time', '>', '1 week');
+                    break;
+            }
+        }
+
+        if ($request->filled('rating')) {
+            $query->where('average_rating', '>=', $request->rating);
+        }
+
+        // Sorting
+        switch($request->get('sort', 'latest')) {
+            case 'price_asc':  $query->orderBy('price', 'asc');  break;
+            case 'price_desc': $query->orderBy('price', 'desc'); break;
+            case 'rating':     $query->orderBy('average_rating', 'desc'); break;
+            case 'oldest':     $query->orderBy('created_at', 'asc'); break;
+            default:           $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage  = $request->get('per_page', 12);
+        $services = $query->paginate($perPage);
+
+        // Get categories that have approved services
+        $categoryIds = \App\Models\ServiceListing::where('status', 'approved')
+                        ->whereNotNull('category_id')
+                        ->distinct()
+                        ->pluck('category_id');
+
+        $categories = \App\Models\Category::whereIn('id', $categoryIds)->get();
+
+        return view('storefront.services', compact('services', 'categories'));
+    }
+
+    public function serviceShow($slug)
+    {
+        $service = \App\Models\ServiceListing::where('slug', $slug)
+                            ->where('status', 'approved')
+                            ->with(['seller', 'category'])
+                            ->firstOrFail();
+
+        $service->increment('views');
+
+        return view('storefront.services-show', compact('service'));
     }
 
     public function houses(Request $request)
     {
-        $houses = \App\Models\HouseListing::where('status', 'approved')
-            ->with(['seller', 'images'])
-            ->paginate(12);
+        $query = HouseListing::where('status', 'approved');
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('address', 'LIKE', "%{$search}%")
+                  ->orWhere('city', 'LIKE', "%{$search}%")
+                  ->orWhere('state', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Filters
+        if ($request->filled('listing_type'))  $query->where('listing_type', $request->listing_type);
+        if ($request->filled('property_type')) $query->where('property_type', $request->property_type);
+        if ($request->filled('min_price'))     $query->where('price', '>=', $request->min_price);
+        if ($request->filled('max_price'))     $query->where('price', '<=', $request->max_price);
+        if ($request->filled('bedrooms'))      $query->where('bedrooms', '>=', $request->bedrooms);
+        if ($request->filled('bathrooms'))     $query->where('bathrooms', '>=', $request->bathrooms);
+        if ($request->filled('city'))          $query->where('city', 'LIKE', "%{$request->city}%");
+        if ($request->filled('state'))         $query->where('state', 'LIKE', "%{$request->state}%");
+
+        // Sorting
+        switch($request->get('sort', 'latest')) {
+            case 'price_asc':  $query->orderBy('price', 'asc');  break;
+            case 'price_desc': $query->orderBy('price', 'desc'); break;
+            case 'oldest':     $query->orderBy('created_at', 'asc'); break;
+            default:           $query->orderBy('created_at', 'desc');
+        }
+
+        $perPage = $request->get('per_page', 12);
+        $houses  = $query->paginate($perPage);
+
         return view('storefront.houses', compact('houses'));
+    }
+
+    public function housesshow($slug)
+    {
+        $house = HouseListing::where('slug', $slug)
+                            ->where('status', 'approved')
+                            ->with(['seller', 'images'])
+                            ->firstOrFail();
+
+        $similarHouses = HouseListing::where('status', 'approved')
+            ->where('id', '!=', $house->id)
+            ->where(function($query) use ($house) {
+                $query->where('listing_type', $house->listing_type)
+                      ->orWhere('property_type', $house->property_type)
+                      ->orWhere('city', $house->city);
+            })
+            ->take(3)
+            ->get();
+
+        return view('storefront.houses-details', compact('house', 'similarHouses'));
     }
 
     public function contact()
@@ -192,7 +377,6 @@ class StorefrontController extends Controller
     public function newsletterSubscribe(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
-        // Store subscriber - simple for now
         return back()->with('success', 'Thank you for subscribing!');
     }
 }

@@ -19,20 +19,30 @@
             $pageTitle = $product->name;
         } elseif (isset($brand)) {
             $pageTitle = $brand->name;
+        } elseif (isset($service)) {
+            $pageTitle = $service->title;
+        } elseif (isset($property)) {
+            $pageTitle = $property->title;
         } elseif (request()->is('brands*')) {
             $pageTitle = 'Brands';
         } else {
-            $pageTitle = 'Global E-commerce Marketplace';
+            $pageTitle = 'Orderer -- Global E-commerce Marketplace';
         } 
 
         $primaryProductImage = isset($product) ? $product->images->where('is_primary', true)->first() : null;
         $faviconUrl = $primaryProductImage
-            ? asset($primaryProductImage->image)
-            : (isset($brand) && $brand->logo ? asset($brand->logo) : asset('dashboard/assets/images/favicon.png'));
+            ? asset($primaryProductImage->image_url)
+            : (isset($brand) && $brand->logo ? asset($brand->logo) 
+            : (isset($service) && isset($service->portfolio_images[0]['url']) ? $service->portfolio_images[0]['url']
+            : (isset($property) && $property->images->first() ? $property->images->first()->image_url 
+            : asset('dashboard/assets/images/favicon.png'))));
 
         $ogImage = $primaryProductImage
-            ? asset($primaryProductImage->image)
-            : (isset($brand) && $brand->logo ? asset($brand->logo) : asset('dashboard/assets/images/favicon.png'));
+            ? asset($primaryProductImage->image_url)
+            : (isset($brand) && $brand->logo ? asset($brand->logo) 
+            : (isset($service) && isset($service->portfolio_images[0]['url']) ? $service->portfolio_images[0]['url']
+            : (isset($property) && $property->images->first() ? $property->images->first()->image_url 
+            : asset('dashboard/assets/images/favicon.png'))));
     @endphp
 
     <title>{{ $pageTitle }} — Orderer</title>

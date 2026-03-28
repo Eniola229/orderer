@@ -86,13 +86,14 @@
                                     {{ Str::limit($house->rejection_reason, 40) }}
                                 </p>
                             @endif
-                        </td>
+                        </td> 
                         <td class="text-muted fs-12">{{ $house->created_at->format('M d, Y') }}</td>
                         <td>
+                           
                             <div class="d-flex gap-2">
-                                <a href="{{ route('seller.houses.edit', $house->id) }}"
+                                <a href="{{ route('seller.houses.show', $house->id) }}"
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="feather-edit-2"></i>
+                                    <i class="feather-eye"></i>
                                 </a>
                                 <form action="{{ route('seller.houses.destroy', $house->id) }}"
                                       method="POST"

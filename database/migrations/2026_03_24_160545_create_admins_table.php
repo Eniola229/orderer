@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('role', [
                 'super_admin',
                 'finance_admin',
-                'support_admin',
+                'support_admin', 
                 'content_moderator',
             ])->default('content_moderator');
             $table->boolean('is_active')->default(true);

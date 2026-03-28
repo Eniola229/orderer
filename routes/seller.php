@@ -50,14 +50,19 @@ Route::prefix('seller')->name('seller.')->group(function () {
         // Services
         Route::get('/services',               [ServiceController::class, 'index'])->name('services.index');
         Route::get('/services/create',        [ServiceController::class, 'create'])->name('services.create');
+        Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
+        Route::get('/services/edit/{service}',  [ServiceController::class, 'edit'])->name('services.edit');
         Route::post('/services',              [ServiceController::class, 'store'])->name('services.store');
+        Route::put('/services/edit/{service}',  [ServiceController::class, 'update'])->name('services.update');
         Route::delete('/services/{service}',  [ServiceController::class, 'destroy'])->name('services.destroy');
 
         // Properties
         Route::get('/properties',             [HouseController::class, 'index'])->name('houses.index');
         Route::get('/properties/create',      [HouseController::class, 'create'])->name('houses.create');
         Route::post('/properties',            [HouseController::class, 'store'])->name('houses.store');
+        Route::get('houses/{house}', [HouseController::class, 'show'])->name('houses.show');
         Route::delete('/properties/{house}',  [HouseController::class, 'destroy'])->name('houses.destroy');
+
 
         // Profile
         Route::get('/profile',  [ProfileController::class, 'index'])->name('profile');
@@ -83,6 +88,7 @@ Route::prefix('seller')->name('seller.')->group(function () {
 
         // Ads
         Route::get('/ads',               [SellerAdController::class, 'index'])->name('ads.index');
+        Route::get('/ads/{ad}', [SellerAdController::class, 'show'])->name('ads.show');
         Route::get('/ads/create',        [SellerAdController::class, 'create'])->name('ads.create');
         Route::post('/ads',              [SellerAdController::class, 'store'])->name('ads.store');
         Route::delete('/ads/{ad}',       [SellerAdController::class, 'destroy'])->name('ads.destroy');

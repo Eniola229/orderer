@@ -42,9 +42,15 @@ class SupportController extends Controller
         $tickets = SupportTicket::whereIn('status', ['open', 'waiting'])
             ->latest()->paginate(20);
 
-        return view('admin.support.index', compact('tickets'));
-    }
+        $stats = [
+            'open'        => SupportTicket::where('status', 'open')->count(),
+            'in_progress' => SupportTicket::where('status', 'in_progress')->count(),
+            'resolved'    => SupportTicket::where('status', 'resolved')->count(),
+            'closed'      => SupportTicket::where('status', 'closed')->count(),
+        ];
 
+        return view('admin.support.index', compact('tickets', 'stats'));
+    }
     public function show(SupportTicket $ticket)
     {
         if (!auth('admin')->user()->canHandleSupport()) abort(403);

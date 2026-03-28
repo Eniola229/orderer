@@ -108,7 +108,7 @@ class WithdrawalController extends Controller
             $seller,
             (float) $request->amount,
             'withdrawal',
-            "Withdrawal request for \${$request->amount} — pending admin approval"
+            "Withdrawal request for \${$request->amount}"
         );
 
         return redirect()->route('seller.withdrawals.index')

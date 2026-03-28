@@ -39,6 +39,7 @@ class Seller extends Authenticatable
         'email_verified_at',
         'last_login_at',
         'last_login_ip',
+        'rejection_reason',
     ];
 
     protected $hidden = [
@@ -66,4 +67,20 @@ class Seller extends Authenticatable
     {
         return $this->hasMany(SellerDocument::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+        public function brand()
+        {
+            return $this->hasOne(Brand::class);  // One seller has one brand
+        }
+
+    public function orders()
+    {
+        return $this->hasManyThrough(Order::class, OrderItem::class, 'seller_id', 'id', 'id', 'order_id');
+    }
+
 }

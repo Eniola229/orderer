@@ -92,6 +92,10 @@
                         <td class="text-muted fs-12">{{ $product->created_at->format('M d, Y') }}</td>
                         <td>
                             <div class="d-flex gap-2">
+                                    <a href="{{ route('seller.products.show', $product) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="feather-eye"></i> View Product
+                                    </a>
                                 <a href="{{ route('seller.products.edit', $product->id) }}"
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="feather-edit-2"></i>

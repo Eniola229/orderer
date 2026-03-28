@@ -8,6 +8,39 @@
 
 @section('content')
 
+<style>
+    .media-preview {
+        position: relative;
+        display: inline-block;
+        margin-top: 15px;
+    }
+    .media-preview img, .media-preview video {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+    .remove-media {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .remove-media:hover {
+        background: #c82333;
+    }
+</style>
+
 <div class="row">
     <div class="col-lg-8">
         <form action="{{ route('seller.ads.store') }}"
@@ -189,6 +222,17 @@
                             <small class="text-muted">Image: JPG, PNG | Video: MP4, MOV — max 50MB</small>
                         </div>
                         <p id="adMediaName" class="text-success fs-13 mt-2 mb-0" style="display:none;"></p>
+
+                        
+                        {{-- Media Preview --}}
+                        <canvas id="thumbnailCanvas" style="display:none;"></canvas>
+
+                    {{-- Media Preview --}}
+                    <div id="mediaPreview" class="media-preview" style="display:none;">
+                            <button type="button" class="remove-media" onclick="removeMedia()">×</button>
+                            <img id="imagePreview" src="" alt="Preview" style="display:none;">
+                            <video id="videoPreview" controls preload="metadata" style="display:none;"></video>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -220,6 +264,7 @@
                             </label>
                             <input type="date"
                                    name="start_date"
+                                   id="startDate"
                                    class="form-control"
                                    value="{{ old('start_date', now()->format('Y-m-d')) }}"
                                    min="{{ now()->format('Y-m-d') }}"
@@ -231,11 +276,11 @@
                             </label>
                             <input type="date"
                                    name="end_date"
+                                   id="endDate"
                                    class="form-control"
                                    value="{{ old('end_date', now()->addDays(7)->format('Y-m-d')) }}"
                                    min="{{ now()->addDay()->format('Y-m-d') }}"
-                                   required
-                                   id="endDateInput">
+                                   required>
                         </div>
                     </div>
 
@@ -440,10 +485,97 @@ document.querySelectorAll('.slot-radio').forEach(function(radio) {
     });
 });
 
+// Media preview
+const mediaInput     = document.getElementById('adMedia');
+const mediaNameSpan  = document.getElementById('adMediaName');
+const previewContainer = document.getElementById('mediaPreview');
+const imagePreview   = document.getElementById('imagePreview');
+const videoPreview   = document.getElementById('videoPreview');
+const thumbCanvas    = document.getElementById('thumbnailCanvas');
+const thumbCtx       = thumbCanvas.getContext('2d');
+
+mediaInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) { removeMedia(); return; }
+
+    mediaNameSpan.textContent = '✓ ' + file.name;
+    mediaNameSpan.style.display = 'block';
+    previewContainer.style.display = 'block';
+
+    if (file.type.startsWith('image/')) {
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+            videoPreview.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+    } else if (file.type.startsWith('video/')) {
+
+        // Show the real video player
+        videoPreview.src = URL.createObjectURL(file);
+        videoPreview.style.display = 'block';
+        imagePreview.style.display = 'none';
+
+        // Use a SEPARATE hidden video purely for thumbnail extraction
+        const tmpVid = document.createElement('video');
+        tmpVid.muted      = true;
+        tmpVid.playsInline = true;
+        tmpVid.autoplay   = false;
+
+        const tmpUrl = URL.createObjectURL(file);
+        tmpVid.src = tmpUrl;
+
+        // Step 1 — wait for metadata so we know dimensions
+        tmpVid.addEventListener('loadedmetadata', function () {
+            thumbCanvas.width  = tmpVid.videoWidth;
+            thumbCanvas.height = tmpVid.videoHeight;
+            tmpVid.currentTime = 0; // seek to first frame
+        }, { once: true });
+
+        // Step 2 — after seek, draw frame → set as poster
+        tmpVid.addEventListener('seeked', function () {
+            thumbCtx.drawImage(tmpVid, 0, 0, thumbCanvas.width, thumbCanvas.height);
+            videoPreview.poster = thumbCanvas.toDataURL('image/jpeg');
+            URL.revokeObjectURL(tmpUrl);
+        }, { once: true });
+
+        tmpVid.addEventListener('error', function () {
+            URL.revokeObjectURL(tmpUrl);
+        }, { once: true });
+    }
+});
+
+function removeMedia() {
+    mediaInput.value = '';
+    mediaNameSpan.style.display = 'none';
+    previewContainer.style.display = 'none';
+    imagePreview.style.display = 'none';
+    videoPreview.style.display = 'none';
+    videoPreview.poster = '';
+    imagePreview.src = '';
+    videoPreview.src = '';
+}
+
+function removeMedia() {                                               // ✅ fixed name
+    mediaInput.value = '';
+    mediaNameSpan.style.display = 'none';
+    previewContainer.style.display = 'none';
+    imagePreview.style.display = 'none';
+    videoPreview.style.display = 'none';
+    
+    if (imagePreview.src) URL.revokeObjectURL(imagePreview.src);
+    if (videoPreview.src) URL.revokeObjectURL(videoPreview.src);
+    imagePreview.src = '';
+    videoPreview.src = '';
+}
+
 // Budget estimate
 function updateBudgetEstimate() {
-    const start   = document.querySelector('[name="start_date"]').value;
-    const end     = document.querySelector('[name="end_date"]').value;
+    const start   = document.getElementById('startDate').value;
+    const end     = document.getElementById('endDate').value;
     const slot    = document.querySelector('.slot-radio:checked');
     const pricePerDay = slot ? parseFloat(slot.dataset.price) : 5.00;
 
@@ -459,22 +591,28 @@ function updateBudgetEstimate() {
     }
 }
 
-document.querySelector('[name="start_date"]').addEventListener('change', updateBudgetEstimate);
-document.getElementById('endDateInput').addEventListener('change', updateBudgetEstimate);
-
-// Media file name
-document.getElementById('adMedia').addEventListener('change', function() {
-    const label = document.getElementById('adMediaName');
-    if (this.files[0]) {
-        label.textContent = '✓ ' + this.files[0].name;
-        label.style.display = 'block';
-    }
-});
+document.getElementById('startDate').addEventListener('change', updateBudgetEstimate);
+document.getElementById('endDate').addEventListener('change', updateBudgetEstimate);
 
 // Pre-trigger if old values exist
 @if(old('promotable_type'))
     document.getElementById('promotableType').value = '{{ old("promotable_type") }}';
     document.getElementById('promotableType').dispatchEvent(new Event('change'));
+@endif
+
+@if(old('ad_category_id'))
+    document.getElementById('adCategorySelect').value = '{{ old("ad_category_id") }}';
+    document.getElementById('adCategorySelect').dispatchEvent(new Event('change'));
+@endif
+
+@if(old('ad_banner_slot_id'))
+    document.querySelector(`input[name="ad_banner_slot_id"][value="{{ old('ad_banner_slot_id') }}"]`).checked = true;
+    document.querySelector(`input[name="ad_banner_slot_id"][value="{{ old('ad_banner_slot_id') }}"]`).dispatchEvent(new Event('change'));
+@endif
+
+// Check if there's a media preview from old data (if any)
+@if(old('media'))
+    // Handle old media preview if needed
 @endif
 </script>
 @endpush

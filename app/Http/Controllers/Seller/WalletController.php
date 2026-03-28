@@ -27,10 +27,14 @@ class WalletController extends Controller
         $transactions = WalletTransaction::where('wallet_id', $wallet->id)
             ->latest()
             ->paginate(20);
+        
+        // Get withdrawal requests
+        $withdrawals = WithdrawalRequest::where('seller_id', $seller->id)
+            ->latest()
+            ->paginate(10);
 
-        return view('seller.wallet.index', compact('seller', 'wallet', 'transactions'));
+        return view('seller.wallet.index', compact('seller', 'wallet', 'transactions', 'withdrawals'));
     }
-
     /**
      * Initialize Korapay top-up for ads balance
      */

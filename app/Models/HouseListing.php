@@ -16,7 +16,7 @@ class HouseListing extends Model
         'property_type', 'listing_type', 'price',
         'location', 'address', 'city', 'state', 'country',
         'bedrooms', 'bathrooms', 'toilets', 'size_sqm',
-        'features', 'video_tour_url', 'status', 'rejection_reason',
+        'features', 'video_tour_url', 'status', 'rejection_reason','approved_by'
     ];
 
     protected $casts = [

@@ -75,6 +75,14 @@ class Admin extends Authenticatable
         ]);
     }
 
+    public function canModerateBuyer(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_CONTENT_MODERATOR,
+        ]);
+    }
+
     /** Approve / reject / manage ads */
     public function canManageAds(): bool
     {

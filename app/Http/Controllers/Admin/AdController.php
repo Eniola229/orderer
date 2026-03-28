@@ -30,7 +30,16 @@ class AdController extends Controller
 
         return view('admin.ads.index', compact('ads'));
     }
-
+    
+    public function show(Ad $ad)
+    {
+        if (!auth('admin')->user()->canManageAds()) abort(403);
+        
+        $ad->load(['seller', 'adCategory', 'bannerSlot']);
+        
+        return view('admin.ads.show', compact('ad'));
+    }
+    
     public function pending()
     {
         $ads = Ad::with(['seller', 'adCategory', 'bannerSlot'])

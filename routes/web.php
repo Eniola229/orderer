@@ -28,6 +28,10 @@ Route::get('/brands',               [StorefrontController::class, 'brands'])->na
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
 
+// Ad click tracking & redirect
+Route::get('/ads/{ad}/click', [App\Http\Controllers\AdClickController::class, 'click'])
+     ->name('ads.click');
+
 // Contact
 Route::get('/contact',       [App\Http\Controllers\StorefrontController::class, 'contact'])->name('contact');
 Route::post('/contact/send', [App\Http\Controllers\ContactController::class,    'send'])->name('contact.send');
@@ -45,9 +49,10 @@ Route::post('/brands/{brand}/review',
 
 // Houses (storefront)
 Route::get('/properties',    [App\Http\Controllers\StorefrontController::class, 'houses'])->name('houses.index');
-
+Route::get('properties/{slug}', [StorefrontController::class, 'housesshow'])->name('houses.show');
 // Services (storefront)
-Route::get('/services',      [App\Http\Controllers\StorefrontController::class, 'services'])->name('services.index');
+Route::get('services', [App\Http\Controllers\StorefrontController::class, 'services'])->name('services.index');
+Route::get('services/{slug}', [App\Http\Controllers\StorefrontController::class, 'serviceShow'])->name('services.show');
 //Validate address
 Route::post('/address/validate', function (\Illuminate\Http\Request $request, \App\Services\ShipbubbleService $shipbubble) {
     $request->validate([

@@ -127,7 +127,7 @@
                         @endforelse
 
                         <div class="text-center notifications-footer">
-                            <a href="{{ route('seller.dashboard') }}"
+                            <a href="{{ route('seller.notifications.index') }}"
                                class="fs-13 fw-semibold text-dark">
                                 View all
                             </a>

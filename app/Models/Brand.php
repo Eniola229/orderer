@@ -39,4 +39,5 @@ class Brand extends Model
     public function seller()  { return $this->belongsTo(Seller::class); }
     public function reviews() { return $this->hasMany(BrandReview::class); }
     public function products(){ return $this->hasMany(Product::class); }
+    
 }

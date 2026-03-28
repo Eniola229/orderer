@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('dollar_capable')->default(true);
             $table->string('swift_code')->nullable();
             $table->enum('status', [
-                'pending', 'processing', 'completed', 'rejected'
+                'pending', 'processing', 'completed', 'rejected', 'approved'
             ])->default('pending');
             $table->text('rejection_reason')->nullable();
             $table->string('transaction_reference')->nullable();

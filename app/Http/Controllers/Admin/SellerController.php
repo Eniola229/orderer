@@ -61,15 +61,23 @@ class SellerController extends Controller
                             ->where('status', 'completed')
                             ->sum('seller_earnings');
 
-        $wallet = \App\Models\Wallet::where('owner_type', 'App\Models\Seller')
-                    ->where('owner_id', $seller->id)
+        $wallet = \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')
+                    ->where('walletable_id', $seller->id)
                     ->first();
 
+        // Get wallet transactions
+        $transactions = [];
+        if ($wallet) {
+            $transactions = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
+                            ->latest()
+                            ->limit(10)
+                            ->get();
+        }
+
         return view('admin.sellers.show', compact(
-            'seller', 'orderCount', 'totalEarnings', 'wallet'
+            'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions'
         ));
     }
-
     public function approve(Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) {
@@ -126,9 +134,9 @@ class SellerController extends Controller
         $request->validate(['reason' => ['required', 'string']]);
 
         $seller->update([
-            'status'          => 'suspended',
+            'is_active'          => false,
             'rejection_reason'=> $request->reason,
-        ]);
+        ]); 
 
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
@@ -144,7 +152,130 @@ class SellerController extends Controller
     public function unsuspend(Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) abort(403);
-        $seller->update(['status' => 'active']);
+        $seller->update(['is_active' => true]);
         return back()->with('success', 'Seller account reinstated.');
+    }
+
+    /**
+     * Adjust seller wallet balance (credit or debit for main wallet or ads balance)
+     */
+    public function adjustWallet(Request $request, Seller $seller)
+    {
+        if (!auth('admin')->user()->canManageFinance()) {
+            abort(403, 'You do not have permission to manage finances.');
+        }
+
+        $request->validate([
+            'wallet_type' => ['required', 'string', 'in:balance,ads'],
+            'type'        => ['required', 'string', 'in:credit,debit'],
+            'amount'      => ['required', 'numeric', 'min:0.01'],
+            'reason'      => ['required', 'string', 'max:500'],
+        ]);
+
+        try {
+            $walletService = app(\App\Services\WalletService::class);
+            $wallet = $walletService->getOrCreate($seller);
+            
+            $amount = $request->amount;
+            $reason = $request->reason;
+            $walletType = $request->wallet_type;
+            $actionType = $request->type;
+            
+            // Check for sufficient balance if it's a debit
+            if ($actionType === 'debit') {
+                if ($walletType === 'balance' && $wallet->balance < $amount) {
+                    return redirect()->back()->with('error', 
+                        "Insufficient main wallet balance. Current balance: $" . number_format($wallet->balance, 2)
+                    );
+                }
+                if ($walletType === 'ads' && $wallet->ads_balance < $amount) {
+                    return redirect()->back()->with('error', 
+                        "Insufficient ads balance. Current balance: $" . number_format($wallet->ads_balance, 2)
+                    );
+                }
+            }
+            
+            // Process the adjustment based on wallet type and action type
+            if ($walletType === 'balance') {
+                // Main wallet adjustment
+                if ($actionType === 'credit') {
+                    $transaction = $walletService->credit(
+                        $seller,
+                        $amount,
+                        'credit',  // Using the enum value from schema
+                        "System adjustment: {$reason}",
+                        'seller',
+                        $seller->id
+                    );
+                    
+                    $message = "Successfully added $" . number_format($amount, 2) . " to seller's main wallet.";
+                    
+                } else { // debit
+                    $transaction = $walletService->debit(
+                        $seller,
+                        $amount,
+                        'debit',  // Using the enum value from schema
+                        "System adjustment: {$reason}",
+                        'seller',
+                        $seller->id
+                    );
+                    
+                    $message = "Successfully deducted $" . number_format($amount, 2) . " from seller's main wallet.";
+                }
+                
+            } else { // Ads balance adjustment
+                if ($actionType === 'credit') {
+                    // Top up ads balance
+                    $walletService->topupAdsBalance($seller, $amount);
+                    
+                    $message = "Successfully added $" . number_format($amount, 2) . " to seller's ads balance.";
+                    
+                } else { // debit
+                    // Debit ads balance
+                    $walletService->debitAdsBalance($seller, $amount, 'admin_adjustment_' . time());
+                    
+                    $message = "Successfully deducted $" . number_format($amount, 2) . " from seller's ads balance.";
+                }
+                
+                $transaction = null;
+            }
+            
+            // Create notification for seller
+            Notification::create([
+                'notifiable_type' => 'App\Models\Seller',
+                'notifiable_id'   => $seller->id,
+                'type'            => 'wallet_adjusted',
+                'title'           => 'Wallet Balance Updated',
+                'body'            => "System adjustment: {$reason} - Amount: $" . number_format($amount, 2),
+                'action_url'      => route('seller.wallet.index'),
+                'data'            => json_encode([
+                    'wallet_type' => $walletType,
+                    'amount'      => $amount,
+                    'type'        => $actionType,
+                    'reason'      => $reason,
+                ]),
+            ]);
+            
+            // Log admin action
+            \Illuminate\Support\Facades\Log::info('Admin wallet adjustment', [
+                'admin_id'    => auth('admin')->id(),
+                'seller_id'   => $seller->id,
+                'wallet_type' => $walletType,
+                'type'        => $actionType,
+                'amount'      => $amount,
+                'reason'      => $reason,
+            ]);
+            
+            return redirect()->back()->with('success', $message);
+            
+        } catch (\Exception $e) {
+            \Log::error('Wallet adjustment failed', [
+                'seller_id' => $seller->id,
+                'admin_id'  => auth('admin')->id(),
+                'error'     => $e->getMessage(),
+            ]);
+            
+            return redirect()->back()->with('error', 'Failed to adjust wallet: ' . $e->getMessage());
+        }
     }
 }

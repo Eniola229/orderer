@@ -18,7 +18,7 @@
                     </div>
                     <h3 style="font-weight: 600; margin-bottom: 20px;">Session Expired</h3>
                     <p style="color: #888; margin-bottom: 30px;">Sorry, your session has expired. Please refresh the page and try again.</p>
-                    <a href="{{ url('/') }}" class="btn essence-btn" style="min-width: 200px; background-color: #2ECC71; color: white; padding: 12px 30px; border-radius: 50px;">
+                    <a href="{{ url('/') }}" class="btn essence-btn">
                         <i class="fa fa-refresh mr-2"></i> Refresh Page
                     </a>
                 </div>

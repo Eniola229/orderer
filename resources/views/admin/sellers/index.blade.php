@@ -33,7 +33,7 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    <tr>
+                    亚
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Email</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
@@ -73,11 +73,11 @@
                         <td class="fw-semibold">{{ $seller->products_count ?? 0 }}</td>
                         <td>
                             @if(!$seller->is_approved)
-                            <span class="badge orderer-badge badge-pending">Pending</span>
-                            @elseif($seller->status === 'suspended')
-                            <span class="badge orderer-badge badge-rejected">Suspended</span>
+                                <span class="badge orderer-badge badge-pending">Pending</span>
+                            @elseif($seller->is_active == 0)
+                                <span class="badge orderer-badge badge-rejected">Suspended</span>
                             @else
-                            <span class="badge orderer-badge badge-approved">Approved</span>
+                                <span class="badge orderer-badge badge-approved">Approved</span>
                             @endif
                         </td>
                         <td class="text-muted fs-12">{{ $seller->created_at->format('M d, Y') }}</td>
@@ -93,46 +93,21 @@
                                     </button>
                                 </form>
                                 @endif
-                                @if($seller->status !== 'suspended' && auth('admin')->user()->canModerateSellers())
-                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#suspendModal{{ $seller->id }}">
-                                    Suspend
-                                </button>
-                                @elseif($seller->status === 'suspended' && auth('admin')->user()->canModerateSellers())
-                                <form action="{{ route('admin.sellers.unsuspend', $seller->id) }}" method="POST">
-                                    @csrf @method('PUT')
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Reinstate</button>
-                                </form>
+                                @if($seller->is_active == 1 && auth('admin')->user()->canModerateSellers())
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="openSuspendModal('{{ $seller->id }}', '{{ addslashes($seller->business_name) }}')">
+                                        Suspend
+                                    </button>
+                                @elseif($seller->is_active == 0 && auth('admin')->user()->canModerateSellers())
+                                    <form action="{{ route('admin.sellers.unsuspend', $seller->id) }}" method="POST">
+                                        @csrf @method('PUT')
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Reinstate</button>
+                                    </form>
                                 @endif
                             </div>
                         </td>
                     </tr>
-
-                    {{-- Suspend modal --}}
-                    <div class="modal fade" id="suspendModal{{ $seller->id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Suspend {{ $seller->business_name }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form action="{{ route('admin.sellers.suspend', $seller->id) }}" method="POST">
-                                    @csrf @method('PUT')
-                                    <div class="modal-body">
-                                        <label class="form-label fw-bold">Reason</label>
-                                        <textarea name="reason" class="form-control" rows="3" required
-                                                  placeholder="Reason for suspension..."></textarea>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-danger">Suspend</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
                     @endforeach
                 </tbody>
             </table>
@@ -146,5 +121,69 @@
         @endif
     </div>
 </div>
+
+{{-- Custom Modal (same style as withdrawals) --}}
+<div id="suspendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; margin: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease;">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
+            <h5 style="margin: 0; font-size: 18px; font-weight: 600;">Suspend Seller</h5>
+        </div>
+        <form id="suspendForm" method="POST" action="">
+            @csrf
+            @method('PUT')
+            <div style="padding: 20px;">
+                <p id="modalSellerInfo" style="margin-bottom: 20px; color: #6b7280; font-size: 14px;"></p>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Reason</label>
+                    <textarea name="reason" rows="4" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;" placeholder="Reason for suspension..." required></textarea>
+                </div>
+            </div>
+            <div style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeSuspendModal()" style="padding: 8px 20px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Cancel</button>
+                <button type="submit" style="padding: 8px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Suspend Seller</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    function openSuspendModal(id, sellerName) {
+        const modal = document.getElementById('suspendModal');
+        const form = document.getElementById('suspendForm');
+        const sellerInfo = document.getElementById('modalSellerInfo');
+        
+        form.action = `/admin/sellers/${id}/suspend`;
+        sellerInfo.innerHTML = `<strong>${sellerName}</strong><br>This seller will be suspended and unable to list products.`;
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeSuspendModal() {
+        const modal = document.getElementById('suspendModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('suspendModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSuspendModal();
+        }
+    });
+</script>
 
 @endsection

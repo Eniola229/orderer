@@ -33,6 +33,7 @@ return new class extends Migration
                 'commission_debit',
                 'withdrawal',
                 'referral_credit',
+                'refund',
             ]);
             $table->decimal('amount', 12, 2);
             $table->decimal('balance_before', 12, 2);

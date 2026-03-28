@@ -35,7 +35,7 @@ class AdminController extends Controller
             'email'      => ['required', 'email', 'unique:admins,email'],
             'password'   => ['required', 'confirmed', 'min:8'],
             'role'       => ['required', 'in:' . implode(',', array_keys(Admin::roles()))],
-            'status'     => ['required', 'in:active,inactive'],
+            'is_active'  => ['required', 'boolean'],
         ]);
 
         Admin::create([
@@ -44,7 +44,7 @@ class AdminController extends Controller
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
             'role'       => $request->role,
-            'status'     => $request->status,
+            'is_active'  => $request->is_active,
         ]);
 
         return redirect()->route('admin.admins.index')
@@ -72,11 +72,11 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'role'   => ['required', 'in:' . implode(',', array_keys(Admin::roles()))],
-            'status' => ['required', 'in:active,inactive'],
+            'role'      => ['required', 'in:' . implode(',', array_keys(Admin::roles()))],
+            'is_active' => ['required', 'boolean'],
         ]);
 
-        $adminUser->update($request->only('role', 'status'));
+        $adminUser->update($request->only('role', 'is_active'));
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin updated.');
@@ -85,10 +85,26 @@ class AdminController extends Controller
     public function suspend(Admin $adminUser)
     {
         if (!auth('admin')->user()->canManageAdmins()) abort(403);
+        
         if ($adminUser->id === auth('admin')->id()) {
             return back()->with('error', 'You cannot suspend yourself.');
         }
-        $adminUser->update(['status' => 'inactive']);
+        
+        $adminUser->update(['is_active' => false]);
+        
         return back()->with('success', 'Admin suspended.');
+    }
+    
+    public function activate(Admin $adminUser)
+    {
+        if (!auth('admin')->user()->canManageAdmins()) abort(403);
+        
+        if ($adminUser->id === auth('admin')->id()) {
+            return back()->with('error', 'You cannot activate yourself.');
+        }
+        
+        $adminUser->update(['is_active' => true]);
+        
+        return back()->with('success', 'Admin activated.');
     }
 }

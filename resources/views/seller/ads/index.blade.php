@@ -92,6 +92,11 @@
                         </td>
                         <td>
                             <div class="d-flex gap-1">
+                                <a href="{{ route('seller.ads.show', $ad->id) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   onclick="event.stopPropagation();">
+                                    <i class="feather-eye"></i>
+                                </a>
                                 @if($ad->status === 'active')
                                 <form action="{{ route('seller.ads.pause', $ad->id) }}"
                                       method="POST">

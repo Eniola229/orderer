@@ -12,6 +12,22 @@
 
 @section('content')
 
+<style>
+    .portfolio-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .portfolio-images img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        cursor: pointer;
+    }
+</style>
+
 {{-- Status filter tabs --}}
 <div class="d-flex gap-2 mb-3 flex-wrap">
     @foreach(['all','pending','approved','rejected','draft','suspended'] as $tab)
@@ -28,7 +44,7 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    <tr>
+                    践
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Service</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Category</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
@@ -36,33 +52,36 @@
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Date</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Actions</th>
-                    </tr>
-                </thead>
+                     </thead>
                 <tbody>
                     @foreach($services as $service)
                     <tr>
-                        <td>
-                            <p class="mb-0 fw-semibold fs-13">{{ Str::limit($service->title, 45) }}</p>
+                        <td class="fw-semibold fs-13">
+                            <p class="mb-0">{{ Str::limit($service->title, 45) }}</p>
                             @if($service->location)
                                 <small class="text-muted">
                                     <i class="feather-map-pin me-1"></i>{{ $service->location }}
                                 </small>
                             @endif
-                        </td>
-                        <td class="fs-13 text-muted">{{ $service->category->name ?? '—' }}</td>
+                          
+                        
+                        <td class="fs-13 text-muted">{{ $service->category->name ?? '—' }}  
+                        
                         <td>
                             @if($service->pricing_type === 'negotiable')
                                 <span class="text-muted fs-13">Negotiable</span>
                             @else
-                                <span class="fw-bold">
+                                <span class="fw-bold text-success">
                                     ${{ number_format($service->price, 2) }}
                                     @if($service->pricing_type === 'hourly')
                                         <small class="text-muted fw-normal">/hr</small>
                                     @endif
                                 </span>
                             @endif
-                        </td>
-                        <td class="fs-13 text-muted">{{ $service->delivery_time ?? '—' }}</td>
+                        
+                        
+                        <td class="fs-13 text-muted">{{ $service->delivery_time ?? '—' }}  
+                        
                         <td>
                             <span class="badge orderer-badge badge-{{ $service->status }}">
                                 {{ ucfirst($service->status) }}
@@ -72,13 +91,19 @@
                                     {{ Str::limit($service->rejection_reason, 40) }}
                                 </p>
                             @endif
-                        </td>
-                        <td class="text-muted fs-12">{{ $service->created_at->format('M d, Y') }}</td>
+                        
+                        
+                        <td class="text-muted fs-12">{{ $service->created_at->format('M d, Y') }}  
+                        
                         <td>
                             <div class="d-flex gap-2">
-                                <a href="{{ route('seller.services.edit', $service->id) }}"
+                                <a href="{{ route('seller.services.show', $service->id) }}" 
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="feather-edit-2"></i>
+                                    <i class="feather-eye"></i> View
+                                </a>
+                                <a href="{{ route('seller.services.edit', $service->id) }}" 
+                                   class="btn btn-sm btn-outline-warning">
+                                    <i class="feather-edit"></i>
                                 </a>
                                 <form action="{{ route('seller.services.destroy', $service->id) }}"
                                       method="POST"
@@ -89,11 +114,12 @@
                                     </button>
                                 </form>
                             </div>
-                        </td>
+                        
+                      
                     </tr>
                     @endforeach
                 </tbody>
-            </table>
+             </table>
         </div>
         <div class="p-3">{{ $services->links() }}</div>
         @else

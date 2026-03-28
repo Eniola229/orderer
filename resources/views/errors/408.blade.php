@@ -19,7 +19,7 @@
                     <h1 style="font-size: 120px; font-weight: 800; margin-bottom: 20px; color: #2ECC71;">408</h1>
                     <h3 style="font-weight: 600; margin-bottom: 20px;">Request Timeout</h3>
                     <p style="color: #888; margin-bottom: 30px;">The server timed out waiting for the request. Please check your connection and try again.</p>
-                    <a href="{{ url('/') }}" class="btn essence-btn" style="min-width: 200px; background-color: #2ECC71; color: white; padding: 12px 30px; border-radius: 50px;">
+                    <a href="{{ url('/') }}" class="btn essence-btn" >
                         <i class="fa fa-refresh mr-2"></i> Try Again
                     </a>
                 </div>

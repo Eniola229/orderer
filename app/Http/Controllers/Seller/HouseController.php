@@ -90,6 +90,15 @@ class HouseController extends Controller
             ->with('success', 'Property submitted for review.');
     }
 
+    public function show(HouseListing $house)
+    {
+        // Ensure the seller owns this property
+        if ($house->seller_id !== auth('seller')->id()) {
+            abort(403, 'Unauthorized access to this property.');
+        }
+        
+        return view('seller.houses.show', compact('house'));
+    }
     public function destroy(HouseListing $house)
     {
         if ($house->seller_id !== auth('seller')->id()) abort(403);

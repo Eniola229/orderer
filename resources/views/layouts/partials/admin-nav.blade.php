@@ -30,7 +30,7 @@
                 </li>
 
                 {{-- Sellers --}}
-                @if(auth('admin')->user()->role === 'super_admin' || in_array(auth('admin')->user()->role, ['admin','manager','content_moderator']))
+                @if(auth('admin')->user()->canModerateSellers())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.sellers.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-users"></i></span>
@@ -49,7 +49,7 @@
                 @endif
 
                 {{-- Buyers --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','admin','manager']))
+                @if(auth('admin')->user()->canModerateBuyer())
                 <li class="nxl-item {{ request()->routeIs('admin.buyers.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.buyers.index') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-user-check"></i></span>
@@ -59,6 +59,7 @@
                 @endif
 
                 {{-- Products --}}
+                @if(auth('admin')->user()->canModerateSellers())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-package"></i></span>
@@ -75,8 +76,22 @@
                     </ul>
                 </li>
 
+            <li class="nxl-item">
+                    <a href="{{ route('admin.services.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-package"></i></span>
+                        <span class="nxl-mtext">Services</span>
+                    </a>
+                </li>
+            <li class="nxl-item">
+                    <a href="{{ route('admin.houses.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-home"></i></span>
+                        <span class="nxl-mtext">Properties</span>
+                    </a>
+                </li>
+                @endif
+
                 {{-- Orders --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','finance_admin','admin','manager']))
+                @if(auth('admin')->user()->canEditOrders())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-shopping-bag"></i></span>
@@ -95,8 +110,8 @@
                 @endif
 
                 {{-- Finance --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','finance_admin']))
-                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.finance.*') ? 'active' : '' }}">
+                @if(auth('admin')->user()->canManageFinance())
+                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.finance.*') || request()->routeIs('admin.withdrawals.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
                         <span class="nxl-mtext">Finance</span>
@@ -117,7 +132,7 @@
                 @endif
 
                 {{-- Ads --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','admin','manager','content_moderator']))
+                @if(auth('admin')->user()->canManageAds())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.ads.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-trending-up"></i></span>
@@ -142,34 +157,27 @@
                 @endif
 
                 {{-- Categories --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','admin','content_moderator']))
-                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-                    <a href="javascript:void(0);" class="nxl-link">
+                @if(auth('admin')->user()->canManageCategories())
+                <li class="nxl-item {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.categories.index') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-grid"></i></span>
                         <span class="nxl-mtext">Categories</span>
-                        <span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
                     </a>
-                    <ul class="nxl-submenu">
-                        <li class="nxl-item">
-                            <a class="nxl-link" href="{{ route('admin.categories.index') }}">Categories</a>
-                        </li>
-                        <li class="nxl-item">
-                            <a class="nxl-link" href="{{ route('admin.categories.create') }}">Add Category</a>
-                        </li>
-                    </ul>
                 </li>
                 @endif
 
                 {{-- Brands --}}
+                @if(auth('admin')->user()->canManageCategories())
                 <li class="nxl-item {{ request()->routeIs('admin.brands.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.brands.index') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-award"></i></span>
                         <span class="nxl-mtext">Brands</span>
                     </a>
                 </li>
+                @endif
 
                 {{-- Support --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','admin','support_admin','manager']))
+                @if(auth('admin')->user()->canHandleSupport())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.support.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-life-buoy"></i></span>
@@ -187,11 +195,12 @@
                 </li>
                 @endif
 
-                {{-- Admins (HR only) --}}
-                @if(in_array(auth('admin')->user()->role, ['super_admin','hr']))
                 <li class="nxl-item nxl-caption">
-                    <label>Admin Panel</label>
+                    <label>Administration</label>
                 </li>
+
+                {{-- Admins (Super Admin or HR) --}}
+                @if(auth('admin')->user()->canManageAdmins())
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.admins.*') ? 'active' : '' }}">
                     <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-shield"></i></span>
@@ -209,8 +218,8 @@
                 </li>
                 @endif
 
-                {{-- Logs (super admin only) --}}
-                @if(auth('admin')->user()->role === 'super_admin')
+                {{-- Logs (Super Admin only) --}}
+                @if(auth('admin')->user()->canViewLogs())
                 <li class="nxl-item {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.logs.index') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-activity"></i></span>
@@ -219,6 +228,16 @@
                 </li>
                 @endif
 
+                <li class="nxl-item nxl-caption">
+                    <label>Profile</label>
+                </li>
+
+                <li class="nxl-item">
+                    <a href="{{ route('admin.profile.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-user"></i></span>
+                        <span class="nxl-mtext">My Profile</span>
+                    </a>
+                </li>
                 <li class="nxl-item">
                     <form method="POST" action="{{ route('admin.logout') }}">
                         @csrf

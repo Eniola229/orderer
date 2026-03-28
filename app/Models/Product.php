@@ -16,7 +16,7 @@ class Product extends Model
         'name', 'slug', 'description', 'price', 'sale_price',
         'stock', 'sku', 'condition', 'location', 'weight_kg',
         'status', 'rejection_reason', 'is_featured',
-        'average_rating', 'total_reviews', 'total_sold', 'views',
+        'average_rating', 'total_reviews', 'total_sold', 'views', 'approved_by'
     ];
 
     protected $casts = [

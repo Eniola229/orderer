@@ -10,20 +10,29 @@ class Wallet extends Model
     use HasUuid;
 
     protected $fillable = [
-        'walletable_type', 'walletable_id',
-        'balance', 'escrow_balance', 'ads_balance', 'currency',
+        'walletable_type',
+        'walletable_id',
+        'balance',
+        'escrow_balance',
+        'ads_balance',
+        'currency',
     ];
 
     protected $casts = [
-        'balance'         => 'decimal:2',
-        'escrow_balance'  => 'decimal:2',
-        'ads_balance'     => 'decimal:2',
+        'balance' => 'decimal:2',
+        'escrow_balance' => 'decimal:2',
+        'ads_balance' => 'decimal:2',
     ];
 
-    public function walletable() { return $this->morphTo(); }
-
-    public function transactions()
+    // Polymorphic relationship
+    public function walletable()
     {
-        return $this->hasMany(WalletTransaction::class)->latest();
+        return $this->morphTo();
+    }
+
+    // Alias for easier access
+    public function owner()
+    {
+        return $this->morphTo('walletable', 'walletable_type', 'walletable_id');
     }
 }

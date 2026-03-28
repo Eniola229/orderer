@@ -68,10 +68,30 @@ class AdController extends Controller
         ]);
 
         $seller = auth('seller')->user();
+        
+        // Get ad category
+        $adCategory = AdCategory::findOrFail($request->ad_category_id);
+        
+        // Validate media based on category type
+        if ($adCategory->type === 'banner_image') {
+            // Banner image ad - media is required and must be image
+            $request->validate([
+                'media' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240']
+            ]);
+        } elseif ($adCategory->type === 'banner_video') {
+            // Banner video ad - media is required and must be video
+            $request->validate([
+                'media' => ['required', 'file', 'mimes:mp4,mov,avi', 'max:51200']
+            ]);
+        } elseif ($adCategory->type === 'cpc') {
+            // CPC ad - no media required
+            // No media validation needed
+        } elseif ($adCategory->type === 'top_listing') {
+            // Top listing ad - no media required
+            // No media validation needed
+        }
 
         // Check ads balance
-        $adCategory = AdCategory::findOrFail($request->ad_category_id);
-
         // Calculate cost
         $days      = now()->parse($request->start_date)->diffInDays($request->end_date) + 1;
         $slot      = $request->ad_banner_slot_id
@@ -96,7 +116,7 @@ class AdController extends Controller
             default   => 'App\Models\Seller',
         };
 
-        // Upload media
+        // Upload media (if provided)
         $mediaUrl  = null;
         $publicId  = null;
         $mediaType = 'image';
@@ -162,6 +182,15 @@ class AdController extends Controller
 
         return redirect()->route('seller.ads.index')
             ->with('success', 'Ad deleted. Unspent budget refunded to ads balance.');
+    }
+
+    public function show(Ad $ad)
+    {
+        if ($ad->seller_id !== auth('seller')->id()) abort(403);
+        
+        $ad->load(['adCategory', 'bannerSlot', 'promotable']);
+        
+        return view('seller.ads.show', compact('ad'));
     }
 
     public function pause(Ad $ad)

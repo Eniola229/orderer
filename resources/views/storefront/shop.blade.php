@@ -1,14 +1,14 @@
-@auth('web')
-    @include('layouts.storefront.header-auth')
-@else
-    @include('layouts.storefront.header-guest')
-@endauth
+{{-- ============================================================
+       1. Search/category banner — between topbar and product grid
+       2. Sponsored products — first 4 items in grid marked "Sponsored"
+     ============================================================ --}}
 
+@auth('web')@include('layouts.storefront.header-auth')@else @include('layouts.storefront.header-guest')@endauth
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
-{{-- Breadcrumb --}}
-<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpg') }});">
+{{-- Breadcrumb (unchanged) --}}
+<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }});">
     <div class="container h-100">
         <div class="row h-100 align-items-center">
             <div class="col-12">
@@ -24,7 +24,7 @@
     <div class="container">
         <div class="row">
 
-            {{-- Sidebar --}}
+            {{-- Sidebar (unchanged) --}}
             <div class="col-12 col-md-4 col-lg-3">
                 <div class="shop_sidebar_area">
 
@@ -126,11 +126,13 @@
             {{-- Products grid --}}
             <div class="col-12 col-md-8 col-lg-9">
                 <div class="shop_grid_product_area">
+
+                    {{-- Sort topbar (unchanged) --}}
                     <div class="row">
                         <div class="col-12">
                             <div class="product-topbar d-flex align-items-center justify-content-between">
                                 <div class="total-products">
-                                    <p><span>{{ $products->total() }}</span> products found</p>
+                                    <p><span style="color: green;">{{ $products->total() }}</span> products found</p>
                                 </div>
                                 <div class="product-sorting d-flex align-items-center">
                                     <p class="mb-0 mr-2">Sort by:</p>
@@ -151,6 +153,120 @@
                         </div>
                     </div>
 
+                    {{-- ── SEARCH/CATEGORY BANNER AD ─────────────────────────────
+                         Shows one full-width banner between topbar and products.
+                         Uses 'search_results' slot on shop, 'category_page' on category.
+                         ──────────────────────────────────────────────────────── --}}
+                    @php
+                        $bannerAd = isset($categoryBannerAds) && $categoryBannerAds->count()
+                            ? $categoryBannerAds->first()
+                            : (isset($searchBannerAds) && $searchBannerAds->count()
+                                ? $searchBannerAds->first()
+                                : null);
+                    @endphp
+
+                    @if($bannerAd)
+                    <div class="row mb-30">
+                        <div class="col-12">
+                            <a href="{{ $bannerAd->clickTrackingUrl() }}"
+                               style="display:block;position:relative;border-radius:10px;overflow:hidden;">
+
+                                @if($bannerAd->media_type === 'image' && $bannerAd->media_url)
+                                <img src="{{ $bannerAd->media_url }}"
+                                     alt="{{ $bannerAd->title }}"
+                                     style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;">
+                                @elseif($bannerAd->media_type === 'video' && $bannerAd->media_url)
+                                <video autoplay muted loop playsinline
+                                       style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;">
+                                    <source src="{{ $bannerAd->media_url }}">
+                                </video>
+                                @else
+                                {{-- Text-only fallback banner --}}
+                                <div style="background:linear-gradient(135deg,#1a1a2e,#2ECC71);border-radius:10px;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;">
+                                    <span style="color:#fff;font-size:18px;font-weight:700;">
+                                        {{ $bannerAd->title }}
+                                    </span>
+                                    <span style="background:#fff;color:#2ECC71;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;">
+                                        Shop Now
+                                    </span>
+                                </div>
+                                @endif
+
+                                {{-- Sponsored label --}}
+                                <span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:2px 8px;border-radius:8px;letter-spacing:.5px;">
+                                    Sponsored
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                    @endif
+                    {{-- END BANNER AD --}}
+
+
+                    {{-- ── SPONSORED PRODUCT CARDS (top_listing) ────────────────
+                         Shown only on first page. Placed before regular products.
+                         ──────────────────────────────────────────────────────── --}}
+                    @if(isset($topListingAds) && $topListingAds->count() && $products->currentPage() === 1)
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
+                                <i class="fa fa-star" style="color:#F39C12;"></i>
+                                Sponsored
+                            </p>
+                        </div>
+                        @foreach($topListingAds as $ad)
+                        @php
+                            $sp   = $ad->promotable;
+                            if (!$sp) continue;
+                            $spImg = $sp->images->where('is_primary',true)->first() ?? $sp->images->first();
+                        @endphp
+                        <div class="col-12 col-sm-6 col-lg-4">
+                            <div class="single-product-wrapper" style="position:relative;">
+                                <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                                    Sponsored
+                                </div>
+                                <div class="product-img">
+                                    <a href="{{ $ad->clickTrackingUrl() }}">
+                                        <img src="{{ $spImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
+                                    </a>
+                                    <div class="product-favourite">
+                                        <a href="#" class="favme fa fa-heart" data-product="{{ $sp->id }}"></a>
+                                    </div>
+                                </div>
+                                <div class="product-description">
+                                    <span>{{ $sp->seller->business_name ?? '' }}</span>
+                                    <a href="{{ $ad->clickTrackingUrl() }}">
+                                        <h6>{{ Str::limit($sp->name, 40) }}</h6>
+                                    </a>
+                                    <p class="product-price">
+                                        @if($sp->sale_price)
+                                            <span class="old-price">${{ number_format($sp->price, 2) }}</span>
+                                            ${{ number_format($sp->sale_price, 2) }}
+                                        @else
+                                            ${{ number_format($sp->price, 2) }}
+                                        @endif
+                                    </p>
+                                    <div class="hover-content">
+                                        <div class="add-to-cart-btn">
+                                            <a href="#" class="btn essence-btn add-to-cart"
+                                               data-product="{{ $sp->id }}">Add to Cart</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+
+                        {{-- Divider between sponsored and organic --}}
+                        <div class="col-12">
+                            <hr style="border-color:#eee;margin:8px 0 16px;">
+                        </div>
+                    </div>
+                    @endif
+                    {{-- END SPONSORED PRODUCTS --}}
+
+
+                    {{-- Regular product grid (unchanged) --}}
                     <div class="row">
                         @forelse($products as $product)
                         @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
@@ -208,7 +324,7 @@
                         @endforelse
                     </div>
 
-                    {{-- Pagination --}}
+                    {{-- Pagination (unchanged) --}}
                     @if($products->hasPages())
                     <nav aria-label="navigation">
                         <ul class="pagination mt-50 mb-70">
