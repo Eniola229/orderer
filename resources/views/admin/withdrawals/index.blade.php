@@ -15,7 +15,7 @@
                 <h2 class="fw-bold mb-0 text-warning">{{ $stats['pending'] }}</h2>
             </div>
         </div>
-    </div>
+    </div> 
     <div class="col-md-4 mb-2">
         <div class="card">
             <div class="card-body py-3">
@@ -28,7 +28,7 @@
         <div class="card">
             <div class="card-body py-3">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Total Paid Out</p>
-                <h2 class="fw-bold mb-0 text-primary">${{ number_format($stats['total_paid'], 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-primary">₦{{ number_format($stats['total_paid'], 2) }}</h2>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
                 <thead class="table-light">
                     亚
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Amount (USD)</th>
+                        <th class="fs-11 text-uppercase text-muted fw-semibold">Amount (NGN)</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Exchange Rate</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Local Amount</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Bank</th>
@@ -73,27 +73,27 @@
                             </div>
                         </td>
                         <td>
-                            <span class="fw-bold text-success">${{ number_format($wd->amount, 2) }}</span>
-                            @if($wd->currency !== 'USD')
+                            <span class="fw-bold text-success">₦{{ number_format($wd->amount, 2) }}</span>
+                            @if($wd->currency !== 'NGN')
                                 <br>
                                 <small class="text-muted">({{ $wd->currency }})</small>
                             @endif
                         </td>
                         <td>
-                            @if($wd->exchange_rate && $wd->currency !== 'USD')
+                            @if($wd->exchange_rate && $wd->currency !== 'NGN')
                                 <span class="badge bg-info" style="font-size:11px;">
-                                    1 USD = {{ number_format($wd->exchange_rate, 4) }} {{ $wd->currency }}
+                                    1 NGN = {{ number_format($wd->exchange_rate, 4) }} {{ $wd->currency }}
                                 </span>
-                            @elseif($wd->currency !== 'USD' && !$wd->exchange_rate && $wd->status === 'approved')
+                            @elseif($wd->currency !== 'NGN' && !$wd->exchange_rate && $wd->status === 'approved')
                                 <small class="text-warning">Rate pending</small>
-                            @elseif($wd->currency !== 'USD' && !$wd->exchange_rate)
+                            @elseif($wd->currency !== 'NGN' && !$wd->exchange_rate)
                                 <small class="text-muted">—</small>
                             @else
                                 <small class="text-muted">—</small>
                             @endif
                         </td>
                         <td>
-                            @if($wd->converted_amount && $wd->currency !== 'USD')
+                            @if($wd->converted_amount && $wd->currency !== 'NGN')
                                 <span class="fw-semibold text-primary">
                                     {{ number_format($wd->converted_amount, 2) }} {{ $wd->currency }}
                                 </span>
@@ -103,9 +103,9 @@
                                         @ {{ number_format($wd->exchange_rate, 4) }}
                                     </small>
                                 @endif
-                            @elseif($wd->currency !== 'USD' && $wd->status === 'approved')
+                            @elseif($wd->currency !== 'NGN' && $wd->status === 'approved')
                                 <small class="text-warning">Awaiting conversion</small>
-                            @elseif($wd->currency !== 'USD')
+                            @elseif($wd->currency !== 'NGN')
                                 <small class="text-muted">—</small>
                             @else
                                 <small class="text-muted">—</small>
@@ -161,27 +161,48 @@
                             @endif
                         </td>
                         <td>
-                            @if($wd->status === 'pending' && auth('admin')->user()->canManageFinance())
+                            @if(in_array($wd->status, ['processing', 'pending', 'approved']) && auth('admin')->user()->canManageFinance())
                             <div class="d-flex flex-column gap-1">
-                                <form action="{{ route('admin.withdrawals.approve', $wd->id) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('Approve this withdrawal? Ensure bank transfer is initiated.')">
-                                    @csrf @method('PUT')
-                                    <button type="submit" class="btn btn-sm btn-success w-100">
-                                        <i class="feather-check me-1"></i> Approve
+                                @if($wd->status === 'processing')
+                                    <form action="{{ route('admin.withdrawals.change-status', $wd->id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Change this withdrawal from processing to pending?')">
+                                        @csrf @method('PUT')
+                                        <input type="hidden" name="status" value="pending">
+                                        <button type="submit" class="btn btn-sm btn-warning w-100 mb-1">
+                                            <i class="feather-clock me-1"></i> Change to Pending
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.withdrawals.change-status', $wd->id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Change this withdrawal from processing to approved? This will mark it as approved without payout processing.')">
+                                        @csrf @method('PUT')
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-sm btn-success w-100">
+                                            <i class="feather-check me-1"></i> Force Approve
+                                        </button>
+                                    </form>
+                                @elseif($wd->status === 'pending' && auth('admin')->user()->canManageFinance())
+                                    <form action="{{ route('admin.withdrawals.approve', $wd->id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Approve this withdrawal? Ensure bank transfer is initiated.')">
+                                        @csrf @method('PUT')
+                                        <button type="submit" class="btn btn-sm btn-success w-100">
+                                            <i class="feather-check me-1"></i> Approve
+                                        </button>
+                                    </form>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="openRejectModal('{{ $wd->id }}', '{{ $wd->amount }}', '{{ addslashes($wd->seller->business_name ?? 'Unknown') }}')">
+                                        <i class="feather-x me-1"></i> Reject
                                     </button>
-                                </form>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        onclick="openRejectModal('{{ $wd->id }}', '{{ $wd->amount }}', '{{ addslashes($wd->seller->business_name ?? 'Unknown') }}')">
-                                    <i class="feather-x me-1"></i> Reject
-                                </button>
+                                @elseif($wd->status === 'approved')
+                                    <small class="text-success fw-semibold">
+                                        <i class="feather-check-circle me-1"></i>
+                                        Paid {{ $wd->processed_at?->format('M d') }} 
+                                    </small>
+                                @endif
                             </div>
-                            @elseif($wd->status === 'approved')
-                            <small class="text-success fw-semibold">
-                                <i class="feather-check-circle me-1"></i>
-                                    Paid {{ $wd->processed_at?->format('M d') }} 
-                            </small>
                             @elseif($wd->status === 'rejected')
                             <small class="text-danger fw-semibold">
                                 <i class="feather-x-circle me-1"></i>
@@ -248,7 +269,7 @@
         const amountInfo = document.getElementById('modalAmountInfo');
         
         form.action = `/admin/withdrawals/${id}/reject`;
-        amountInfo.innerHTML = `$${parseFloat(amount).toFixed(2)} from <strong>${sellerName}</strong><br>Amount will be refunded to seller wallet.`;
+        amountInfo.innerHTML = `₦${parseFloat(amount).toFixed(2)} from <strong>${sellerName}</strong><br>Amount will be refunded to seller wallet.`;
         
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';

@@ -49,13 +49,13 @@
                         <td class="fs-13">
                             {{ $hold->order->user->email ?? '—' }}
                         </td>
-                        <td class="fw-bold">${{ number_format($hold->amount, 2) }}</td>
+                        <td class="fw-bold">₦{{ number_format($hold->amount, 2) }}</td>
                         <td>
                             <span class="badge orderer-badge badge-{{ $hold->status }}">
                                 {{ ucfirst($hold->status) }}
                             </span>
                         </td>
-                        <td class="text-muted fs-12">{{ $hold->held_at?->format('M d, Y H:i') }}</td>
+                        <td class="text-muted fs-12">{{ $hold->created_at?->format('M d, Y H:i') }}</td>
                         <td class="text-muted fs-12">
                             {{ $hold->released_at?->format('M d, Y H:i') ?? '—' }}
                         </td>

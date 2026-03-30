@@ -53,7 +53,7 @@
         <div class="card">
             <div class="card-body py-3">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Total Spent</p>
-                <h2 class="fw-bold mb-0 text-info">${{ number_format($ads->sum('amount_spent'), 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-info">₦{{ number_format($ads->sum('amount_spent'), 2) }}</h2>
                 <small class="text-muted">Across all ads</small>
             </div>
         </div>
@@ -162,9 +162,9 @@
                         
                         <td class="fs-13">{{ $ad->bannerSlot->name ?? '—' }}  
                         
-                        <td class="fw-bold text-success">${{ number_format($ad->budget, 2) }}  
+                        <td class="fw-bold text-success">₦{{ number_format($ad->budget, 2) }}  
                         
-                        <td class="text-muted">${{ number_format($ad->amount_spent, 2) }}  
+                        <td class="text-muted">₦{{ number_format($ad->amount_spent, 2) }}  
                         
                         <td>
                             <span class="badge" style="
@@ -279,19 +279,19 @@
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Budget</label>
-                                            <strong class="text-success">${{ number_format($ad->budget, 2) }}</strong>
+                                            <strong class="text-success">₦{{ number_format($ad->budget, 2) }}</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Amount Spent</label>
-                                            <strong>${{ number_format($ad->amount_spent, 2) }}</strong>
+                                            <strong>₦{{ number_format($ad->amount_spent, 2) }}</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Cost Per Day / Click</label>
-                                            <strong>${{ number_format($ad->cost_per_day ?? 0, 2) }} / ${{ number_format($ad->cost_per_click ?? 0, 2) }}</strong>
+                                            <strong>₦{{ number_format($ad->cost_per_day ?? 0, 2) }} / ${{ number_format($ad->cost_per_click ?? 0, 2) }}</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-3">

@@ -14,7 +14,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Available Balance</p>
-                        <h2 class="fw-bold mb-0 text-success">${{ number_format($wallet->balance, 2) }}</h2>
+                        <h2 class="fw-bold mb-0 text-success">₦{{ number_format($wallet->balance, 2) }}</h2>
                         <small class="text-muted">Ready to withdraw</small>
                     </div>
                     <div class="avatar-text avatar-lg rounded" style="background:#D5F5E3;color:#2ECC71;">
@@ -30,7 +30,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">In Escrow</p>
-                        <h2 class="fw-bold mb-0 text-warning">${{ number_format($wallet->escrow_balance, 2) }}</h2>
+                        <h2 class="fw-bold mb-0 text-warning">₦{{ number_format($escrowBalance, 2) }}</h2>
                         <small class="text-muted">Pending delivery</small>
                     </div>
                     <div class="avatar-text avatar-lg rounded" style="background:#FEF9E7;color:#F39C12;">
@@ -46,7 +46,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Ads Balance</p>
-                        <h2 class="fw-bold mb-0 text-primary">${{ number_format($wallet->ads_balance, 2) }}</h2>
+                        <h2 class="fw-bold mb-0 text-primary">₦{{ number_format($wallet->ads_balance, 2) }}</h2>
                         <small class="text-muted">For promotions</small>
                     </div>
                     <div class="avatar-text avatar-lg rounded" style="background:#EBF5FB;color:#2980B9;">
@@ -71,9 +71,9 @@
                 <form action="{{ route('seller.wallet.topup') }}" method="POST">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Amount (USD)</label>
+                        <label class="form-label fw-bold">Amount (NGN)</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="amount" class="form-control"
                                    min="1" step="0.01" placeholder="0.00">
                         </div>
@@ -93,9 +93,9 @@
                 <form action="{{ route('seller.wallet.topup.ads') }}" method="POST">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Amount (USD)</label>
+                        <label class="form-label fw-bold">Amount (NGN)</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="amount" class="form-control"
                                    min="1" step="0.01" placeholder="0.00">
                         </div>
@@ -174,9 +174,9 @@
                                     </span>
                                 </td>
                                 <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                    {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                    {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                 </td>
-                                <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}</td>
+                                <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td>
                                     <span class="badge" style="
                                         background-color: {{ $statusColor }};
@@ -214,16 +214,16 @@
                                                     <tr>
                                                         <td style="padding: 5px 0; color: #6c757d;">Amount:</td>
                                                         <td style="padding: 5px 0;" class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                                            {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                                            {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td style="padding: 5px 0; color: #6c757d;">Balance Before:</td>
-                                                        <td style="padding: 5px 0;">${{ number_format($txn->balance_before, 2) }}</td>
+                                                        <td style="padding: 5px 0;">₦{{ number_format($txn->balance_before, 2) }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td style="padding: 5px 0; color: #6c757d;">Balance After:</td>
-                                                        <td style="padding: 5px 0;">${{ number_format($txn->balance_after, 2) }}</td>
+                                                        <td style="padding: 5px 0;">₦{{ number_format($txn->balance_after, 2) }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td style="padding: 5px 0; color: #6c757d;">Status:</td>

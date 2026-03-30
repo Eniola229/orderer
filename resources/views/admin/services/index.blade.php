@@ -156,7 +156,7 @@
                                 <span class="text-muted fs-13">Negotiable</span>
                             @else
                                 <span class="fw-bold text-success">
-                                    ${{ number_format($service->price, 2) }}
+                                    ₦{{ number_format($service->price, 2) }}
                                     @if($service->pricing_type === 'hourly')
                                         <small class="text-muted fw-normal">/hr</small>
                                     @endif
@@ -258,7 +258,7 @@
                                                 @if($service->pricing_type === 'negotiable')
                                                     Negotiable
                                                 @else
-                                                    ${{ number_format($service->price, 2) }}
+                                                    ₦{{ number_format($service->price, 2) }}
                                                     @if($service->pricing_type === 'hourly')
                                                         /hour
                                                     @endif

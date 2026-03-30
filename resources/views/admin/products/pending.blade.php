@@ -47,9 +47,9 @@
                     </div>
                     <div class="col-6">
                         <small class="text-muted d-block">Price</small>
-                        <strong class="fs-13 text-success">${{ number_format($product->price, 2) }}</strong>
+                        <strong class="fs-13 text-success">₦{{ number_format($product->price, 2) }}</strong>
                         @if($product->sale_price)
-                            <small class="text-muted ms-1">(Sale: ${{ number_format($product->sale_price, 2) }})</small>
+                            <small class="text-muted ms-1">(Sale: ₦{{ number_format($product->sale_price, 2) }})</small>
                         @endif
                     </div>
                     <div class="col-6">

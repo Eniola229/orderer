@@ -19,7 +19,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Wallet Balance</p>
-                        <h3 class="fw-bold mb-0">${{ number_format($stats['wallet_balance'], 2) }}</h3>
+                        <h3 class="fw-bold mb-0">₦{{ number_format($stats['wallet_balance'], 2) }}</h3>
                         <p class="text-muted fs-12 mt-1 mb-0">Available to spend</p>
                     </div>
                     <div class="avatar-text avatar-lg rounded" style="background:#D5F5E3;color:#2ECC71;">
@@ -111,7 +111,7 @@
                                     </a>
                                 </td>
                                 <td class="text-muted fs-13">{{ $order->items->count() }} item(s)</td>
-                                <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $order->status }}">
                                         {{ ucfirst($order->status) }}

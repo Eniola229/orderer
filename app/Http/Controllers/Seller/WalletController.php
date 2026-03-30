@@ -33,7 +33,11 @@ class WalletController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('seller.wallet.index', compact('seller', 'wallet', 'transactions', 'withdrawals'));
+        $escrowBalance = \App\Models\EscrowHold::where('seller_id', $seller->id)
+        ->where('status', 'held')
+        ->sum('seller_amount');
+
+        return view('seller.wallet.index', compact('seller', 'wallet', 'transactions', 'withdrawals', 'escrowBalance'));
     }
     /**
      * Initialize Korapay top-up for ads balance

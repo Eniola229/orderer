@@ -226,12 +226,36 @@ class KorapayService
             $payload['metadata'] = $metadata;
         }
 
+        // Log the request payload for debugging
+        \Log::info('Korapay payout request', [
+            'reference' => $reference,
+            'payload' => $payload
+        ]);
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->secretKey,
             'Content-Type'  => 'application/json',
         ])->post($this->baseUrl . '/transactions/disburse', $payload);
 
-        // IMPORTANT: Do NOT treat 502/503/504/500 as failed — always verify first.
+        // Log the response for debugging
+        \Log::info('Korapay payout response', [
+            'status_code' => $response->status(),
+            'body' => $response->body(),
+            'successful' => $response->successful(),
+            'server_error' => $response->serverError(),
+            'client_error' => $response->clientError()
+        ]);
+
+        // Handle client errors (400-499) - these are validation errors
+        if ($response->clientError()) {
+            $errorData = $response->json();
+            $errorMessage = $errorData['message'] ?? 'Validation error';
+            $errorDetails = $errorData['data'] ?? [];
+            
+            throw new \Exception("Korapay validation error: {$errorMessage}. Details: " . json_encode($errorDetails));
+        }
+
+        // Handle server errors (500-599)
         if ($response->serverError()) {
             // Re-check status via verifyPayout() before marking failed
             throw new \Exception('Korapay server error — verify payout before marking failed: ' . $response->body());

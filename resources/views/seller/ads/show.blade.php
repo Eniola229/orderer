@@ -146,13 +146,13 @@
                                 @if($ad->promotable_type === 'App\Models\Product')
                                     <strong>Product:</strong> {{ $promotable->name ?? '—' }}
                                     <br>
-                                    <small class="text-muted">Price: ${{ number_format($promotable->price, 2) }}</small>
+                                    <small class="text-muted">Price: ₦{{ number_format($promotable->price, 2) }}</small>
                                 @elseif($ad->promotable_type === 'App\Models\ServiceListing')
                                     <strong>Service:</strong> {{ $promotable->title ?? '—' }}
                                 @elseif($ad->promotable_type === 'App\Models\HouseListing')
                                     <strong>Property:</strong> {{ $promotable->title ?? '—' }}
                                     <br>
-                                    <small class="text-muted">Price: ${{ number_format($promotable->price, 2) }}</small>
+                                    <small class="text-muted">Price: ₦{{ number_format($promotable->price, 2) }}</small>
                                 @elseif($ad->promotable_type === 'App\Models\Seller')
                                     <strong>Brand/Store:</strong> {{ $promotable->business_name ?? 'Your Store' }}
                                 @endif
@@ -174,16 +174,16 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Budget</label>
-                        <p class="fw-bold text-success fs-4 mb-0">${{ number_format($ad->budget, 2) }}</p>
+                        <p class="fw-bold text-success fs-4 mb-0">₦{{ number_format($ad->budget, 2) }}</p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Amount Spent</label>
-                        <p class="fw-semibold mb-0">${{ number_format($ad->amount_spent, 2) }}</p>
+                        <p class="fw-semibold mb-0">₦{{ number_format($ad->amount_spent, 2) }}</p>
                         <small class="text-muted">{{ $ad->budget > 0 ? round(($ad->amount_spent / $ad->budget) * 100, 1) : 0 }}% used</small>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Cost Per Day</label>
-                        <p class="fw-semibold mb-0">${{ number_format($ad->cost_per_day, 2) }}/day</p>
+                        <p class="fw-semibold mb-0">₦{{ number_format($ad->cost_per_day, 2) }}/day</p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Duration</label>

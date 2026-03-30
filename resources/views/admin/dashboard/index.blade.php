@@ -77,8 +77,8 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">30-Day Revenue</p>
-                        <h2 class="fw-bold mb-0 text-success">${{ number_format($revenue, 2) }}</h2>
-                        <small class="text-muted">Commission: ${{ number_format($commission, 2) }}</small>
+                        <h2 class="fw-bold mb-0 text-success">₦{{ number_format($revenue, 2) }}</h2>
+                        <small class="text-muted">Commission: ₦{{ number_format($commission, 2) }}</small>
                     </div>
                     <div class="avatar-text avatar-lg rounded" style="background:#D5F5E3;color:#2ECC71;">
                         <i class="feather-dollar-sign"></i>
@@ -238,7 +238,7 @@
                                     </a>
                                 </td>
                                 <td class="fs-13">{{ $order->user->email ?? '—' }}</td>
-                                <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $order->payment_status }}">
                                         {{ ucfirst($order->payment_status) }}
@@ -269,7 +269,7 @@ const chartData = @json($chartData);
 
 const options = {
     series: [{
-        name: 'Revenue ($)',
+        name: 'Revenue (₦)',
         data: chartData.map(d => d.value)
     }],
     chart: {
@@ -290,13 +290,13 @@ const options = {
     },
     yaxis: {
         labels: {
-            formatter: val => '$' + val.toFixed(0)
+            formatter: val => '₦' + val.toFixed(0)
         }
     },
     dataLabels: { enabled: false },
     grid: { borderColor: '#f1f1f1' },
     tooltip: {
-        y: { formatter: val => '$' + val.toFixed(2) }
+        y: { formatter: val => '₦' + val.toFixed(2) }
     }
 };
 

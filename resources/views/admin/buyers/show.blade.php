@@ -50,7 +50,7 @@
                 <div class="mb-2">
                     <small class="text-muted d-block">Current Balance</small>
                     <h4 class="fw-bold text-success mb-0">
-                        ${{ number_format($wallet->balance ?? 0, 2) }}
+                        ₦{{ number_format($wallet->balance ?? 0, 2) }}
                     </h4>
                 </div>
                 <form action="{{ route('admin.buyers.wallet', $user->id) }}" method="POST">
@@ -63,9 +63,9 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label fw-bold fs-13">Amount (USD)</label>
+                        <label class="form-label fw-bold fs-13">Amount (NGN)</label>
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="amount" class="form-control"
                                    min="0.01" step="0.01" placeholder="0.00" required>
                         </div>
@@ -201,7 +201,7 @@
                                 <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
                                     {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
                                 </td>
-                                <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}</td>
+                                <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td class="text-muted fs-12">{{ Str::limit($txn->description, 40) }}</td>
                                 <td class="text-muted fs-12">{{ $txn->created_at->format('M d, Y H:i') }}</td>
                             </tr>

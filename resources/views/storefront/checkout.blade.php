@@ -268,13 +268,13 @@
                             @foreach($cartItems as $item)
                             <li>
                                 <span>{{ Str::limit($item['name'], 30) }} × {{ $item['quantity'] }}</span>
-                                <span>${{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                <span>₦{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
                             </li>
                             @endforeach
                             <li>
                                 <span>Subtotal</span>
                                 <span id="displaySubtotal" data-value="{{ $subtotal }}">
-                                    ${{ number_format($subtotal, 2) }}
+                                    ₦{{ number_format($subtotal, 2) }}
                                 </span>
                             </li>
                             <li>
@@ -285,7 +285,7 @@
                             </li>
                             <li class="font-weight-bold">
                                 <span>Total</span>
-                                <span id="displayTotal" class="h5 mb-0">${{ number_format($subtotal, 2) }}</span>
+                                <span id="displayTotal" class="h5 mb-0">₦{{ number_format($subtotal, 2) }}</span>
                             </li>
                         </ul>
 
@@ -306,7 +306,7 @@
                                                 </label>
                                             </div>
                                         </div>
-                                        <span class="badge badge-success">${{ number_format(auth('web')->user()->wallet_balance, 2) }} available</span>
+                                        <span class="badge badge-success">₦{{ number_format(auth('web')->user()->wallet_balance, 2) }} available</span>
                                     </div>
                                     <p class="text-muted small mt-2 mb-0 ml-4 pl-2">
                                         Pay instantly from your Orderer wallet. No redirects, no extra steps.
@@ -316,7 +316,7 @@
                                         <div class="alert alert-warning py-2 px-3 mb-2" style="font-size:13px;">
                                             <i class="fa fa-exclamation-triangle mr-1"></i>
                                             Your wallet balance is insufficient for this order.
-                                            You need at least <strong>${{ number_format($subtotal, 2) }}</strong>.
+                                            You need at least <strong>₦{{ number_format($subtotal, 2) }}</strong>.
                                         </div>
                                         <a href="{{ route('buyer.wallet') }}" class="btn btn-sm btn-outline-success">
                                             <i class="fa fa-plus-circle mr-1"></i> Top Up Wallet
@@ -479,7 +479,7 @@ function fetchShippingRates() {
                                 ${rate.delivery_eta ? `<small class="text-muted"><i class="fa fa-clock-o mr-1"></i>${rate.delivery_eta}</small>` : ''}
                             </div>
                         </div>
-                        <span class="h5 mb-0 text-success">$${price}</span>
+                        <span class="h5 mb-0 text-success">₦${price}</span>
                     </div>
                 </label>
             `;

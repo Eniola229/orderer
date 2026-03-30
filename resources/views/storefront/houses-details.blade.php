@@ -172,9 +172,9 @@
                         <div class="col-md-4 mb-3">
                             <div class="info-label">Price</div>
                             <div class="info-value fs-3 fw-bold" style="color:#2ECC71;">
-                                ${{ number_format($house->price, 2) }}
+                                ₦{{ number_format($house->price, 2) }}
                                 @if($house->listing_type == 'rent')
-                                    <small class="fs-6">/month</small>
+                                    <small class="fs-6">/year</small>
                                 @endif
                             </div>
                         </div>
@@ -340,7 +340,7 @@
                                     <i class="fa fa-map-marker"></i> {{ $similar->city }}, {{ $similar->state }}
                                 </p>
                                 <span style="font-size:18px;font-weight:800;color:#2ECC71;">
-                                    ${{ number_format($similar->price, 0) }}
+                                    ₦{{ number_format($similar->price, 0) }}
                                 </span>
                             </div>
                         </div>

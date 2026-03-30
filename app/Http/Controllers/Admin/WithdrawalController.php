@@ -84,23 +84,23 @@ class WithdrawalController extends Controller
         $korapay   = app(\App\Services\KorapayService::class);
         $reference = $korapay->generateReference('PAY');
         
-        // Get exchange rate if currency is not USD
+        // Get exchange rate if currency is not NGN
         $exchangeRate = null;
         $convertedAmount = (float) $withdrawal->amount;
         $conversionNarration = "";
         
-        if ($withdrawal->currency !== 'USD') {
+        if ($withdrawal->currency !== 'NGN') {
             try {
-                $exchangeRate = $this->getExchangeRate('USD', $withdrawal->currency);
+                $exchangeRate = $this->getExchangeRate('NGN', $withdrawal->currency);
                 
                 if (!$exchangeRate) {
                     // Roll back the lock
                     $withdrawal->update(['status' => 'pending']);
-                    return back()->with('error', "Cannot process payout: Failed to get exchange rate for USD to {$withdrawal->currency}. Please try again later.");
+                    return back()->with('error', "Cannot process payout: Failed to get exchange rate for NGN to {$withdrawal->currency}. Please try again later.");
                 }
                 
                 $convertedAmount = round((float) $withdrawal->amount * $exchangeRate, 2);
-                $conversionNarration = " (USD {$withdrawal->amount} @ {$exchangeRate} {$withdrawal->currency}/USD)";
+                $conversionNarration = " (NGN {$withdrawal->amount} @ {$exchangeRate} {$withdrawal->currency}/NGN)";
                 
             } catch (\Exception $e) {
                 $withdrawal->update(['status' => 'pending']);
@@ -145,13 +145,20 @@ class WithdrawalController extends Controller
             ];
         }
 
+        // Build metadata conditionally - only include exchange_rate if it exists
+        $metadata = [
+            'withdrawal_id' => (string) $withdrawal->id,
+            'usd_amount' => (float) $withdrawal->amount,
+            'local_amount' => $convertedAmount,
+        ];
+        
+        // Only add exchange_rate to metadata if it exists (not null)
+        if ($exchangeRate !== null) {
+            $metadata['exchange_rate'] = $exchangeRate;
+        }
+
         try {
-            $result = $korapay->disbursePayout($reference, $destination, [
-                'withdrawal_id' => (string) $withdrawal->id,
-                'exchange_rate' => $exchangeRate,
-                'usd_amount' => (float) $withdrawal->amount,
-                'local_amount' => $convertedAmount,
-            ]);
+            $result = $korapay->disbursePayout($reference, $destination, $metadata);
 
             $withdrawal->update([
                 'status'            => 'approved',
@@ -167,7 +174,16 @@ class WithdrawalController extends Controller
             $this->brevo->sendWithdrawalSuccess($withdrawal);
 
         } catch (\Exception $e) {
-            if (str_contains($e->getMessage(), 'verify payout before marking failed')) {
+            // Log the full error for debugging
+            \Log::error('Korapay payout exception', [
+                'withdrawal_id' => $withdrawal->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            
+            $errorMessage = $e->getMessage();
+            
+            if (str_contains($errorMessage, 'verify payout before marking failed')) {
                 $withdrawal->update([
                     'status'            => 'approved',
                     'processed_at'      => now(),
@@ -177,16 +193,21 @@ class WithdrawalController extends Controller
                     'exchange_rate'     => $exchangeRate,
                     'converted_amount'  => $convertedAmount,
                 ]);
+                
+                return back()->with('warning', 'Payout initiated but needs verification: ' . $errorMessage);
             } else {
+                // Roll back the lock
                 $withdrawal->update(['status' => 'pending']);
-                return back()->with('error', 'Payout failed: ' . $e->getMessage());
+                
+                // Return the actual error message to the user
+                return back()->with('error', 'Payout failed: ' . $errorMessage);
             }
         }
 
         // Build notification with exchange rate info
-        $notificationBody = "Your withdrawal of \${$withdrawal->amount} has been approved";
-        if ($exchangeRate && $withdrawal->currency !== 'USD') {
-            $notificationBody .= " and converted to {$withdrawal->currency} {$convertedAmount} at rate {$exchangeRate} {$withdrawal->currency}/USD";
+        $notificationBody = "Your withdrawal of ₦{$withdrawal->amount} has been approved";
+        if ($exchangeRate && $withdrawal->currency !== 'NGN') {
+            $notificationBody .= " and converted to {$withdrawal->currency} {$convertedAmount} at rate {$exchangeRate} {$withdrawal->currency}/NGN";
         }
         $notificationBody .= " and is being processed.";
 
@@ -199,11 +220,10 @@ class WithdrawalController extends Controller
             'action_url'      => route('seller.withdrawals.index'),
         ]);
 
-        return back()->with('success', "Withdrawal of \${$withdrawal->amount} approved and payout initiated.");
+        return back()->with('success', "Withdrawal of ₦{$withdrawal->amount} approved and payout initiated.");
     }
-
     /**
-     * Get exchange rate from USD to target currency
+     * Get exchange rate from NGN to target currency
      */
     private function getExchangeRate(string $from, string $to): ?float
     {
@@ -268,10 +288,80 @@ class WithdrawalController extends Controller
             'notifiable_id'   => $withdrawal->seller_id,
             'type'            => 'withdrawal_rejected',
             'title'           => 'Withdrawal Rejected',
-            'body'            => "Your withdrawal of \${$withdrawal->amount} was rejected. Reason: {$request->reason}. Amount has been refunded to your wallet.",
+            'body'            => "Your withdrawal of ₦{$withdrawal->amount} was rejected. Reason: {$request->reason}. Amount has been refunded to your wallet.",
             'action_url'      => route('seller.withdrawals.index'),
         ]);
 
         return back()->with('success', 'Withdrawal rejected and amount refunded to seller wallet.');
+    }
+
+    /**
+     * Change withdrawal status (especially for processing to pending/approved)
+     */
+    public function changeStatus(Request $request, WithdrawalRequest $wd)
+    {
+        if (!auth('admin')->user()->canManageFinance()) abort(403);
+        
+        $request->validate([
+            'status' => ['required', 'in:pending,approved']
+        ]);
+        
+        $withdrawal = $wd;
+        $oldStatus = $withdrawal->status;
+        
+        // Only allow changing from processing to pending or approved
+        if ($oldStatus !== 'processing') {
+            return back()->with('error', 'Only withdrawals in processing status can be manually changed.');
+        }
+        
+        $newStatus = $request->status;
+        
+        // Update the withdrawal
+        $withdrawal->update([
+            'status' => $newStatus,
+            'processed_at' => $newStatus === 'approved' ? now() : ($newStatus === 'pending' ? null : $withdrawal->processed_at),
+            'processed_by' => auth('admin')->id(),
+            'korapay_status' => $newStatus === 'pending' ? null : $withdrawal->korapay_status,
+        ]);
+        
+        // If changing to pending, we need to reverse any wallet actions if necessary
+        if ($newStatus === 'pending') {
+  
+            // Send notification to seller
+            Notification::create([
+                'notifiable_type' => 'App\Models\Seller',
+                'notifiable_id' => $withdrawal->seller_id,
+                'type' => 'withdrawal_status_changed',
+                'title' => 'Withdrawal Status Updated',
+                'body' => "Your withdrawal of ₦{$withdrawal->amount} has been changed from {$oldStatus} back to pending for review.",
+                'action_url' => route('seller.withdrawals.index'),
+            ]);
+            
+            return back()->with('success', "Withdrawal status changed from {$oldStatus} to pending.");
+        }
+        
+        // If changing to approved from processing
+        if ($newStatus === 'approved') {
+            // Send notification
+            Notification::create([
+                'notifiable_type' => 'App\Models\Seller',
+                'notifiable_id' => $withdrawal->seller_id,
+                'type' => 'withdrawal_approved',
+                'title' => 'Withdrawal Approved',
+                'body' => "Your withdrawal of ₦{$withdrawal->amount} has been approved and will be processed.",
+                'action_url' => route('seller.withdrawals.index'),
+            ]);
+            
+            // Send email notification
+            if (method_exists($this, 'sendWithdrawalSuccess')) {
+                $this->sendWithdrawalSuccess($withdrawal);
+            } elseif (isset($this->brevo)) {
+                $this->brevo->sendWithdrawalSuccess($withdrawal);
+            }
+            
+            return back()->with('success', "Withdrawal status changed from {$oldStatus} to approved.");
+        }
+        
+        return back()->with('error', 'Invalid status change request.');
     }
 }

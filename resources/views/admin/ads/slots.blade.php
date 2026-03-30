@@ -43,7 +43,7 @@
                                           class="d-flex align-items-center gap-2">
                                         @csrf @method('PUT')
                                         <div class="input-group input-group-sm" style="width:120px;">
-                                            <span class="input-group-text">$</span>
+                                            <span class="input-group-text">₦</span>
                                             <input type="number"
                                                    name="price_per_day"
                                                    class="form-control"
@@ -108,9 +108,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Price per Day (USD) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Price per Day (NGN) <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="price_per_day" class="form-control"
                                    step="0.01" min="0.01" placeholder="0.00" required>
                         </div>

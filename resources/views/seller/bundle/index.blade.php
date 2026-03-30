@@ -47,10 +47,10 @@
                         </td>
                         <td class="fw-semibold">{{ $bundle->items->count() }} items</td>
                         <td class="text-muted text-decoration-line-through">
-                            ${{ number_format($bundle->original_total, 2) }}
+                            ₦{{ number_format($bundle->original_total, 2) }}
                         </td>
                         <td class="fw-bold text-success">
-                            ${{ number_format($bundle->bundle_price, 2) }}
+                            ₦{{ number_format($bundle->bundle_price, 2) }}
                         </td>
                         <td>
                             <span style="background:#D5F5E3;color:#1E8449;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700;">

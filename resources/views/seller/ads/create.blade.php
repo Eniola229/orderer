@@ -79,7 +79,7 @@
                             <option value="">Select a product</option>
                             @foreach($products as $p)
                             <option value="{{ $p->id }}" {{ old('promotable_id') == $p->id ? 'selected' : '' }}>
-                                {{ $p->name }} — ${{ number_format($p->price, 2) }}
+                                {{ $p->name }} — ₦{{ number_format($p->price, 2) }}
                             </option>
                             @endforeach
                         </select>
@@ -173,7 +173,7 @@
                                             <p class="mb-0 fw-semibold fs-14">{{ $slot->name }}</p>
                                             <small class="text-muted">{{ ucfirst(str_replace('_', ' ', $slot->location)) }}</small>
                                             <p class="mb-0 text-primary fw-bold fs-13 mt-1">
-                                                ${{ number_format($slot->price_per_day, 2) }}/day
+                                                ₦{{ number_format($slot->price_per_day, 2) }}/day
                                             </p>
                                             @if($slot->dimensions)
                                                 <small class="text-muted">{{ $slot->dimensions }}</small>
@@ -303,10 +303,10 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">
-                            Total Budget (USD) <span class="text-danger">*</span>
+                            Total Budget (NGN) <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number"
                                    name="budget"
                                    id="budgetInput"
@@ -617,7 +617,7 @@ function updateBudgetEstimate() {
         const div     = document.getElementById('budgetEstimate');
         div.style.display = 'block';
         div.innerHTML = `
-            <strong>${days} day(s)</strong> × $${pricePerDay.toFixed(2)}/day = 
+            <strong>${days} day(s)</strong> × ₦${pricePerDay.toFixed(2)}/day = 
             <strong>$${minCost} minimum budget</strong>
         `;
     }

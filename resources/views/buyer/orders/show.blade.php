@@ -64,7 +64,7 @@ function orderStatusBadge(string $status): string {
                                 </td>
                                 <td class="text-muted fs-13">{{ $item->seller->business_name ?? '—' }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td class="fw-bold">${{ number_format($item->total_price, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($item->total_price, 2) }}</td>
                                 <td>
                                     <span class="badge {{ orderStatusBadge($item->status) }}">
                                         {{ ucfirst($item->status) }}
@@ -138,16 +138,16 @@ function orderStatusBadge(string $status): string {
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Subtotal</span>
-                    <span class="fw-semibold">${{ number_format($order->subtotal, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->subtotal, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Shipping</span>
-                    <span class="fw-semibold">${{ number_format($order->shipping_fee, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->shipping_fee, 2) }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between">
                     <span class="fw-bold">Total</span>
-                    <span class="fw-bold text-primary">${{ number_format($order->total, 2) }}</span>
+                    <span class="fw-bold text-primary">₦{{ number_format($order->total, 2) }}</span>
                 </div>
                 <div class="mt-3">
                     <small class="text-muted d-block">Payment method</small>

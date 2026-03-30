@@ -45,7 +45,7 @@
                                     {{ old('product_id') == $product->id ? 'selected' : '' }}>
                                 {{ $product->name }}
                                 ({{ $product->seller->business_name }})
-                                — ${{ number_format($product->price, 2) }}
+                                — ₦{{ number_format($product->price, 2) }}
                             </option>
                             @endforeach
                         </select>
@@ -55,7 +55,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-bold">
-                                Original Price (USD)
+                                Original Price (NGN)
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
@@ -67,10 +67,10 @@
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-bold">
-                                Flash Sale Price (USD) <span class="text-danger">*</span>
+                                Flash Sale Price (NGN) <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number" name="sale_price"
                                        class="form-control @error('sale_price') is-invalid @enderror"
                                        value="{{ old('sale_price') }}"
@@ -132,7 +132,7 @@
 document.getElementById('productSelect').addEventListener('change', function() {
     const option = this.options[this.selectedIndex];
     const price  = parseFloat(option.dataset.price || 0);
-    document.getElementById('originalPriceDisplay').value = price ? '$' + price.toFixed(2) : '';
+    document.getElementById('originalPriceDisplay').value = price ? '₦' + price.toFixed(2) : '';
     updateDiscount();
 });
 
@@ -146,7 +146,7 @@ function updateDiscount() {
 
     if (orig > 0 && sale > 0 && sale < orig) {
         const pct = Math.round(((orig - sale) / orig) * 100);
-        preview.textContent = `Buyers save ${pct}% (−$${(orig - sale).toFixed(2)})`;
+        preview.textContent = `Buyers save ${pct}% (−₦${(orig - sale).toFixed(2)})`;
     } else {
         preview.textContent = '';
     }

@@ -278,7 +278,7 @@
                                 @if($service->pricing_type === 'negotiable')
                                     Negotiable
                                 @else
-                                    ${{ number_format($service->price, 2) }}
+                                    ₦{{ number_format($service->price, 2) }}
                                     @if($service->pricing_type === 'hourly')
                                         <small class="fs-6">/hour</small>
                                     @endif

@@ -47,8 +47,8 @@
                         <td class="fs-13 text-muted">
                             {{ $sale->product->seller->business_name ?? '—' }}
                         </td>
-                        <td>${{ number_format($sale->original_price, 2) }}</td>
-                        <td class="fw-bold text-success">${{ number_format($sale->sale_price, 2) }}</td>
+                        <td>₦{{ number_format($sale->original_price, 2) }}</td>
+                        <td class="fw-bold text-success">₦{{ number_format($sale->sale_price, 2) }}</td>
                         <td>
                             <span class="badge" style="background:#FADBD8;color:#E74C3C;">
                                 -{{ $discount }}%

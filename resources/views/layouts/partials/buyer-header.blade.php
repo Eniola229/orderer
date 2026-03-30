@@ -29,7 +29,7 @@
                        class="btn btn-sm"
                        style="background:#D5F5E3;color:#1E8449;font-weight:700;border:none;">
                         <i class="feather-dollar-sign me-1" style="font-size:13px;"></i>
-                        ${{ number_format(auth('web')->user()->wallet_balance, 2) }}
+                        ₦{{ number_format(auth('web')->user()->wallet_balance, 2) }}
                     </a>
                 </div>
 

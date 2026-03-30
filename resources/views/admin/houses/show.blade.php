@@ -102,9 +102,9 @@
                         <label class="text-muted d-block fs-12 mb-1">Price</label>
                         <p class="fw-bold text-success fs-4 mb-0">
                             @if($house->listing_type === 'rent')
-                                ${{ number_format($house->price, 2) }}/month
+                                ₦{{ number_format($house->price, 2) }}/month
                             @else
-                                ${{ number_format($house->price, 2) }}
+                                ₦{{ number_format($house->price, 2) }}
                             @endif
                         </p>
                     </div>

@@ -91,9 +91,9 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-4" id="priceField">
-                            <label class="form-label fw-bold">Price (USD) - <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small></label>
+                            <label class="form-label fw-bold">Price (NGN) - <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number"
                                        name="price"
                                        class="form-control @error('price') is-invalid @enderror"

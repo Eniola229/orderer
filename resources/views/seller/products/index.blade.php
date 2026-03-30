@@ -65,13 +65,13 @@
                         <td>
                             @if($product->sale_price)
                                 <small class="text-muted text-decoration-line-through">
-                                    ${{ number_format($product->price, 2) }}
+                                    ₦{{ number_format($product->price, 2) }}
                                 </small><br>
                                 <span class="fw-bold text-success">
-                                    ${{ number_format($product->sale_price, 2) }}
+                                    ₦{{ number_format($product->sale_price, 2) }}
                                 </span>
                             @else
-                                <span class="fw-bold">${{ number_format($product->price, 2) }}</span>
+                                <span class="fw-bold">₦{{ number_format($product->price, 2) }}</span>
                             @endif
                         </td>
                         <td>

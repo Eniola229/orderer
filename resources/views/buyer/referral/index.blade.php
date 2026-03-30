@@ -51,7 +51,7 @@
             <div class="col-4">
                 <div class="card text-center">
                     <div class="card-body py-3">
-                        <h3 class="fw-bold text-success mb-0">${{ number_format($stats['total_earned'], 2) }}</h3>
+                        <h3 class="fw-bold text-success mb-0">₦{{ number_format($stats['total_earned'], 2) }}</h3>
                         <small class="text-muted">Total Earned</small>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
             <div class="col-4">
                 <div class="card text-center">
                     <div class="card-body py-3">
-                        <h3 class="fw-bold text-warning mb-0">${{ number_format($stats['pending_earnings'], 2) }}</h3>
+                        <h3 class="fw-bold text-warning mb-0">₦{{ number_format($stats['pending_earnings'], 2) }}</h3>
                         <small class="text-muted">Pending</small>
                     </div>
                 </div>
@@ -95,7 +95,7 @@
                                 <td>
                                     @foreach($ref->earnings as $earning)
                                     <span class="fw-bold text-success">
-                                        ${{ number_format($earning->amount, 2) }}
+                                        ₦{{ number_format($earning->amount, 2) }}
                                     </span>
                                     @endforeach
                                 </td>

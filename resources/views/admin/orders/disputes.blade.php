@@ -33,7 +33,7 @@
                             </a>
                         </td>
                         <td class="fs-13">{{ $order->user->email ?? '—' }}</td>
-                        <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
+                        <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                         <td>
                             <span class="badge orderer-badge badge-{{ $order->status }}">
                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}

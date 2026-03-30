@@ -33,7 +33,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Wallet Balance</p>
-                        <h3 class="fw-bold mb-0">${{ number_format($stats['wallet_balance'], 2) }}</h3>
+                        <h3 class="fw-bold mb-0">₦{{ number_format($stats['wallet_balance'], 2) }}</h3>
                         <p class="text-muted fs-12 mt-1 mb-0">
                             <i class="feather-arrow-up text-success me-1"></i>
                             Available to withdraw
@@ -94,7 +94,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Ads Balance</p>
-                        <h3 class="fw-bold mb-0">${{ number_format($stats['ads_balance'], 2) }}</h3>
+                        <h3 class="fw-bold mb-0">₦{{ number_format($stats['ads_balance'], 2) }}</h3>
                         <p class="text-muted fs-12 mt-1 mb-0">
                             {{ $stats['active_ads'] }} active ad(s)
                         </p>
@@ -142,7 +142,7 @@
                                     </a>
                                 </td>
                                 <td class="fs-13">{{ $item->order->shipping_name }}</td>
-                                <td class="fw-bold">${{ number_format($item->total_price, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($item->total_price, 2) }}</td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $item->status }}">
                                         {{ ucfirst($item->status) }}
@@ -208,7 +208,7 @@
                                     </div>
                                 </td>
                                 <td class="fw-bold fs-13">
-                                    ${{ number_format($product->price, 2) }}
+                                    ₦{{ number_format($product->price, 2) }}
                                 </td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $product->status }}">

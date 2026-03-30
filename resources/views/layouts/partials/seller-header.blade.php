@@ -32,7 +32,7 @@
                        class="btn btn-sm"
                        style="background:#D5F5E3;color:#1E8449;font-weight:700;border:none;">
                         <i class="feather-dollar-sign me-1" style="font-size:13px;"></i>
-                        ${{ number_format(auth('seller')->user()->wallet_balance, 2) }}
+                        ₦{{ number_format(auth('seller')->user()->wallet_balance, 2) }}
                     </a>
                 </div>
 
@@ -42,7 +42,7 @@
                        class="btn btn-sm"
                        style="background:#FEF9E7;color:#B7950B;font-weight:700;border:none;">
                         <i class="feather-trending-up me-1" style="font-size:13px;"></i>
-                        Ads: ${{ number_format(auth('seller')->user()->ads_balance, 2) }}
+                        Ads: ₦{{ number_format(auth('seller')->user()->ads_balance, 2) }}
                     </a>
                 </div>
 

@@ -48,12 +48,12 @@
                     </div>
                     <div class="col-6">
                         <small class="text-muted d-block">Budget</small>
-                        <span class="fw-bold text-success">${{ number_format($ad->budget, 2) }}</span>
+                        <span class="fw-bold text-success">₦{{ number_format($ad->budget, 2) }}</span>
                     </div>
                     <div class="col-6">
                         <small class="text-muted d-block">Seller Ads Balance</small>
                         <span class="fw-bold {{ $ad->seller->ads_balance >= $ad->budget ? 'text-success' : 'text-danger' }}">
-                            ${{ number_format($ad->seller->ads_balance, 2) }}
+                            ₦{{ number_format($ad->seller->ads_balance, 2) }}
                             @if($ad->seller->ads_balance < $ad->budget)
                                 <i class="feather-alert-circle text-danger ms-1"></i>
                             @endif

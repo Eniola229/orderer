@@ -69,14 +69,14 @@
                             <div class="widget-desc">
                                 <div class="d-flex align-items-center gap-2 mb-3">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">₦</span>
                                         <input type="number" name="min_price" class="form-control"
                                                placeholder="Min" value="{{ request('min_price') }}"
                                                min="0" step="0.01">
                                     </div>
                                     <span class="text-muted">—</span>
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">₦</span>
                                         <input type="number" name="max_price" class="form-control"
                                                placeholder="Max" value="{{ request('max_price') }}"
                                                min="0" step="0.01">
@@ -247,9 +247,9 @@
                                     <p class="product-price">
                                         @if($sp->sale_price)
                                             <span class="old-price">${{ number_format($sp->price, 2) }}</span>
-                                            ${{ number_format($sp->sale_price, 2) }}
+                                            ₦{{ number_format($sp->sale_price, 2) }}
                                         @else
-                                            ${{ number_format($sp->price, 2) }}
+                                            ₦{{ number_format($sp->price, 2) }}
                                         @endif
                                     </p>
                                     <div class="hover-content">
@@ -313,9 +313,9 @@
                                     <p class="product-price">
                                         @if($product->sale_price)
                                             <span class="old-price">${{ number_format($product->price, 2) }}</span>
-                                            ${{ number_format($product->sale_price, 2) }}
+                                            ₦{{ number_format($product->sale_price, 2) }}
                                         @else
-                                            ${{ number_format($product->price, 2) }}
+                                            ₦{{ number_format($product->price, 2) }}
                                         @endif
                                     </p>
                                     <div class="hover-content">

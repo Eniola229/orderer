@@ -158,13 +158,13 @@
                         <td>
                             @if($product->sale_price)
                                 <small class="text-muted text-decoration-line-through d-block">
-                                    ${{ number_format($product->price, 2) }}
+                                    ₦{{ number_format($product->price, 2) }}
                                 </small>
                                 <span class="fw-bold text-success">
-                                    ${{ number_format($product->sale_price, 2) }}
+                                    ₦{{ number_format($product->sale_price, 2) }}
                                 </span>
                             @else
-                                <span class="fw-bold">${{ number_format($product->price, 2) }}</span>
+                                <span class="fw-bold">₦{{ number_format($product->price, 2) }}</span>
                             @endif
                         
                         
@@ -270,9 +270,9 @@
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Price</label>
-                                            <strong class="text-success">${{ number_format($product->price, 2) }}</strong>
+                                            <strong class="text-success">₦{{ number_format($product->price, 2) }}</strong>
                                             @if($product->sale_price)
-                                                <br><small class="text-muted">Sale: ${{ number_format($product->sale_price, 2) }}</small>
+                                                <br><small class="text-muted">Sale: ₦{{ number_format($product->sale_price, 2) }}</small>
                                             @endif
                                         </div>
                                     </div>

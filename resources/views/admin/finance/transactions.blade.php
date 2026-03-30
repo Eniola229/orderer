@@ -31,7 +31,7 @@
         <div class="card">
             <div class="card-body">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Total Volume</p>
-                <h2 class="fw-bold mb-0 text-success">${{ number_format($stats['total_volume'], 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-success">₦{{ number_format($stats['total_volume'], 2) }}</h2>
                 <small class="text-muted">All successful payments</small>
             </div>
         </div>
@@ -204,7 +204,7 @@
                             </span>
                           
                         <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                            {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                            {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                           
                         <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}  
                         <td>
@@ -265,20 +265,20 @@
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Amount</label>
                                             <strong class="{{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                                {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                                {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                             </strong>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Balance Before</label>
-                                            <strong>${{ number_format($txn->balance_before, 2) }}</strong>
+                                            <strong>₦{{ number_format($txn->balance_before, 2) }}</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Balance After</label>
-                                            <strong>${{ number_format($txn->balance_after, 2) }}</strong>
+                                            <strong>₦{{ number_format($txn->balance_after, 2) }}</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

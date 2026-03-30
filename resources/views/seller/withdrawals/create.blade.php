@@ -20,7 +20,7 @@
                     <div>
                         <p class="text-muted fs-12 mb-1">Available to withdraw</p>
                         <p class="fw-bold text-success mb-0" style="font-size:32px;">
-                            ${{ number_format($wallet->balance, 2) }}
+                            ₦{{ number_format($wallet->balance, 2) }}
                         </p>
                     </div>
                     <div class="rounded-circle d-flex align-items-center justify-content-center"
@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <p class="text-muted fs-13 mt-2">
-                    Supported countries for direct bank payout: <strong>Nigeria, Ghana, Kenya, and South Africa</strong>.
+                    Supported countries for direct bank payout: <strong>NGN, KES, GHS, XOF, XAF, EGP, ZAR and TSZ</strong>.
                     If your country isn't listed, you can still withdraw using a USD-enabled account such as
                     <strong>Grey, Geegpay, Cleva, or Chipper Cash</strong> — select <em>United States (USD)</em>
                     as the country and choose <em>Yes — it accepts USD</em>.
@@ -48,9 +48,9 @@
 
                 {{-- Amount --}}
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Amount (USD) <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold">Amount (NGN) <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">₦</span>
                         <input type="number" name="amount"
                                class="form-control @error('amount') is-invalid @enderror"
                                value="{{ old('amount') }}" step="0.01" min="10"
@@ -58,12 +58,12 @@
                                @if(isset($wallet) && $wallet->balance > 0)
                                max="{{ $wallet->balance }}"
                                @endif
-                               placeholder="Minimum $10.00" required>
+                               placeholder="Minimum ₦100.00" required>
                         @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     {{-- Show wallet balance info --}}
                     @if(isset($wallet) && $wallet->balance > 0)
-                    <small class="text-muted">Available balance: ${{ number_format($wallet->balance, 2) }}</small>
+                    <small class="text-muted">Available balance: ₦{{ number_format($wallet->balance, 2) }}</small>
                     @else
                     <small class="text-danger">No funds available to withdraw</small>
                     @endif
@@ -100,7 +100,7 @@
                                     <option value="GH" {{ old('bank_country') === 'GH' ? 'selected' : '' }}>Ghana (GHS)</option>
                                     <option value="KE" {{ old('bank_country') === 'KE' ? 'selected' : '' }}>Kenya (KES)</option>
                                     <option value="ZA" {{ old('bank_country') === 'ZA' ? 'selected' : '' }}>South Africa (ZAR)</option>
-                                    <option value="US" {{ old('bank_country') === 'US' ? 'selected' : '' }}>United States (USD)</option>
+                                    <option value="US" {{ old('bank_country') === 'US' ? 'selected' : '' }}>United States (NGN)</option>
                                     <option value="GB" {{ old('bank_country') === 'GB' ? 'selected' : '' }}>United Kingdom (GBP)</option>
                                 </select>
                                 <input type="hidden" name="currency" id="currency" value="{{ old('currency', '') }}">
@@ -157,7 +157,7 @@
                                 <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
                                     <input type="radio" name="dollar_capable" value="no"
                                            {{ old('dollar_capable', 'no') === 'no' ? 'checked' : '' }}>
-                                    No — local currency only
+                                    No — only (NGN, KES, GHS, XOF, XAF, EGP, ZAR and TSZ)
                                 </label>
                             </div>
                             @error('dollar_capable')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
@@ -228,7 +228,7 @@
             <div class="card-body">
                 <div class="alert alert-warning mb-3">
                     <i class="feather-info me-2"></i>
-                    All withdrawals are processed in <strong>USD</strong>. Processing takes 1–3 business days.
+                    All withdrawals are processed in <strong>NGN</strong>. Processing takes 1–3 business days.
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" form="withdrawalForm" class="btn btn-primary">
@@ -250,11 +250,11 @@
                 <ul class="list-unstyled fs-13 text-muted">
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Minimum withdrawal is <strong>$10.00</strong>
+                        Minimum withdrawal is <strong>₦100.00</strong>
                     </li>
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Ensure account can receive USD transfers
+                        Ensure account can receive NGN transfers
                     </li>
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
@@ -279,7 +279,7 @@ const currencyMap = {
     'GH': 'GHS',
     'KE': 'KES',
     'ZA': 'ZAR',
-    'US': 'USD',
+    'US': 'NGN',
     'GB': 'GBP'
 };
 

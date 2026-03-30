@@ -96,13 +96,13 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Price</label>
-                        <p class="fw-bold text-success fs-4 mb-0">${{ number_format($product->price, 2) }}</p>
+                        <p class="fw-bold text-success fs-4 mb-0">₦{{ number_format($product->price, 2) }}</p>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Sale Price</label>
                         <p class="fw-bold mb-0">
                             @if($product->sale_price)
-                                ${{ number_format($product->sale_price, 2) }}
+                                ₦{{ number_format($product->sale_price, 2) }}
                             @else
                                 <span class="text-muted">—</span>
                             @endif

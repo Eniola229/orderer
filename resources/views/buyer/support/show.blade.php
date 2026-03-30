@@ -7,49 +7,69 @@
 @endsection
 
 @section('content')
+
+@php
+function ticketStatusBadge(string $status): string {
+    return match($status) {
+        'open'            => 'bg-success text-white',
+        'waiting'         => 'bg-warning text-dark',
+        'in_progress'     => 'bg-primary text-white',
+        'resolved'        => 'bg-secondary text-white',
+        'closed'          => 'bg-dark text-white',
+        default           => 'bg-secondary text-white',
+    };
+}
+@endphp
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">{{ $ticket->subject }}</h5>
-                <span class="badge orderer-badge badge-{{ $ticket->status }}">
-                    {{ ucfirst(str_replace('_',' ',$ticket->status)) }}
+                <span class="badge {{ ticketStatusBadge($ticket->status) }}">
+                    {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
                 </span>
             </div>
+
+            {{-- Message thread --}}
             <div class="card-body" style="max-height:500px;overflow-y:auto;" id="msgBox">
-                @foreach($ticket->messages->where('is_internal', false) as $msg)
-                @php $isBuyer = $msg->sender_type === 'App\Models\User'; @endphp
-                <div class="d-flex gap-3 mb-4 {{ $isBuyer ? 'flex-row-reverse' : '' }}">
-                    <div class="avatar-text avatar-sm rounded flex-shrink-0
-                         {{ $isBuyer ? 'bg-primary text-white' : 'bg-secondary text-white' }}"
-                         style="font-size:11px;">
-                        {{ $isBuyer ? 'Me' : 'CS' }}
-                    </div>
-                    <div style="max-width:75%;">
-                        <div class="p-3 rounded
-                             {{ $isBuyer ? 'bg-primary text-white' : 'bg-light' }}"
-                             style="{{ $isBuyer ? 'border-radius:12px 12px 4px 12px !important' : 'border-radius:12px 12px 12px 4px !important' }}">
-                            <p class="mb-0 fs-14">{{ $msg->message }}</p>
+                <div id="messageThread">
+                    {{-- Rendered server-side on first load --}}
+                    @foreach($ticket->messages->where('is_internal', false) as $msg)
+                    @php $isBuyer = $msg->sender_type === 'App\Models\User'; @endphp
+                    <div class="d-flex gap-3 mb-4 {{ $isBuyer ? 'flex-row-reverse' : '' }}">
+                        <div class="avatar-text avatar-sm rounded flex-shrink-0
+                             {{ $isBuyer ? 'bg-primary text-white' : 'bg-secondary text-white' }}"
+                             style="font-size:11px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
+                            {{ $isBuyer ? 'Me' : 'CS' }}
                         </div>
-                        <small class="text-muted d-block mt-1 {{ $isBuyer ? 'text-end' : '' }}">
-                            {{ $msg->created_at->format('M d, Y H:i') }}
-                        </small>
+                        <div style="max-width:75%;">
+                            <div class="p-3 rounded {{ $isBuyer ? 'bg-primary text-white' : 'bg-light' }}"
+                                 style="{{ $isBuyer ? 'border-radius:12px 12px 4px 12px !important' : 'border-radius:12px 12px 12px 4px !important' }}">
+                                <p class="mb-0 fs-14">{{ $msg->message }}</p>
+                            </div>
+                            <small class="text-muted d-block mt-1 {{ $isBuyer ? 'text-end' : '' }}">
+                                {{ $msg->created_at->format('M d, Y H:i') }}
+                            </small>
+                        </div>
                     </div>
+                    @endforeach
                 </div>
-                @endforeach
             </div>
+
             @if(!in_array($ticket->status, ['resolved','closed']))
             <div class="card-footer">
-                <form action="{{ route('buyer.support.reply', $ticket->id) }}" method="POST">
-                    @csrf
-                    <div class="d-flex gap-2">
-                        <textarea name="message" class="form-control" rows="2"
-                                  placeholder="Type your reply..." required></textarea>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="feather-send"></i>
-                        </button>
-                    </div>
-                </form>
+                <div id="replyError" class="alert alert-danger py-2 mb-2" style="display:none;"></div>
+                <div class="d-flex gap-2" id="replyForm">
+                    <textarea id="replyMessage" class="form-control" rows="2"
+                              placeholder="Type your reply..." required></textarea>
+                    <button type="button" id="sendReplyBtn" class="btn btn-primary px-4">
+                        <span id="sendBtnText"><i class="feather-send"></i></span>
+                        <span id="sendBtnLoader" style="display:none;">
+                            <span class="spinner-border spinner-border-sm"></span>
+                        </span>
+                    </button>
+                </div>
             </div>
             @else
             <div class="card-footer">
@@ -62,6 +82,7 @@
             @endif
         </div>
     </div>
+
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Ticket Info</h5></div>
@@ -72,17 +93,25 @@
                 </div>
                 <div class="mb-3">
                     <small class="text-muted d-block">Status</small>
-                    <span class="badge orderer-badge badge-{{ $ticket->status }}">
-                        {{ ucfirst(str_replace('_',' ',$ticket->status)) }}
+                    <span class="badge {{ ticketStatusBadge($ticket->status) }}">
+                        {{ ucfirst(str_replace('_', ' ', $ticket->status)) }}
                     </span>
                 </div>
                 <div class="mb-3">
                     <small class="text-muted d-block">Category</small>
-                    <strong>{{ ucfirst(str_replace('_',' ',$ticket->category)) }}</strong>
+                    <strong>{{ ucfirst(str_replace('_', ' ', $ticket->category)) }}</strong>
                 </div>
                 <div class="mb-3">
                     <small class="text-muted d-block">Priority</small>
-                    <span class="badge bg-{{ $ticket->priority === 'urgent' ? 'danger' : ($ticket->priority === 'high' ? 'warning' : 'secondary') }} text-white">
+                    @php
+                    $priorityBadge = match($ticket->priority) {
+                        'urgent' => 'bg-danger text-white',
+                        'high'   => 'bg-warning text-dark',
+                        'medium' => 'bg-info text-white',
+                        default  => 'bg-secondary text-white',
+                    };
+                    @endphp
+                    <span class="badge {{ $priorityBadge }}">
                         {{ ucfirst($ticket->priority) }}
                     </span>
                 </div>
@@ -94,10 +123,135 @@
         </div>
     </div>
 </div>
+
 @push('scripts')
 <script>
-    const b = document.getElementById('msgBox');
-    if (b) b.scrollTop = b.scrollHeight;
+const ticketId    = '{{ $ticket->id }}';
+const replyUrl    = '{{ route("buyer.support.reply", $ticket->id) }}';
+const messagesUrl = '{{ route("buyer.support.messages", $ticket->id) }}';
+const csrfToken   = document.querySelector('meta[name="csrf-token"]').content;
+
+// Track last known message count to detect new ones
+let lastMessageCount = {{ $ticket->messages->where('is_internal', false)->count() }};
+
+// Scroll to bottom of message box
+function scrollToBottom() {
+    const box = document.getElementById('msgBox');
+    if (box) box.scrollTop = box.scrollHeight;
+}
+
+// Build a single message bubble HTML
+function buildBubble(msg) {
+    const align  = msg.is_buyer ? 'flex-row-reverse' : '';
+    const avatar = msg.is_buyer
+        ? 'bg-primary text-white'
+        : 'bg-secondary text-white';
+    const bubble = msg.is_buyer
+        ? 'bg-primary text-white" style="border-radius:12px 12px 4px 12px !important'
+        : 'bg-light" style="border-radius:12px 12px 12px 4px !important';
+    const timeAlign = msg.is_buyer ? 'text-end' : '';
+    const label     = msg.is_buyer ? 'Me' : 'CS';
+
+    return `
+        <div class="d-flex gap-3 mb-4 ${align}" data-msg-id="${msg.id}">
+            <div class="avatar-text avatar-sm rounded flex-shrink-0 ${avatar}"
+                 style="font-size:11px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
+                ${label}
+            </div>
+            <div style="max-width:75%;">
+                <div class="p-3 rounded ${bubble}">
+                    <p class="mb-0 fs-14">${msg.message}</p>
+                </div>
+                <small class="text-muted d-block mt-1 ${timeAlign}">
+                    ${msg.created_at}
+                </small>
+            </div>
+        </div>`;
+}
+
+// Poll for new messages every 5 seconds
+function pollMessages() {
+    fetch(messagesUrl, {
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(messages => {
+        if (messages.length > lastMessageCount) {
+            const thread   = document.getElementById('messageThread');
+            const newOnes  = messages.slice(lastMessageCount);
+            newOnes.forEach(msg => {
+                thread.insertAdjacentHTML('beforeend', buildBubble(msg));
+            });
+            lastMessageCount = messages.length;
+            scrollToBottom();
+        }
+    })
+    .catch(() => {}); // silent fail — polling should never break the UI
+}
+
+// Send reply via AJAX
+document.getElementById('sendReplyBtn')?.addEventListener('click', function () {
+    const textarea  = document.getElementById('replyMessage');
+    const message   = textarea.value.trim();
+    const errorBox  = document.getElementById('replyError');
+    const btnText   = document.getElementById('sendBtnText');
+    const btnLoader = document.getElementById('sendBtnLoader');
+
+    if (!message || message.length < 5) {
+        errorBox.textContent = 'Please enter at least 5 characters.';
+        errorBox.style.display = 'block';
+        return;
+    }
+
+    errorBox.style.display = 'none';
+    btnText.style.display   = 'none';
+    btnLoader.style.display = 'inline-block';
+    this.disabled = true;
+
+    fetch(replyUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            textarea.value = '';
+            // Immediately append the new message
+            const thread = document.getElementById('messageThread');
+            thread.insertAdjacentHTML('beforeend', buildBubble({
+                id: data.message.id,
+                message: data.message.message,
+                is_buyer: true,
+                created_at: data.message.created_at,
+            }));
+            lastMessageCount++;
+            scrollToBottom();
+        } else {
+            errorBox.textContent = data.error ?? 'Failed to send. Please try again.';
+            errorBox.style.display = 'block';
+        }
+    })
+    .catch(() => {
+        errorBox.textContent = 'Network error. Please try again.';
+        errorBox.style.display = 'block';
+    })
+    .finally(() => {
+        btnText.style.display   = 'inline-block';
+        btnLoader.style.display = 'none';
+        this.disabled = false;
+    });
+});
+
+// Start polling
+setInterval(pollMessages, 5000);
+
+// Scroll on load
+scrollToBottom();
 </script>
 @endpush
 @endsection

@@ -99,13 +99,14 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/brand',             [BrandController::class, 'index'])->name('brand.index');
         Route::post('/brand',            [BrandController::class, 'store'])->name('brand.store');
         Route::put('/brand/{brand}',     [BrandController::class, 'update'])->name('brand.update');
-
+ 
         // Support
         Route::get('/support',                        [SellerSupportController::class, 'index'])->name('support');
         Route::get('/support/create',                 [SellerSupportController::class, 'create'])->name('support.create');
         Route::post('/support',                       [SellerSupportController::class, 'store'])->name('support.store');
         Route::get('/support/{ticket}',               [SellerSupportController::class, 'show'])->name('support.show');
         Route::post('/support/{ticket}/reply',        [SellerSupportController::class, 'reply'])->name('support.reply');
+        Route::get('/support/{ticket}/messages', [SellerSupportController::class, 'messages'])->name('support.messages');
 
         // Notifications
         Route::get('/notifications',                  [SellerNotificationController::class, 'index'])->name('notifications.index');

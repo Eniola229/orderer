@@ -138,7 +138,7 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="info-label">Price</div>
-                    <div class="info-value fs-4 fw-bold text-primary">${{ number_format($house->price, 2) }}</div>
+                    <div class="info-value fs-4 fw-bold text-primary">₦{{ number_format($house->price, 2) }}</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="info-label">Listing Type</div>

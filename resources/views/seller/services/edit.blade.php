@@ -100,7 +100,7 @@
                         <div class="col-md-4 mb-4" id="priceField">
                             <label class="form-label fw-bold">Price</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number"
                                        name="price"
                                        class="form-control"

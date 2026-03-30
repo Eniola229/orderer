@@ -8,7 +8,7 @@ use App\Models\TicketMessage;
 use Illuminate\Http\Request;
 
 class SupportController extends Controller
-{
+{ 
     public function index()
     {
         $tickets = SupportTicket::where('requester_type', 'App\Models\Seller')
@@ -69,20 +69,38 @@ class SupportController extends Controller
 
         return view('seller.support.show', compact('ticket'));
     }
+    
+    public function messages(SupportTicket $ticket)
+    {
+        if ($ticket->requester_id !== auth('seller')->id()) abort(403);
+
+        $messages = $ticket->messages()
+            ->where('is_internal', false)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'id'         => $msg->id,
+                    'message'    => $msg->message,
+                    'is_seller'  => $msg->sender_type === 'App\Models\Seller',
+                    'created_at' => $msg->created_at->format('M d, Y H:i'),
+                ];
+            });
+
+        return response()->json($messages);
+    }
 
     public function reply(Request $request, SupportTicket $ticket)
     {
         if ($ticket->requester_id !== auth('seller')->id()) abort(403);
 
         if (in_array($ticket->status, ['resolved', 'closed'])) {
-            return back()->with('error', 'This ticket is closed. Open a new one if needed.');
+            return response()->json(['success' => false, 'error' => 'This ticket is closed.'], 403);
         }
 
-        $request->validate([
-            'message' => ['required', 'string', 'min:5'],
-        ]);
+        $request->validate(['message' => ['required', 'string', 'min:5']]);
 
-        TicketMessage::create([
+        $msg = TicketMessage::create([
             'support_ticket_id' => $ticket->id,
             'sender_type'       => 'App\Models\Seller',
             'sender_id'         => auth('seller')->id(),
@@ -92,6 +110,14 @@ class SupportController extends Controller
 
         $ticket->update(['status' => 'waiting']);
 
-        return back()->with('success', 'Reply sent.');
+        return response()->json([
+            'success' => true,
+            'message' => [
+                'id'         => $msg->id,
+                'message'    => $msg->message,
+                'is_seller'  => true,
+                'created_at' => $msg->created_at->format('M d, Y H:i'),
+            ]
+        ]);
     }
 }

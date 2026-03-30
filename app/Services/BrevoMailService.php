@@ -115,7 +115,7 @@ class BrevoMailService
         return $this->send(
             $seller->email,
             $seller->full_name,
-            "Withdrawal of \${$amount} processed — Orderer",
+            "Withdrawal of ₦{$amount} processed — Orderer",
             $this->withdrawalSuccessHtml($withdrawal, $seller, $amount, $currency, $localAmount, $exchangeRate)
         );
     }
@@ -241,7 +241,7 @@ class BrevoMailService
             <div style='padding:30px;background:#fff;'>
                 <p>Hi <strong>{$user->first_name}</strong>,</p>
                 <p>Your order <strong>#{$order->order_number}</strong> has been placed successfully.</p>
-                <p>Total: <strong>\${$order->total}</strong></p>
+                <p>Total: <strong>₦{$order->total}</strong></p>
                 <div style='text-align:center;margin:30px 0;'>
                     <a href='" . route('buyer.orders') . "' style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
                         Track Order
@@ -323,7 +323,7 @@ class BrevoMailService
                     <table style='width:100%;font-size:14px;'>
                          <tr>
                             <td style='padding:8px 0;color:#6c757d;'>Amount:</td>
-                            <td style='padding:8px 0;font-weight:bold;'>\${$amount}</td>
+                            <td style='padding:8px 0;font-weight:bold;'>₦{$amount}</td>
                          </tr>
                          <tr>
                             <td style='padding:8px 0;color:#6c757d;'>Bank:</td>
@@ -386,7 +386,7 @@ protected function withdrawalRejectedHtml($withdrawal, $seller, $amount, $reason
         </div>
         <div style='padding:30px;background:#fff;'>
             <p>Hi <strong>{$seller->first_name}</strong>,</p>
-            <p>Your withdrawal request of <strong>\${$amount}</strong> has been reviewed and could not be processed at this time.</p>
+            <p>Your withdrawal request of <strong>₦{$amount}</strong> has been reviewed and could not be processed at this time.</p>
             
             <div style='background:#FEF9E7;border-left:3px solid #F39C12;padding:12px 16px;margin:20px 0;font-size:14px;'>
                 <strong>Reason:</strong> {$reason}
@@ -397,7 +397,7 @@ protected function withdrawalRejectedHtml($withdrawal, $seller, $amount, $reason
                 <table style='width:100%;font-size:14px;'>
                     <tr>
                         <td style='padding:8px 0;color:#6c757d;'>Amount:</td>
-                        <td style='padding:8px 0;font-weight:bold;'>\${$amount}</td>
+                        <td style='padding:8px 0;font-weight:bold;'>₦{$amount}</td>
                     </tr>
                     <tr>
                         <td style='padding:8px 0;color:#6c757d;'>Bank:</td>

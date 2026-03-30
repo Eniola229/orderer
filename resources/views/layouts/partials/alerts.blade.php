@@ -11,6 +11,20 @@
     </div>
 @endif
 
+@if(session('warning'))
+    <div class="alert-orderer alert-error-orderer mb-3">
+        <div class="container-fluid">
+            <p>
+                <i class="feather-check-circle me-2"></i>
+                {{ session('warning') }}
+                <button type="button" class="alert-close-btn"
+                        onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </p>
+        </div>
+    </div>
+@endif
+
+
 @if(session('error'))
     <div class="alert-orderer alert-error-orderer mb-3">
         <div class="container-fluid">

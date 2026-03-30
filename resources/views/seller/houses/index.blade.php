@@ -72,7 +72,7 @@
                         <td class="fs-13 text-muted">{{ ucfirst($house->property_type) }}</td>
                         <td class="fs-13 text-muted">{{ ucfirst($house->listing_type) }}</td>
                         <td>
-                            <span class="fw-bold">${{ number_format($house->price, 2) }}</span>
+                            <span class="fw-bold">₦{{ number_format($house->price, 2) }}</span>
                         </td>
                         <td class="fs-13 text-muted">
                             {{ $house->city }}@if($house->city && $house->state), @endif{{ $house->state }}

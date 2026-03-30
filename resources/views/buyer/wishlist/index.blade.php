@@ -53,16 +53,16 @@
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div>
                             @if($product->sale_price)
-                            <span class="fw-bold text-success">${{ number_format($product->sale_price, 2) }}</span>
+                            <span class="fw-bold text-success">₦{{ number_format($product->sale_price, 2) }}</span>
                             <small class="text-muted text-decoration-line-through ms-1">
-                                ${{ number_format($product->price, 2) }}
+                                ₦{{ number_format($product->price, 2) }}
                             </small>
                             @else
-                            <span class="fw-bold">${{ number_format($product->price, 2) }}</span>
+                            <span class="fw-bold">₦{{ number_format($product->price, 2) }}</span>
                             @endif
                         </div>
                         @if($item->price_at_save)
-                        <small class="text-muted">Saved at ${{ number_format($item->price_at_save, 2) }}</small>
+                        <small class="text-muted">Saved at ₦{{ number_format($item->price_at_save, 2) }}</small>
                         @endif
                     </div>
                     <form action="{{ route('cart.add') }}" method="POST">

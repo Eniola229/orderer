@@ -43,7 +43,7 @@
                             </a>
                         </td>
                         <td class="text-muted fs-13">{{ $order->items->count() }} item(s)</td>
-                        <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
+                        <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                         <td>
                             @php
                             $paymentBadge = match($order->payment_status) {

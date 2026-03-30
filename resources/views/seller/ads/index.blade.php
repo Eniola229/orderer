@@ -62,9 +62,9 @@
                         <td class="fs-13 text-muted">
                             {{ $ad->bannerSlot->name ?? 'Top Listing / CPC' }}
                         </td>
-                        <td class="fw-bold">${{ number_format($ad->budget, 2) }}</td>
+                        <td class="fw-bold">₦{{ number_format($ad->budget, 2) }}</td>
                         <td class="text-danger fw-semibold">
-                            ${{ number_format($ad->amount_spent, 2) }}
+                            ₦{{ number_format($ad->amount_spent, 2) }}
                         </td>
                         <td>
                             <div class="fs-12">

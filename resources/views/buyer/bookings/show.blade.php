@@ -41,7 +41,7 @@
                     </div>
                     <div class="col-md-4">
                         <small class="text-muted d-block">Fee Paid</small>
-                        <strong class="text-success">${{ number_format($booking->fee, 2) }}</strong>
+                        <strong class="text-success">₦{{ number_format($booking->fee, 2) }}</strong>
                     </div>
                     @if($booking->tracking_number)
                     <div class="col-12">
@@ -106,7 +106,7 @@
                 <div class="d-flex justify-content-between">
                     <span class="fw-bold">Total Paid</span>
                     <span class="fw-bold text-success" style="font-size:18px;">
-                        ${{ number_format($booking->fee, 2) }}
+                        ₦{{ number_format($booking->fee, 2) }}
                     </span>
                 </div>
             </div>

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class SupportController extends Controller
 {
-    public function index()
+    public function index() 
     {
         $tickets = SupportTicket::where('requester_type', 'App\Models\User')
             ->where('requester_id', auth('web')->id())
@@ -74,12 +74,12 @@ class SupportController extends Controller
         if ($ticket->requester_id !== auth('web')->id()) abort(403);
 
         if (in_array($ticket->status, ['resolved', 'closed'])) {
-            return back()->with('error', 'This ticket is closed.');
+            return response()->json(['success' => false, 'error' => 'This ticket is closed.'], 403);
         }
 
         $request->validate(['message' => ['required', 'string', 'min:5']]);
 
-        TicketMessage::create([
+        $msg = TicketMessage::create([
             'support_ticket_id' => $ticket->id,
             'sender_type'       => 'App\Models\User',
             'sender_id'         => auth('web')->id(),
@@ -89,6 +89,34 @@ class SupportController extends Controller
 
         $ticket->update(['status' => 'waiting']);
 
-        return back()->with('success', 'Reply sent.');
+        return response()->json([
+            'success' => true,
+            'message' => [
+                'id'         => $msg->id,
+                'message'    => $msg->message,
+                'is_buyer'   => true,
+                'created_at' => $msg->created_at->format('M d, Y H:i'),
+            ]
+        ]);
+    }
+
+    public function messages(SupportTicket $ticket)
+    {
+        if ($ticket->requester_id !== auth('web')->id()) abort(403);
+        
+        $messages = $ticket->messages()
+            ->where('is_internal', false)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'id'          => $msg->id,
+                    'message'     => $msg->message,
+                    'is_buyer'    => $msg->sender_type === 'App\Models\User',
+                    'created_at'  => $msg->created_at->format('M d, Y H:i'),
+                ];
+            });
+
+        return response()->json($messages);
     }
 }

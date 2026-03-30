@@ -62,8 +62,8 @@
                         </td>
                         <td class="fs-13 text-muted">{{ $item->order->shipping_name }}</td>
                         <td class="fw-semibold">{{ $item->quantity }}</td>
-                        <td><span class="fw-bold">${{ number_format($item->total_price, 2) }}</span></td>
-                        <td><span class="fw-bold text-success">${{ number_format($item->seller_earnings, 2) }}</span></td>
+                        <td><span class="fw-bold">₦{{ number_format($item->total_price, 2) }}</span></td>
+                        <td><span class="fw-bold text-success">₦{{ number_format($item->seller_earnings, 2) }}</span></td>
                         <td>
                             <span class="badge orderer-badge badge-{{ $item->status }}">
                                 {{ ucfirst($item->status) }}

@@ -211,10 +211,10 @@
                         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                             <div>
                                 <span style="font-size:18px;font-weight:800;color:#2ECC71;">
-                                    ${{ number_format($house->price, 0) }}
+                                    ₦{{ number_format($house->price, 0) }}
                                 </span>
                                 @if($house->listing_type == 'rent')
-                                    <small class="text-muted">/month</small>
+                                    <small class="text-muted">/year</small>
                                 @endif
                             </div>
                             <a href="{{ route('houses.show', $house->slug) }}" class="btn essence-btn btn-sm">

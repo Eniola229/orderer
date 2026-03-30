@@ -56,7 +56,7 @@
                             {{ $booking->delivery_city }}, {{ $booking->delivery_country }}
                         </td>
                         <td class="fs-13">{{ $booking->carrier ?? '—' }}</td>
-                        <td class="fw-bold text-success">${{ number_format($booking->fee, 2) }}</td>
+                        <td class="fw-bold text-success">₦{{ number_format($booking->fee, 2) }}</td>
                         <td>
                             @if($booking->tracking_number)
                                 <code class="fs-12">{{ $booking->tracking_number }}</code>

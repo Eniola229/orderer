@@ -201,6 +201,7 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::post('/support',             [BuyerSupport::class, 'store'])->name('support.store');
     Route::get('/support/{ticket}',     [BuyerSupport::class, 'show'])->name('support.show');
     Route::post('/support/{ticket}/reply', [BuyerSupport::class, 'reply'])->name('support.reply');
+    Route::get('/support/{ticket}/messages', [BuyerSupport::class, 'messages'])->name('support.messages');
 
     // Bookings
     Route::get('/bookings',           [App\Http\Controllers\RiderBookingController::class, 'myBookings'])->name('bookings');

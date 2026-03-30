@@ -17,9 +17,9 @@
                             Available Balance
                         </p>
                         <h1 style="color:#fff;font-size:42px;font-weight:800;margin-bottom:4px;">
-                            ${{ number_format($wallet->balance, 2) }}
+                            ₦{{ number_format($wallet->balance, 2) }}
                         </h1>
-                        <small style="color:rgba(255,255,255,.7);">USD Wallet</small>
+                        <small style="color:rgba(255,255,255,.7);">NGN Wallet</small>
                     </div>
                     <i class="feather-credit-card" style="font-size:48px;color:rgba(255,255,255,.3);"></i>
                 </div>
@@ -40,9 +40,9 @@
                 <form action="{{ route('buyer.wallet.topup') }}" method="POST">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Amount (USD)</label>
+                        <label class="form-label fw-bold">Amount (NGN)</label>
                         <div class="input-group">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="amount" class="form-control"
                                    min="1" step="0.01" placeholder="0.00" required>
                         </div>
@@ -54,7 +54,7 @@
                         <button type="button"
                                 class="btn btn-sm btn-outline-primary"
                                 onclick="document.querySelector('[name=amount]').value='{{ $amount }}'">
-                            ${{ $amount }}
+                            ₦{{ $amount }}
                         </button>
                         @endforeach
                     </div>
@@ -97,9 +97,9 @@
                                     </span>
                                 </td>
                                 <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                    {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                    {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                 </td>
-                                <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}</td>
+                                <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td class="text-muted fs-12">{{ $txn->created_at->format('M d, Y H:i') }}</td>
                             </tr>
                             @endforeach

@@ -143,7 +143,7 @@
                                 <a href="{{ route('product.show', $product->slug) }}">
                                     <h6>{{ Str::limit($product->name, 35) }}</h6>
                                 </a>
-                                <p class="product-price">${{ number_format($product->price, 2) }}</p>
+                                <p class="product-price">₦{{ number_format($product->price, 2) }}</p>
                                 <div class="hover-content">
                                     <div class="add-to-cart-btn">
                                         <a href="#" class="btn essence-btn add-to-cart"

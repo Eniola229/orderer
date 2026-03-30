@@ -168,7 +168,7 @@
                                     <span style="font-weight:700;color:#1a1a1a;font-size:16px;">Negotiable</span>
                                 @else
                                     <span style="font-weight:800;color:#2ECC71;font-size:18px;">
-                                        ${{ number_format($service->price, 0) }}
+                                        ₦{{ number_format($service->price, 0) }}
                                     </span>
                                     @if($service->pricing_type === 'hourly')
                                         <small style="color:#888;">/hr</small>

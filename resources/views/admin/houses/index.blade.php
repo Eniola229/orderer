@@ -178,9 +178,9 @@
                         
                         <td class="fw-bold text-success">
                             @if($house->listing_type === 'rent')
-                                ${{ number_format($house->price, 2) }}/month
+                                ₦{{ number_format($house->price, 2) }}/month
                             @else
-                                ${{ number_format($house->price, 2) }}
+                                ₦{{ number_format($house->price, 2) }}
                             @endif
                         
                         

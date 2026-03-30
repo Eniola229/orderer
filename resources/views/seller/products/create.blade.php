@@ -86,10 +86,10 @@
                     <div class="row">
                         <div class="col-md-4 mb-4">
                             <label class="form-label fw-bold">
-                                Price (USD) — <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small><span class="text-danger">*</span>
+                                Price (NGN) — <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small><span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number"
                                        name="price"
                                        class="form-control @error('price') is-invalid @enderror"
@@ -101,9 +101,9 @@
                             </div>
                         </div>
                         <div class="col-md-4 mb-4">
-                            <label class="form-label fw-bold">Sale Price (USD) - <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small></label>
+                            <label class="form-label fw-bold">Sale Price (NGN) - <small> This will be automatically converted based on the buyer’s current exchange rate in their region at the time of viewing, adding to cart, wishlist, or checkout.</small></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="number"
                                        name="sale_price"
                                        class="form-control"
@@ -265,7 +265,7 @@
                         </li>
                         <li class="mb-0">
                             <i class="feather-check-circle text-success me-2"></i>
-                            Set competitive USD pricing
+                            Set competitive NGN pricing
                         </li>
                     </ul>
                 </div>

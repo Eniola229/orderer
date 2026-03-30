@@ -63,13 +63,13 @@
                     <div class="col-6">
                         <div class="p-2 bg-light rounded text-center">
                             <small class="text-muted d-block">Balance</small>
-                            <strong class="text-success">${{ number_format($wallet->balance ?? 0, 2) }}</strong>
+                            <strong class="text-success">₦{{ number_format($wallet->balance ?? 0, 2) }}</strong>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="p-2 bg-light rounded text-center">
                             <small class="text-muted d-block">Ads Balance</small>
-                            <strong class="text-primary">${{ number_format($wallet->ads_balance ?? 0, 2) }}</strong>
+                            <strong class="text-primary">₦{{ number_format($wallet->ads_balance ?? 0, 2) }}</strong>
                         </div>
                     </div>
                 </div>
@@ -91,7 +91,7 @@
                     </div>
                     <div class="mb-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">₦</span>
                             <input type="number" name="amount" class="form-control"
                                    min="0.01" step="0.01" placeholder="Amount" required>
                         </div>
@@ -194,7 +194,7 @@
                             @foreach($seller->products->take(6) as $product)
                              <tr>
                                 <td class="fw-semibold fs-13">{{ Str::limit($product->name, 40) }}</td>
-                                <td class="fw-bold">${{ number_format($product->price, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($product->price, 2) }}</td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $product->status }}">
                                         {{ ucfirst($product->status) }}
@@ -260,9 +260,9 @@
                                     </span>
                                 </td>
                                 <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                    {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                    {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                 </td>
-                                <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}</td>
+                                <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td>
                                     <span class="badge" style="
                                         background-color: {{ $statusColor }};

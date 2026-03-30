@@ -154,7 +154,7 @@
                             </div>
                           </td>
                         <td class="fw-bold text-success">
-                            ${{ number_format($order->total, 2) }}
+                            ₦{{ number_format($order->total, 2) }}
                           </td>
                         <td>
                             <span class="badge bg-secondary">

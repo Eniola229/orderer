@@ -725,7 +725,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         </div>
                         <div class="field-group">
                             <label>Currency</label>
-                            <input type="text" value="USD" disabled style="opacity:0.4;cursor:not-allowed;">
+                            <input type="text" value="NGN" disabled style="opacity:0.4;cursor:not-allowed;">
                         </div>
                     </div>
                 </div>
@@ -880,7 +880,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         </div>
                         <div class="summary-row">
                             <span class="label">Shipping fee</span>
-                            <span class="value green" id="displayRiderFee">$0.00</span>
+                            <span class="value green" id="displayRiderFee">₦0.00</span>
                         </div>
                     </div>
                 </div>
@@ -893,7 +893,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         <div class="pay-icon">💰</div>
                         <div>
                             <div class="pay-label">Wallet Balance</div>
-                            <div class="pay-sub">${{ number_format(auth('web')->user()->wallet_balance, 2) }} available</div>
+                            <div class="pay-sub">₦{{ number_format(auth('web')->user()->wallet_balance, 2) }} available</div>
                         </div>
                         @if(auth('web')->user()->wallet_balance > 0)
                         <span class="pay-badge">Ready</span>
@@ -1143,7 +1143,7 @@ function fetchRiderRates() {
                         ${eta ? `<div class="rate-card-eta">⏱ ${eta}</div>` : ''}
                     </div>
                 </div>
-                <div class="rate-card-price">$${price}</div>
+                <div class="rate-card-price">₦${price}</div>
             </div>`;
         });
 
@@ -1192,7 +1192,7 @@ function selectRiderRate(el, serviceCode, courierId, price, carrier, service, ra
     }
 
     // Update payment summary preview
-    document.getElementById('displayRiderFee').textContent = '$' + (parseFloat(price) || 0).toFixed(2);
+    document.getElementById('displayRiderFee').textContent = '₦' + (parseFloat(price) || 0).toFixed(2);
     document.getElementById('displayRiderCarrier').textContent = carrier || '—';
     document.getElementById('displayRiderService').textContent = service || '—';
     

@@ -19,6 +19,14 @@
     <div class="col-md-4 mb-2">
         <div class="card">
             <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Waiting</p>
+                <h2 class="fw-bold mb-0 text-warning">{{ $stats['waiting'] }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card">
+            <div class="card-body py-3">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">In Progress</p>
                 <h2 class="fw-bold mb-0 text-warning">{{ $stats['in_progress'] }}</h2>
             </div>

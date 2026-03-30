@@ -173,17 +173,17 @@
                     <div class="mb-3">
                         @if($product->sale_price)
                         <span style="font-size:32px;font-weight:800;color:#2ECC71;" class="price-large">
-                            ${{ number_format($product->sale_price, 2) }}
+                            ₦{{ number_format($product->sale_price, 2) }}
                         </span>
                         <span style="font-size:18px;color:#aaa;text-decoration:line-through;margin-left:10px;">
-                            ${{ number_format($product->price, 2) }}
+                            ₦{{ number_format($product->price, 2) }}
                         </span>
                         <span style="background:#FADBD8;color:#E74C3C;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-left:8px;display:inline-block;">
                             -{{ round((($product->price - $product->sale_price) / $product->price) * 100) }}% OFF
                         </span>
                         @else
                         <span style="font-size:32px;font-weight:800;color:#1a1a1a;" class="price-large">
-                            ${{ number_format($product->price, 2) }}
+                            ₦{{ number_format($product->price, 2) }}
                         </span>
                         @endif
                     </div>
@@ -421,7 +421,7 @@
                         <a href="{{ route('product.show', $related->slug) }}">
                             <h6>{{ Str::limit($related->name, 35) }}</h6>
                         </a>
-                        <p class="product-price">${{ number_format($related->price, 2) }}</p>
+                        <p class="product-price">₦{{ number_format($related->price, 2) }}</p>
                         <div class="hover-content">
                             <div class="add-to-cart-btn">
                                 <a href="#" class="btn essence-btn add-to-cart"

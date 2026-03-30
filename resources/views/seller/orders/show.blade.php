@@ -64,12 +64,12 @@ function sellerOrderStatusBadge(string $status): string {
                                     </div>
                                 </td>
                                 <td class="fw-semibold">{{ $item->quantity }}</td>
-                                <td>${{ number_format($item->unit_price, 2) }}</td>
+                                <td>₦{{ number_format($item->unit_price, 2) }}</td>
                                 <td class="text-danger">
-                                    -${{ number_format($item->commission_amount, 2) }}
+                                    -₦{{ number_format($item->commission_amount, 2) }}
                                     <small class="text-muted d-block">({{ $item->commission_rate }}%)</small>
                                 </td>
-                                <td class="fw-bold text-success">${{ number_format($item->seller_earnings, 2) }}</td>
+                                <td class="fw-bold text-success">₦{{ number_format($item->seller_earnings, 2) }}</td>
                                 <td>
                                     <span class="badge {{ sellerOrderStatusBadge($item->status) }}">
                                         {{ ucfirst($item->status) }}
@@ -161,16 +161,16 @@ function sellerOrderStatusBadge(string $status): string {
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Subtotal</span>
-                    <span class="fw-semibold">${{ number_format($order->subtotal, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->subtotal, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Shipping fee</span>
-                    <span class="fw-semibold">${{ number_format($order->shipping_fee, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->shipping_fee, 2) }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="fw-bold">Order Total</span>
-                    <span class="fw-bold text-primary">${{ number_format($order->total, 2) }}</span>
+                    <span class="fw-bold text-primary">₦{{ number_format($order->total, 2) }}</span>
                 </div>
 
                 {{-- Seller earnings breakdown --}}
@@ -182,16 +182,16 @@ function sellerOrderStatusBadge(string $status): string {
                     <p class="fw-bold mb-2 text-success" style="font-size:13px;">Your Earnings Breakdown</p>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted fs-13">Your Items Total</span>
-                        <span class="fw-semibold fs-13">${{ number_format($myItems->sum('total_price'), 2) }}</span>
+                        <span class="fw-semibold fs-13">₦{{ number_format($myItems->sum('total_price'), 2) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted fs-13">Platform Commission</span>
-                        <span class="fw-semibold fs-13 text-danger">-${{ number_format($myCommissionTotal, 2) }}</span>
+                        <span class="fw-semibold fs-13 text-danger">-₦{{ number_format($myCommissionTotal, 2) }}</span>
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between">
                         <span class="fw-bold fs-13">Your Net Earnings</span>
-                        <span class="fw-bold text-success">${{ number_format($myEarningsTotal, 2) }}</span>
+                        <span class="fw-bold text-success">₦{{ number_format($myEarningsTotal, 2) }}</span>
                     </div>
                 </div>
 

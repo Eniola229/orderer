@@ -86,6 +86,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/withdrawals', [WithdrawalController::class, 'index'])->name('withdrawals.index');
         Route::put('/withdrawals/{wd}/approve', [WithdrawalController::class, 'approve'])->name('withdrawals.approve');
         Route::put('/withdrawals/{wd}/reject', [WithdrawalController::class, 'reject'])->name('withdrawals.reject');
+        Route::put('/withdrawals/{wd}/change-status', [WithdrawalController::class, 'changeStatus'])->name('withdrawals.change-status');
 
         // ==================== Categories & Brands ====================
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -104,6 +105,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/support/{ticket}/reply', [SupportController::class, 'reply'])->name('support.reply');
         Route::put('/support/{ticket}/resolve', [SupportController::class, 'resolve'])->name('support.resolve');
         Route::put('/support/{ticket}/close', [SupportController::class, 'close'])->name('support.close');
+        Route::get('/support/{ticket}/messages', [AdminSupportController::class, 'messages'])->name('support.messages');
 
         // ==================== Admin Management ====================
         Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
