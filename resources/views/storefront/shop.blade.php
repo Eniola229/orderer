@@ -229,6 +229,12 @@
                                     <a href="{{ $ad->clickTrackingUrl() }}">
                                         <img src="{{ $spImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                                     </a>
+                                    {{-- ADDED: verified badge for sponsored products --}}
+                                    @if($sp->seller->is_verified_business)
+                                    <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                        <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                    </div>
+                                    @endif
                                     <div class="product-favourite">
                                         <a href="#" class="favme fa fa-heart" data-product="{{ $sp->id }}"></a>
                                     </div>
@@ -266,7 +272,7 @@
                     {{-- END SPONSORED PRODUCTS --}}
 
 
-                    {{-- Regular product grid (unchanged) --}}
+                    {{-- Regular product grid --}}
                     <div class="row">
                         @forelse($products as $product)
                         @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
@@ -288,6 +294,12 @@
                                     @endif
                                     @if($product->created_at->diffInDays() <= 7)
                                     <div class="product-badge new-badge"><span>New</span></div>
+                                    @endif
+                                    {{-- ADDED: verified badge for regular products --}}
+                                    @if($product->seller->is_verified_business)
+                                    <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                        <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                    </div>
                                     @endif
                                     <div class="product-favourite">
                                         <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
@@ -365,14 +377,27 @@
 document.querySelectorAll('.add-to-cart').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
+        const productId = this.dataset.product;
         fetch('{{ route("cart.add") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ product_id: this.dataset.product, quantity: 1 })
-        }).then(r => r.json()).then(data => {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        })
+        .then(r => r.json())
+        .then(data => {
             if (data.success) {
-                document.querySelectorAll('#cart-count, #cart-count-sidebar').forEach(el => el.textContent = data.count);
+                window.loadCart();
+                window.cartToast('Item added to cart!');
+            } else {
+                window.cartToast(data.message ?? 'Could not add item.', 'error');
             }
+        })
+        .catch(() => {
+            window.cartToast('Something went wrong.', 'error');
         });
     });
 });
@@ -380,12 +405,38 @@ document.querySelectorAll('.favme').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         @auth('web')
-        const pid = this.dataset.product;
+        const productId = this.dataset.product;
         this.classList.toggle('active');
         fetch('{{ route("buyer.wishlist.toggle") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ product_id: pid })
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ product_id: productId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: data.added ? 'success' : 'info',
+                title: data.message,
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true,
+            });
+        })
+        .catch(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Something went wrong.',
+                showConfirmButton: false,
+                timer: 2500,
+            });
         });
         @else
         window.location.href = '{{ route("login") }}';

@@ -56,6 +56,7 @@ class AdController extends Controller
     {
         $request->validate([
             'title'              => ['required', 'string', 'max:255'],
+            'region'              => ['required', 'string', 'max:255'],
             'ad_category_id'     => ['required', 'exists:ad_categories,id'],
             'ad_banner_slot_id'  => ['nullable', 'exists:ad_banner_slots,id'],
             'promotable_type'    => ['required', 'in:product,service,house,brand'],
@@ -126,19 +127,20 @@ class AdController extends Controller
             $mime = $file->getMimeType();
 
             if (str_contains($mime, 'video')) {
-                $uploaded  = $this->cloudinary->uploadVideo($file, 'orderer/ads/ads_videos');
+                $uploaded  = $this->cloudinary->uploadVideo($file, 'orderer/promotions/videos');
                 $mediaType = 'video';
             } else {
-                $uploaded  = $this->cloudinary->uploadImage($file, 'orderer/ads/ads_images');
+                $uploaded  = $this->cloudinary->uploadImage($file, 'orderer/promotions/images');
                 $mediaType = 'image';
             }
 
             $mediaUrl = $uploaded['url'];
             $publicId = $uploaded['public_id'];
-        }
+        } 
 
         Ad::create([
             'seller_id'          => $seller->id,
+            'region'     => $request->region,
             'ad_category_id'     => $request->ad_category_id,
             'ad_banner_slot_id'  => $request->ad_banner_slot_id,
             'promotable_type'    => $promotableClass,
@@ -171,12 +173,12 @@ class AdController extends Controller
             }
         }
 
-        if ($ad->cloudinary_public_id) {
-            $this->cloudinary->delete(
-                $ad->cloudinary_public_id,
-                $ad->media_type === 'video' ? 'video' : 'image'
-            );
-        }
+        // if ($ad->cloudinary_public_id) {
+        //     $this->cloudinary->delete(
+        //         $ad->cloudinary_public_id,
+        //         $ad->media_type === 'video' ? 'video' : 'image'
+        //     );
+        // }
 
         $ad->delete();
 

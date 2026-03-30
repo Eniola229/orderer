@@ -1,17 +1,3 @@
-{{-- ============================================================
-     storefront/home.blade.php
-       1. Hero banner: if active ads exist → rotating ad carousel
-                       else → original static hero
-       2. Sponsored Products: top_listing ads shown before new arrivals
-     ============================================================ --}}
-
-@php
-    // Pull in DocType + head from the storefront layout wrapper if used,
-    // otherwise this file is included raw inside the full HTML shell.
-    // The original file began directly with the header include, so we
-    // preserve that exactly.
-@endphp
-
 {{-- Header --}}
 @auth('web')
     @include('layouts.storefront.header-auth')
@@ -29,16 +15,41 @@
      If active homepage hero ads exist → show rotating ad slideshow
      Otherwise → show original static hero banner
      ──────────────────────────────────────────────────────────── --}}
+<style>
+    #heroAdCarousel .carousel-item {
+        min-height: 520px !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    /* Force the background div to fill the slide */
+    #heroAdCarousel .ad-bg {
+        position: absolute !important;
+        top: 0 !important; left: 0 !important;
+        width: 100% !important; height: 100% !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        z-index: 0 !important;
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    /* Content sits above background */
+    #heroAdCarousel .ad-content-wrap {
+        position: relative !important;
+        z-index: 2 !important;
+        min-height: 520px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+</style>
+
 @if(isset($heroBannerAds) && $heroBannerAds->count())
 
-
-
-{{-- AD HERO BANNER CAROUSEL --}}
 <section class="welcome_area" style="position:relative;overflow:hidden;min-height:520px;">
 
-    {{-- Slides --}}
-    <div id="heroAdCarousel" class="carousel slide" data-ride="carousel" data-interval="5000"
-         style="min-height:520px;">
+    <div id="heroAdCarousel" class="carousel slide" data-ride="carousel" data-interval="5000">
+
         <ol class="carousel-indicators">
             @foreach($heroBannerAds as $i => $ad)
             <li data-target="#heroAdCarousel"
@@ -46,45 +57,41 @@
                 class="{{ $i === 0 ? 'active' : '' }}"
                 style="background:#2ECC71;width:10px;height:10px;border-radius:50%;"></li>
             @endforeach
+            <li data-target="#heroAdCarousel"
+                data-slide-to="{{ $heroBannerAds->count() }}"
+                style="background:#2ECC71;width:10px;height:10px;border-radius:50%;"></li>
         </ol>
 
-        <div class="carousel-inner" style="min-height:520px;">
+        <div class="carousel-inner">
+
+            {{-- Ad slides --}}
             @foreach($heroBannerAds as $i => $ad)
-            <div class="carousel-item {{ $i === 0 ? 'active' : '' }}"
-                 style="min-height:520px;">
+            <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
 
                 @if($ad->media_type === 'video' && $ad->media_url)
-                {{-- Video ad --}}
-                <video autoplay muted loop playsinline
-                       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
-                    <source src="{{ $ad->media_url }}">
-                </video>
+                    {{-- Video: use background on a div to avoid theme CSS conflicts --}}
+                    <video autoplay muted loop playsinline
+                           style="position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;object-fit:cover!important;z-index:0!important;display:block!important;opacity:1!important;visibility:visible!important;">
+                        <source src="{{ $ad->media_url }}">
+                    </video>
                 @elseif($ad->media_url)
-                {{-- Image ad --}}
-                <div class="bg-img background-overlay"
-                     style="position:absolute;inset:0;background-image:url({{ $ad->media_url }});background-size:cover;background-position:center;z-index:0;"></div>
+                    {{-- Use background-image on a div instead of <img> to avoid theme CSS hiding images --}}
+                    <div class="ad-bg" style="background-image: url('{{ $ad->media_url }}');"></div>
                 @else
-                {{-- Fallback colour --}}
-                <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#2ECC71);z-index:0;"></div>
+                    <div class="ad-bg" style="background: linear-gradient(135deg,#1a1a2e,#2ECC71);"></div>
                 @endif
 
-                {{-- Overlay + content --}}
-                <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:1;"></div>
-                <div class="container h-100" style="position:relative;z-index:2;min-height:520px;">
-                    <div class="row h-100 align-items-center" style="min-height:520px;">
-                        <div class="col-12 col-md-7">
+                <div class="container ad-content-wrap">
+                    <div class="row w-100">
+                        <div class="col-12 col-md-7" style="background:rgba(0,0,0,0.35);border-radius:12px;padding:24px;">
                             <div class="hero-content">
                                 <span style="display:inline-block;background:#2ECC71;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
                                     Sponsored
                                 </span>
-                                <h2 style="color:#fff;font-size:clamp(24px,4vw,46px);font-weight:800;line-height:1.2;margin-bottom:16px;">
+                                <h2 style="color:#fff;font-size:clamp(24px,4vw,46px);font-weight:800;line-height:1.2;margin-bottom:16px;text-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8);">
                                     {{ $ad->title }}
                                 </h2>
-                                <a href="{{ $ad->clickTrackingUrl() }}"
-                                   class="btn essence-btn"
-                                   style="padding:12px 28px;font-size:15px;">
-                                    Shop Now
-                                </a>
+                                <a href="{{ $ad->clickTrackingUrl() }}" class="btn essence-btn">Shop Now</a>
                             </div>
                         </div>
                     </div>
@@ -92,27 +99,37 @@
 
             </div>
             @endforeach
+
+            {{-- Static hero as last slide --}}
+            <div class="carousel-item">
+                <div class="ad-bg" style="background-image: url('{{ $heroBanner ?? asset('img/bg-img/bg-1.png') }}');"></div>
+                <div class="container ad-content-wrap">
+                    <div class="row w-100">
+                        <div class="col-12">
+                            <div class="hero-content">
+                                <h6>Orderer</h6>
+                                <h2>Shop Everything, <br>Delivered Everywhere</h2>
+                                <a href="{{ route('shop.index') }}" class="btn essence-btn">Shop Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        {{-- Prev / Next --}}
-        @if($heroBannerAds->count() > 1)
-        <a class="carousel-control-prev" href="#heroAdCarousel" role="button" data-slide="prev"
-           style="width:5%;">
+        <a class="carousel-control-prev" href="#heroAdCarousel" role="button" data-slide="prev" style="width:5%;">
             <span class="carousel-control-prev-icon"></span>
         </a>
-        <a class="carousel-control-next" href="#heroAdCarousel" role="button" data-slide="next"
-           style="width:5%;">
+        <a class="carousel-control-next" href="#heroAdCarousel" role="button" data-slide="next" style="width:5%;">
             <span class="carousel-control-next-icon"></span>
         </a>
-        @endif
     </div>
 
 </section>
-{{-- END AD HERO BANNER --}}
 
 @else
 
-{{-- ORIGINAL STATIC HERO (unchanged) --}}
 <section class="welcome_area bg-img background-overlay"
          style="background-image: url({{ $heroBanner ?? asset('img/bg-img/bg-1.png') }});">
     <div class="container h-100">
@@ -188,7 +205,7 @@
     </div>
 </div>
 
-{{-- Flash Sales (unchanged) --}}
+{{-- Flash Sales --}}
 @if($flashSales->count())
 <div class="cta-area" style="background:#fff7f0;padding:40px 0;">
     <div class="container">
@@ -213,9 +230,15 @@
                         <a href="{{ route('product.show', $flash->product->slug) }}">
                             <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                         </a>
+                        {{-- FIXED: removed broken nested badge, clean discount + verified --}}
                         <div class="product-badge offer-badge">
                             <span>-{{ round((($flash->original_price - $flash->sale_price) / $flash->original_price) * 100) }}%</span>
                         </div>
+                        @if($flash->product->seller->is_verified_business)
+                        <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </div>
+                        @endif
                         <div class="product-favourite">
                             <a href="#" class="favme fa fa-heart" data-product="{{ $flash->product_id }}"></a>
                         </div>
@@ -245,7 +268,7 @@
 @endif
 
 
-{{-- Featured / Promoted Products (unchanged) --}}
+{{-- Featured / Promoted Products --}}
 <section class="new_arrivals_area section-padding-80 clearfix">
     <div class="container">
         <div class="row">
@@ -268,8 +291,11 @@
                                 <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                             </a>
                             @if($product->sale_price)
-                            <div class="product-badge offer-badge">
-                                <span>SALE</span>
+                            <div class="product-badge offer-badge"><span>SALE</span></div>
+                            @endif
+                            @if($product->seller->is_verified_business)
+                            <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
                             </div>
                             @endif
                             <div class="product-favourite">
@@ -305,10 +331,6 @@
 </section>
 
 
-{{-- ── SPONSORED PRODUCTS (top_listing ads) ────────────────────
-     Shown only when there are active top_listing ads.
-     Sits between Featured and Brands strip.
-     ─────────────────────────────────────────────────────────── --}}
 @if(isset($topListingAds) && $topListingAds->count())
 <section style="background:#fffdf5;padding:40px 0;">
     <div class="container">
@@ -340,6 +362,12 @@
                         <a href="{{ $ad->clickTrackingUrl() }}">
                             <img src="{{ $sImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                         </a>
+                        {{-- ADDED: verified badge for sponsored products --}}
+                        @if($sponsoredProduct->seller->is_verified_business)
+                        <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </div>
+                        @endif
                         <div class="product-favourite">
                             <a href="#" class="favme fa fa-heart" data-product="{{ $sponsoredProduct->id }}"></a>
                         </div>
@@ -374,7 +402,7 @@
 {{-- END SPONSORED PRODUCTS --}}
 
 
-{{-- Brands Strip (unchanged) --}}
+{{-- Brands Strip --}}
 @if($brands->count())
 <section class="ord-brands-strip">
     <div class="container">
@@ -425,7 +453,7 @@
 @endif
 
 
-{{-- New Arrivals (unchanged) --}}
+{{-- New Arrivals --}}
 <section class="new_arrivals_area section-padding-80 clearfix" style="background:#f8f8f8;">
     <div class="container">
         <div class="row">
@@ -447,6 +475,12 @@
                             <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                         </a>
                         <div class="product-badge new-badge"><span>New</span></div>
+                        {{-- FIXED: removed duplicate, kept one clean verified badge --}}
+                        @if($product->seller->is_verified_business)
+                        <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </div>
+                        @endif
                         <div class="product-favourite">
                             <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
                         </div>
@@ -477,7 +511,7 @@
 </section>
 
 
-{{-- Book a Rider CTA (unchanged) --}}
+{{-- Book a Rider CTA --}}
 <div class="cta-area">
     <div class="container">
         <div class="row">
@@ -569,7 +603,7 @@
     });
 </script>
 <script>
-// Flash sale countdown (unchanged)
+// Flash sale countdown
 @if($flashSales->count() && $flashSales->first()->ends_at)
 (function() {
     const end = new Date('{{ $flashSales->first()->ends_at->toIso8601String() }}');
@@ -588,7 +622,6 @@
 })();
 @endif
 
-// Add to cart via AJAX (unchanged)
 document.querySelectorAll('.add-to-cart').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -597,6 +630,7 @@ document.querySelectorAll('.add-to-cart').forEach(function(btn) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
             body: JSON.stringify({ product_id: productId, quantity: 1 })
@@ -604,15 +638,19 @@ document.querySelectorAll('.add-to-cart').forEach(function(btn) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                document.querySelectorAll('#cart-count, #cart-count-sidebar').forEach(el => {
-                    el.textContent = data.count;
-                });
+                window.loadCart();
+                window.cartToast('Item added to cart!');
+            } else {
+                window.cartToast(data.message ?? 'Could not add item.', 'error');
             }
+        })
+        .catch(() => {
+            window.cartToast('Something went wrong.', 'error');
         });
     });
 });
 
-// Wishlist heart toggle (unchanged)
+// Wishlist heart toggle
 document.querySelectorAll('.favme').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -623,9 +661,32 @@ document.querySelectorAll('.favme').forEach(function(btn) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
             body: JSON.stringify({ product_id: productId })
+        })
+        .then(r => r.json())
+        .then(data => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: data.added ? 'success' : 'info',
+                title: data.message,
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true,
+            });
+        })
+        .catch(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Something went wrong.',
+                showConfirmButton: false,
+                timer: 2500,
+            });
         });
         @else
         window.location.href = '{{ route("login") }}';

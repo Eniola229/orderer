@@ -8,6 +8,27 @@
 
 @section('content')
 
+@php
+function adminOrderStatusBadge(string $status): string {
+    return match($status) {
+        'pending'    => 'bg-warning text-dark',
+        'confirmed'  => 'bg-info text-white',
+        'processing' => 'bg-primary text-white',
+        'shipped'    => 'bg-primary text-white',
+        'delivered'  => 'bg-success text-white',
+        'completed'  => 'bg-success text-white',
+        'cancelled'  => 'bg-danger text-white',
+        'disputed'   => 'bg-danger text-white',
+        'paid'       => 'bg-success text-white',
+        'failed'     => 'bg-danger text-white',
+        'refunded'   => 'bg-secondary text-white',
+        'held'       => 'bg-warning text-dark',
+        'released'   => 'bg-success text-white',
+        default      => 'bg-secondary text-white',
+    };
+}
+@endphp
+
 <div class="row">
     <div class="col-lg-8">
 
@@ -15,7 +36,7 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">Order Items</h5>
-                <span class="badge orderer-badge badge-{{ $order->status }}">
+                <span class="badge {{ adminOrderStatusBadge($order->status) }}">
                     {{ ucfirst($order->status) }}
                 </span>
             </div>
@@ -42,7 +63,7 @@
                                         <img src="{{ $item->item_image }}"
                                              style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="">
                                         @endif
-                                        <span class="fw-semibold fs-13">{{ Str::limit($item->item_name,30) }}</span>
+                                        <span class="fw-semibold fs-13">{{ Str::limit($item->item_name, 30) }}</span>
                                     </div>
                                 </td>
                                 <td>
@@ -61,7 +82,7 @@
                                     ${{ number_format($item->seller_earnings, 2) }}
                                 </td>
                                 <td>
-                                    <span class="badge orderer-badge badge-{{ $item->status }}">
+                                    <span class="badge {{ adminOrderStatusBadge($item->status) }}">
                                         {{ ucfirst($item->status) }}
                                     </span>
                                 </td>
@@ -73,7 +94,7 @@
             </div>
         </div>
 
-        {{-- Admin actions — finance role required --}}
+        {{-- Admin actions --}}
         @if(auth('admin')->user()->canEditOrders() && !in_array($order->status, ['completed','cancelled']))
         <div class="card mb-3">
             <div class="card-header">
@@ -171,7 +192,7 @@
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted fs-13">Payment Status</span>
-                    <span class="badge orderer-badge badge-{{ $order->payment_status }}">
+                    <span class="badge {{ adminOrderStatusBadge($order->payment_status) }}">
                         {{ ucfirst($order->payment_status) }}
                     </span>
                 </div>
@@ -184,11 +205,15 @@
                 @if($order->escrow)
                 <div class="mt-2 p-2 rounded" style="background:#FEF9E7;">
                     <small class="text-muted d-block">Escrow</small>
-                    <span class="badge orderer-badge badge-{{ $order->escrow->status }}">
+                    <span class="badge {{ adminOrderStatusBadge($order->escrow->status) }}">
                         {{ ucfirst($order->escrow->status) }}
                     </span>
                 </div>
                 @endif
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted fs-13">Payment</span>
+                    <span class="fw-semibold fs-13">{{ ucfirst($order->payment_method) }}</span>
+                </div>
             </div>
         </div>
 
@@ -208,7 +233,7 @@
             </div>
         </div>
 
-        {{-- Delivery --}}
+        {{-- Delivery address --}}
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">Delivery Address</h5></div>
             <div class="card-body">
@@ -220,34 +245,83 @@
             </div>
         </div>
 
-        {{-- Shipment --}}
-        @if($order->tracking_number)
+        {{-- Shipping info — always shown, full detail --}}
         <div class="card">
-            <div class="card-header"><h5 class="card-title mb-0">Shipment</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0">Shipping Info</h5></div>
             <div class="card-body">
-                <div class="mb-2">
-                    <small class="text-muted d-block">Carrier</small>
-                    <strong>{{ $order->shipping_carrier }} — {{ $order->shipping_service_name }}</strong>
-                </div>
-                <div class="mb-2">
-                    <small class="text-muted d-block">Tracking #</small>
-                    <code class="text-primary">{{ $order->tracking_number }}</code>
-                </div>
-                @if($order->estimated_delivery_date)
-                <div>
-                    <small class="text-muted d-block">Est. Delivery</small>
-                    <strong>{{ $order->estimated_delivery_date }}</strong>
+
+                {{-- Carrier --}}
+                @if($order->shipping_carrier)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Carrier</small>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="feather-truck text-primary"></i>
+                        <span class="fw-semibold">{{ $order->shipping_carrier }}</span>
+                        @if($order->shipping_service_name)
+                        <span class="text-muted fs-12">— {{ $order->shipping_service_name }}</span>
+                        @endif
+                    </div>
                 </div>
                 @endif
+
+                {{-- Shipbubble shipment ID --}}
+                @if($order->shipbubble_shipment_id)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Shipment ID</small>
+                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
+                </div>
+                @endif
+
+                {{-- Courier ID --}}
+                @if($order->courier_id)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Courier ID</small>
+                    <code class="fs-12">{{ $order->courier_id }}</code>
+                </div>
+                @endif
+
+                {{-- Tracking number --}}
+                @if($order->tracking_number)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Tracking Number</small>
+                    <code class="fs-12 text-primary">{{ $order->tracking_number }}</code>
+                </div>
+                @endif
+
+                {{-- Estimated delivery --}}
+                @if($order->estimated_delivery_date)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Estimated Delivery</small>
+                    <span class="fw-semibold text-success">
+                        <i class="feather-calendar me-1"></i>
+                        {{ $order->estimated_delivery_date }}
+                    </span>
+                </div>
+                @endif
+
+                {{-- Package info --}}
+                @if($order->package_weight)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Package Weight</small>
+                    <span class="fw-semibold">{{ $order->package_weight }} kg</span>
+                </div>
+                @endif
+
+                {{-- Track button --}}
                 @if($order->tracking_url)
                 <a href="{{ $order->tracking_url }}" target="_blank"
-                   class="btn btn-sm btn-outline-primary w-100 mt-2">
-                    Track Shipment
+                   class="btn btn-outline-primary btn-sm w-100">
+                    <i class="feather-map-pin me-2"></i> Track Shipment
                 </a>
+                @else
+                <div class="text-muted fs-12 text-center py-2">
+                    <i class="feather-clock me-1"></i>
+                    Tracking details will appear once shipment is booked.
+                </div>
                 @endif
+
             </div>
         </div>
-        @endif
 
     </div>
 </div>

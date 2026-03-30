@@ -250,6 +250,23 @@
                 </div>
             </div>
 
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Region</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Country</label>
+                        <input type="text" id="countrySearch" class="form-control mb-2" placeholder="Search country...">
+                        <select name="region" id="regionSelect" class="form-select" size="8" style="height: auto;" required>
+                            <option value="">Loading countries...</option>
+                        </select>
+                        <small class="text-muted">Select the country/region where your ad will be displayed</small>
+                    </div>
+                </div>
+            </div>
+
+
             {{-- Budget & Schedule --}}
             <div class="card mb-3">
                 <div class="card-header">
@@ -402,7 +419,6 @@
                 </div>
             </div>
         </div>
-
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Banner Slots</h5>
@@ -440,7 +456,23 @@
                 </ul>
             </div>
         </div>
-
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Agreement</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled fs-13 text-muted">
+                    <li class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span> By placing an ads on Orderer</span>
+                            <strong class="text-primary">You agree to our <a href="#">Ads Term Policy</a></strong>
+                        </div>
+                        
+                    </li>
+          
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -614,6 +646,126 @@ document.getElementById('endDate').addEventListener('change', updateBudgetEstima
 @if(old('media'))
     // Handle old media preview if needed
 @endif
+// Fallback country list if API fails
+const fallbackCountries = [
+    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", 
+    "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", 
+    "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", 
+    "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", 
+    "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", 
+    "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", 
+    "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", 
+    "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", 
+    "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", 
+    "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, North", "Korea, South", "Kosovo", 
+    "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", 
+    "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", 
+    "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", 
+    "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Macedonia", 
+    "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", 
+    "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", 
+    "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", 
+    "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", 
+    "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", 
+    "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", 
+    "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", 
+    "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+];
+
+let allCountries = [];
+
+async function loadCountries() {
+    const select = document.getElementById('regionSelect');
+    const searchInput = document.getElementById('countrySearch');
+    
+    try {
+        // Try multiple APIs
+        let countries = null;
+        
+        // Try REST Countries API
+        try {
+            const response = await fetch('https://restcountries.com/v3.1/all?fields=name', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                countries = data.map(c => c.name.common).sort();
+            }
+        } catch (e) {
+            console.log('REST Countries API failed, trying alternative...');
+        }
+        
+        // If first API failed, try second API
+        if (!countries) {
+            try {
+                const response = await fetch('https://countriesnow.space/api/v0.1/countries');
+                if (response.ok) {
+                    const data = await response.json();
+                    countries = data.data.map(c => c.country).sort();
+                }
+            } catch (e) {
+                console.log('Second API failed, using fallback data...');
+            }
+        }
+        
+        // Use fallback if both APIs failed
+        if (!countries || countries.length === 0) {
+            countries = fallbackCountries;
+        }
+        
+        allCountries = countries;
+        displayCountries(allCountries);
+        
+        // Add search functionality
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const filtered = allCountries.filter(country => 
+                country.toLowerCase().includes(searchTerm)
+            );
+            displayCountries(filtered);
+        });
+        
+    } catch (error) {
+        console.error('Error loading countries:', error);
+        // Use fallback data
+        allCountries = fallbackCountries;
+        displayCountries(allCountries);
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const filtered = allCountries.filter(country => 
+                country.toLowerCase().includes(searchTerm)
+            );
+            displayCountries(filtered);
+        });
+    }
+}
+
+function displayCountries(countries) {
+    const select = document.getElementById('regionSelect');
+    select.innerHTML = '<option value="">Select a country...</option>';
+    
+    countries.forEach(country => {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        select.appendChild(option);
+    });
+    
+    if (countries.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No countries found';
+        option.disabled = true;
+        select.appendChild(option);
+    }
+}
+
+// Load countries when page loads
+document.addEventListener('DOMContentLoaded', loadCountries);
 </script>
 @endpush
 

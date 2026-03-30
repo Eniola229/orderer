@@ -2,11 +2,63 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    // ── Get or create the cart for this visitor ────────────────
+
+    private function getCart(): Cart
+    {
+        if (auth('web')->check()) {
+            // Logged-in user: find by user_id, merge session cart if any
+            $cart = Cart::firstOrCreate(
+                ['user_id' => auth('web')->id()],
+                ['session_id' => null]
+            );
+
+            // If they had a guest cart, merge it in then delete it
+            $sessionId = session()->getId();
+            $guestCart = Cart::where('session_id', $sessionId)
+                             ->whereNull('user_id')
+                             ->first();
+
+            if ($guestCart && $guestCart->id !== $cart->id) {
+                foreach ($guestCart->items as $guestItem) {
+                    $existing = $cart->items()->where('product_id', $guestItem->product_id)->first();
+                    if ($existing) {
+                        $existing->update([
+                            'quantity' => min(
+                                $existing->quantity + $guestItem->quantity,
+                                $guestItem->product->stock ?? 9999
+                            )
+                        ]);
+                    } else {
+                        $cart->items()->create([
+                            'product_id' => $guestItem->product_id,
+                            'quantity'   => $guestItem->quantity,
+                            'price'      => $guestItem->price,
+                        ]);
+                    }
+                }
+                $guestCart->delete();
+            }
+
+            return $cart;
+        }
+
+        // Guest: find by session_id
+        $sessionId = session()->getId();
+        return Cart::firstOrCreate(
+            ['session_id' => $sessionId, 'user_id' => null]
+        );
+    }
+
+    // ── Add ───────────────────────────────────────────────────
+
     public function add(Request $request)
     {
         $request->validate([
@@ -18,30 +70,26 @@ class CartController extends Controller
             ->where('status', 'approved')
             ->firstOrFail();
 
-        $cart = session()->get('cart', []);
+        $cart     = $this->getCart();
+        $existing = $cart->items()->where('product_id', $product->id)->first();
 
-        if (isset($cart[$product->id])) {
-            $newQty = $cart[$product->id]['quantity'] + $request->quantity;
-            $cart[$product->id]['quantity'] = min($newQty, $product->stock);
+        if ($existing) {
+            $newQty = min($existing->quantity + $request->quantity, $product->stock);
+            $existing->update(['quantity' => $newQty]);
         } else {
-            $primaryImg = $product->images->where('is_primary', true)->first()
-                          ?? $product->images->first();
-            $cart[$product->id] = [
-                'id'       => $product->id,
-                'name'     => $product->name,
-                'price'    => $product->sale_price ?? $product->price,
-                'quantity' => min($request->quantity, $product->stock),
-                'image'    => $primaryImg->image_url ?? null,
-                'seller_id'=> $product->seller_id,
-            ];
+            $cart->items()->create([
+                'product_id' => $product->id,
+                'quantity'   => min($request->quantity, $product->stock),
+                'price'      => $product->sale_price ?? $product->price,
+            ]);
         }
 
-        session()->put('cart', $cart);
+        $count = $cart->items()->sum('quantity');
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'count'   => count($cart),
+                'count'   => $count,
                 'message' => 'Added to cart',
             ]);
         }
@@ -49,20 +97,25 @@ class CartController extends Controller
         return back()->with('success', 'Added to cart!');
     }
 
+    // ── Remove ────────────────────────────────────────────────
+
     public function remove(Request $request)
     {
         $request->validate(['product_id' => ['required']]);
 
-        $cart = session()->get('cart', []);
-        unset($cart[$request->product_id]);
-        session()->put('cart', $cart);
+        $cart = $this->getCart();
+        $cart->items()->where('product_id', $request->product_id)->delete();
+
+        $count = $cart->items()->sum('quantity');
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'count' => count($cart)]);
+            return response()->json(['success' => true, 'count' => $count]);
         }
 
         return back()->with('success', 'Removed from cart.');
     }
+
+    // ── Update ────────────────────────────────────────────────
 
     public function update(Request $request)
     {
@@ -71,19 +124,121 @@ class CartController extends Controller
             'quantity'   => ['required', 'integer', 'min:1'],
         ]);
 
-        $cart = session()->get('cart', []);
-
-        if (isset($cart[$request->product_id])) {
-            $cart[$request->product_id]['quantity'] = $request->quantity;
-            session()->put('cart', $cart);
-        }
+        $cart = $this->getCart();
+        $cart->items()
+             ->where('product_id', $request->product_id)
+             ->update(['quantity' => $request->quantity]);
 
         return response()->json(['success' => true]);
     }
 
+    // ── Clear ─────────────────────────────────────────────────
+
     public function clear()
     {
-        session()->forget('cart');
+        $this->getCart()->items()->delete();
         return back()->with('success', 'Cart cleared.');
+    }
+
+    // ── View (optional, for cart page) ────────────────────────
+
+    public function index()
+    {
+        $cart  = $this->getCart();
+        $items = $cart->items()->with(['product.images'])->get();
+
+        return view('storefront.cart', compact('cart', 'items'));
+    }
+
+    // ── Cart count (for header badges) ───────────────────────────
+    public function count()
+    {
+        $cart  = $this->getCart();
+        $count = $cart->items()->sum('quantity');
+
+        return response()->json(['count' => $count]);
+    }
+
+    // ── Cart sidebar data ─────────────────────────────────────────
+    public function sidebar()
+    {
+        $cart  = $this->getCart();
+        $items = $cart->items()->with(['product.images'])->get();
+
+        $subtotal = $items->sum(fn($item) => $item->price * $item->quantity);
+
+        $data = $items->map(function ($item) {
+            $product     = $item->product;
+            $primaryImg  = $product?->images->where('is_primary', true)->first()
+                           ?? $product?->images->first();
+
+            return [
+                'product_id' => $item->product_id,
+                'name'       => $product?->name ?? 'Product',
+                'price'      => (float) $item->price,
+                'quantity'   => $item->quantity,
+                'subtotal'   => (float) ($item->price * $item->quantity),
+                'image'      => $primaryImg?->image_url ?? null,
+            ];
+        });
+
+        return response()->json([
+            'items'    => $data,
+            'subtotal' => $subtotal,
+            'total'    => $subtotal, // extend later for shipping/discounts
+            'count'    => $items->sum('quantity'),
+        ]);
+    }
+
+    /**
+     * Merge the current session's guest cart into the logged-in user's cart.
+     * Safe to call even if there's no guest cart — it does nothing in that case.
+     */
+    public function mergeGuestCart(string $sessionId): void
+    {
+        if (!auth('web')->check()) {
+            return;
+        }
+
+        $guestCart = Cart::where('session_id', $sessionId)
+                         ->whereNull('user_id')
+                         ->first();
+
+       
+        if (!$guestCart) {
+            return;
+        }
+
+        $userCart = Cart::firstOrCreate(
+            ['user_id' => auth('web')->id()],
+            ['session_id' => null]
+        );
+
+        if ($guestCart->id === $userCart->id) {
+            return;
+        }
+
+        foreach ($guestCart->items as $guestItem) {
+            $existing = $userCart->items()
+                                 ->where('product_id', $guestItem->product_id)
+                                 ->first();
+
+            if ($existing) {
+                $existing->update([
+                    'quantity' => min(
+                        $existing->quantity + $guestItem->quantity,
+                        $guestItem->product->stock ?? 9999
+                    ),
+                ]);
+            } else {
+                $userCart->items()->create([
+                    'product_id' => $guestItem->product_id,
+                    'quantity'   => $guestItem->quantity,
+                    'price'      => $guestItem->price,
+                ]);
+            }
+        }
+
+        $guestCart->delete();
     }
 }

@@ -35,6 +35,9 @@ class RegisterController extends Controller
             }
         }
 
+        // Capture BEFORE login regenerates the session
+        $oldSessionId = session()->getId();
+
         $user = User::create([
             'first_name'     => $request->first_name,
             'last_name'      => $request->last_name,
@@ -46,11 +49,11 @@ class RegisterController extends Controller
             'is_active'      => true,
         ]);
 
-        // Send welcome email via Brevo
         $brevo->sendWelcomeBuyer($user);
 
-        // Log them in
         auth('web')->login($user);
+
+        app(\App\Http\Controllers\CartController::class)->mergeGuestCart($oldSessionId);
 
         return redirect()->route('home')
             ->with('success', "Welcome to Orderer, {$user->first_name}!");

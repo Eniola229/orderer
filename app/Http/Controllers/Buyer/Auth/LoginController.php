@@ -19,6 +19,9 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
+        // Capture guest session ID BEFORE auth changes anything
+        $oldSessionId = session()->getId();
+
         $credentials = $request->only('email', 'password');
         $remember    = $request->boolean('remember');
 
@@ -35,7 +38,6 @@ class LoginController extends Controller
             return back()->withErrors(['email' => 'Your account has been suspended. Contact support.']);
         }
 
-        // Update last login
         $user->update([
             'last_login_at' => now(),
             'last_login_ip' => $request->ip(),
@@ -43,10 +45,12 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        // Merge using the OLD session ID, before it was regenerated
+        app(\App\Http\Controllers\CartController::class)->mergeGuestCart($oldSessionId);
+
         return redirect()->intended(route('home'))
             ->with('success', "Welcome back, {$user->first_name}!");
     }
-
     public function logout(Request $request)
     {
         auth('web')->logout();

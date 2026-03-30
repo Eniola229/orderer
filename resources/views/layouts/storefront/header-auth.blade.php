@@ -7,6 +7,28 @@
     <meta name="description" content="Orderer — Buy, sell and deliver anything, anywhere in the world." />
     <meta name="keywords" content="ecommerce Nigeria, buy online, sell online, orderer, marketplace, delivery" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+    .swal-deny-visible {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    .has-mega:hover .ord-megamenu {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+    .mega-col {
+        display: block !important;
+    }
+    .mega-col li {
+        display: block !important;
+    }
+    .mega-col li a {
+        display: block !important;
+    }
+    
+</style>
 
     {{-- Dynamic Title & Favicon Variables --}}
     @php
@@ -82,7 +104,7 @@
                 <li class="has-mega">
                     <a href="{{ route('shop.index') }}">Shop <i class="fa fa-angle-down"></i></a>
                     <div class="ord-megamenu">
-                        @foreach(\App\Models\Category::where('is_active',true)->with('subcategories')->take(3)->get() as $cat)
+                        @foreach(\App\Models\Category::where('is_active',true)->with('subcategories')->take(4)->get() as $cat)
                         <ul class="mega-col">
                             <li class="mega-title">{{ $cat->name }}</li>
                             @foreach($cat->subcategories->where('is_active',true)->take(6) as $sub)
@@ -90,6 +112,11 @@
                             @endforeach
                         </ul>
                         @endforeach
+                        <ul class="mega-col">
+                            <li class="mega-title">Browse</li>
+                            <li><a href="{{ route('shop.index') }}">All Products</a></li>
+                            <li><a href="{{ route('brands.index') }}">All Brands</a></li>
+                        </ul>
                     </div>
                 </li>
                 <li><a href="{{ route('brands.index') }}">Brands</a></li>
@@ -155,7 +182,7 @@
             <!-- Cart -->
             <a href="#" id="essenceCartBtn" class="ord-icon-btn ord-cart" title="Cart">
                 <img src="{{ asset('img/core-img/bag.svg') }}" alt="Cart">
-                <span id="cart-count">{{ session('cart') ? count(session('cart')) : 0 }}</span>
+                <span id="cart-count">0</span>
             </a>
 
             <!-- Mobile hamburger -->
@@ -166,6 +193,53 @@
         </div>
     </div>
 </header>
+
+<script>
+// ── Global cart alert with checkout + continue shopping buttons ──
+window.cartToast = function(message = 'Added to cart!', icon = 'success') {
+
+    if (icon !== 'success') {
+        // Simple toast for errors/warnings — no buttons needed
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: icon,
+            title: message,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+        return;
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Added to Cart!',
+        text: message,
+        showConfirmButton: true,
+        confirmButtonText: 'Checkout',
+        confirmButtonColor: '#2ECC71',
+        showDenyButton: true,
+        denyButtonText: 'Continue Shopping',
+        denyButtonColor: '#6c757d',
+        reverseButtons: true,
+        allowOutsideClick: true,
+        timer: 6000,
+        timerProgressBar: true,
+        customClass: {
+            denyButton: 'swal-deny-visible'
+        },
+        didOpen: (popup) => {
+            popup.addEventListener('mouseenter', Swal.stopTimer);
+            popup.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '{{ route("checkout") }}';
+        }
+    });
+};
+</script>
 <script>
     // ================================================
 // ORDERER HEADER — JS (drop this in your app.js

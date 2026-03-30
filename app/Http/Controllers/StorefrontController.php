@@ -203,7 +203,14 @@ class StorefrontController extends Controller
 
     public function brands()
     {
-        $brands = Brand::where('is_active', true)->with('seller')->paginate(20);
+        $query = Brand::where('is_active', true)->with('seller');
+
+        if (request('search')) {
+            $query->where('name', 'like', '%' . request('search') . '%');
+        }
+
+        $brands = $query->paginate(20);
+
         return view('storefront.brands', compact('brands'));
     }
 

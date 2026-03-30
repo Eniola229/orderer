@@ -120,6 +120,10 @@
                             <small class="text-muted">{{ ucfirst(str_replace('_', ' ', $ad->bannerSlot->location ?? '')) }}</small>
                         @endif
                     </div>
+                      <div class="col-md-4 mb-3">
+                        <label class="text-muted d-block fs-12 mb-1">Region</label>
+                        <p class="fw-semibold mb-0">{{ $ad->region ?? '—' }}</p>
+                    </div>
                     <div class="col-md-4 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Click URL</label>
                         @if($ad->click_url)
@@ -246,6 +250,7 @@
                 </div>
             </div>
         </div>
+
 
         {{-- Actions Card --}}
         <div class="card">

@@ -14,7 +14,7 @@ use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
+ 
 class CheckoutController extends Controller
 {
     public function __construct(
@@ -26,29 +26,27 @@ class CheckoutController extends Controller
 
     public function index()
     {
-        $cart = session()->get('cart', []);
+        $cartModel = $this->getCart();
+        $items     = $cartModel->items()->with(['product.images'])->get();
 
-        if (empty($cart)) {
+        if ($items->isEmpty()) {
             return redirect()->route('shop.index')->with('info', 'Your cart is empty.');
         }
 
-        $cartItems = [];
-        $subtotal  = 0;
-
-        foreach ($cart as $productId => $item) {
-            $product = Product::find($productId);
-            if (!$product || $product->status !== 'approved') continue;
-
-            $cartItems[] = [
-                'id'       => $productId,
-                'name'     => $item['name'],
-                'price'    => $item['price'],
-                'quantity' => $item['quantity'],
-                'image'    => $item['image'] ?? null,
+        $cartItems = $items->map(function ($item) {
+            $product = $item->product;
+            $img     = $product?->images->where('is_primary', true)->first()
+                       ?? $product?->images->first();
+            return [
+                'id'       => $item->product_id,
+                'name'     => $product?->name,
+                'price'    => (float) $item->price,
+                'quantity' => $item->quantity,
+                'image'    => $img?->image_url ?? null,
             ];
+        })->toArray();
 
-            $subtotal += $item['price'] * $item['quantity'];
-        }
+        $subtotal = collect($cartItems)->sum(fn($i) => $i['price'] * $i['quantity']);
 
         return view('storefront.checkout', compact('cartItems', 'subtotal'));
     }
@@ -61,7 +59,7 @@ class CheckoutController extends Controller
             'shipping_address'      => ['required', 'string'],
             'shipping_city'         => ['required', 'string', 'max:100'],
             'shipping_state'        => ['required', 'string', 'max:100'],
-            'shipping_country'      => ['required', 'string', 'max:5'],
+            'shipping_country'      => ['required', 'string', 'max:30'],
             'payment_method'        => ['required', 'in:wallet,korapay'],
             'shipping_service_code' => ['required', 'string'],
             'shipping_carrier'      => ['required', 'string'],
@@ -69,8 +67,9 @@ class CheckoutController extends Controller
             'shipping_fee'          => ['required', 'numeric', 'min:0'],
         ]);
 
-        $cart = session()->get('cart', []);
-        if (empty($cart)) {
+        $cartModel = $this->getCart();
+        $cartItems = $cartModel->items()->with(['product.images'])->get();
+        if ($cartItems->isEmpty()) {
             return redirect()->route('shop.index')->with('error', 'Cart is empty.');
         }
 
@@ -79,16 +78,19 @@ class CheckoutController extends Controller
         $items       = [];
         $totalWeight = 0;
 
-        foreach ($cart as $productId => $cartItem) {
-            $product = Product::with('category', 'images')->find($productId);
+        foreach ($cartItems as $item) {
+            $product = $item->product;
             if (!$product || $product->status !== 'approved') continue;
 
-            $totalPrice   = $cartItem['price'] * $cartItem['quantity'];
+            $totalPrice   = $item->price * $item->quantity;
             $subtotal    += $totalPrice;
-            $totalWeight += ($product->weight_kg ?? 0.5) * $cartItem['quantity'];
-            $items[]      = ['product' => $product, 'cartItem' => $cartItem, 'total' => $totalPrice];
+            $totalWeight += ($product->weight_kg ?? 0.5) * $item->quantity;
+            $items[]      = [
+                'product'  => $product,
+                'cartItem' => ['price' => $item->price, 'quantity' => $item->quantity],
+                'total'    => $totalPrice,
+            ];
         }
-
         if ($totalWeight <= 0) $totalWeight = 0.5;
 
         $shippingFee = (float) $request->shipping_fee;
@@ -151,6 +153,7 @@ class CheckoutController extends Controller
                 ]);
 
                 $product->decrement('stock', $cartItem['quantity']);
+                $product->increment('total_sold', $cartItem['quantity']);
             }
 
             OrderStatusLog::create([
@@ -178,7 +181,7 @@ class CheckoutController extends Controller
                 $this->bookShipmentForOrder($order, $user, $totalWeight, $subtotal);
 
                 DB::commit();
-                session()->forget('cart');
+                $this->getCart()->items()->delete();
 
                 $this->sendOrderEmails($user, $order);
 
@@ -193,7 +196,7 @@ class CheckoutController extends Controller
                 $this->korapay->createTransaction($user, $total, 'order_payment', $reference);
 
                 DB::commit();
-                session()->forget('cart');
+                $this->getCart()->items()->delete();
 
                 $checkoutData = $this->korapay->initializeCheckout(
                     $user->email,
@@ -298,10 +301,12 @@ class CheckoutController extends Controller
 
             // Save using correct field names from API response
             $order->update([
-                'shipbubble_order_id'  => $shipment['order_id'] ?? null,          // e.g. "SB-2CF48224272"
-                'tracking_url'         => $shipment['tracking_url'] ?? null,
-                'tracking_number'      => $shipment['courier']['tracking_code'] ?? null, // may be null initially
-                'shipping_status'      => $shipment['status'] ?? 'pending',
+                'shipbubble_shipment_id'  => $shipment['order_id'] ?? null,
+                'tracking_number'         => $shipment['courier']['tracking_code'] ?? null,
+                'tracking_url'            => $shipment['tracking_url'] ?? null,
+                'estimated_delivery_date' => $shipment['estimated_delivery_date'] ?? null,
+                'courier_id'              => $courierId,
+                'shipping_status'         => $shipment['status'] ?? 'pending',
             ]);
 
             session()->forget('shipbubble_request_token');
@@ -323,36 +328,70 @@ class CheckoutController extends Controller
             'shipping_phone'   => ['required', 'string'],
         ]);
 
-        $cart = session()->get('cart', []);
-        if (empty($cart)) {
+        $cartModel = $this->getCart();
+        $cartItems = $cartModel->items()->with(['product.seller'])->get();
+
+        if ($cartItems->isEmpty()) {
             return response()->json(['error' => 'Cart is empty'], 400);
         }
 
         $totalWeight = 0;
         $subtotal    = 0;
         $itemName    = 'Package';
+        $sellerIds   = [];
 
-        foreach ($cart as $productId => $item) {
-            $product = Product::find($productId);
+        foreach ($cartItems as $item) {
+            $product = $item->product;
             if (!$product) continue;
-            $totalWeight += ($product->weight_kg ?? 0.5) * $item['quantity'];
-            $subtotal    += $item['price'] * $item['quantity'];
-            $itemName     = $item['name'];
+            $totalWeight += ($product->weight_kg ?? 0.5) * $item->quantity;
+            $subtotal    += $item->price * $item->quantity;
+            $itemName     = $product->name;
+            if ($product->seller_id) {
+                $sellerIds[] = $product->seller_id;
+            }
         }
 
         if ($totalWeight <= 0) $totalWeight = 0.5;
 
-        try {
-            $senderValidation = $this->shipbubble->validateAddress([
-                'name'    => config('app.name'),
-                'email'   => config('mail.from.address'),
-                'phone'   => '08000000000',
-                'address' => 'Orderer Fulfillment Center, Lagos',
-                'city'    => 'Lagos',
-                'state'   => 'Lagos',
-                'country' => 'NG',
-            ]);
+        $uniqueSellerIds = array_unique($sellerIds);
 
+        try {
+            // ── Sender address code ─────────────────────────────────────────
+            // If all items belong to one seller, use their pre-validated address_code.
+            // Otherwise fall back to our default fulfillment address.
+            if (count($uniqueSellerIds) === 1) {
+                $seller = \App\Models\Seller::find($uniqueSellerIds[0]);
+
+                if ($seller && $seller->address_code) {
+                    $senderAddressCode = $seller->address_code;
+                } else {
+                    // Seller exists but has no address_code — validate default
+                    $senderValidation  = $this->shipbubble->validateAddress([
+                        'name'    => 'Orderer Fulfillment',
+                        'email'   => config('mail.from.address'),
+                        'phone'   => '08000000000',
+                        'address' => 'Orderer Fulfillment Center Lagos',
+                        'city'    => 'Lagos',
+                        'state'   => 'Lagos',
+                        'country' => 'NG',
+                    ]);
+                    $senderAddressCode = $senderValidation['data']['address_code'] ?? null;
+                }
+            } else {
+                // Multiple sellers — use our default fulfillment address
+                $senderValidation  = $this->shipbubble->validateAddress([
+                    'name'    => 'Orderer Fulfillment',
+                    'email'   => config('mail.from.address'),
+                    'phone'   => '08000000000',
+                    'address' => 'Orderer Fulfillment Center Lagos',
+                    'city'    => 'Lagos',
+                    'state'   => 'Lagos',
+                    'country' => 'NG',
+                ]);
+                $senderAddressCode = $senderValidation['data']['address_code'] ?? null;
+            }
+
+            // ── Recipient validation ────────────────────────────────────────
             $recipientValidation = $this->shipbubble->validateAddress([
                 'name'    => $request->shipping_name,
                 'email'   => auth('web')->user()->email,
@@ -363,7 +402,6 @@ class CheckoutController extends Controller
                 'country' => $request->shipping_country,
             ]);
 
-            $senderAddressCode    = $senderValidation['data']['address_code']    ?? null;
             $recipientAddressCode = $recipientValidation['data']['address_code'] ?? null;
 
             if (!$senderAddressCode || !$recipientAddressCode) {
@@ -373,7 +411,7 @@ class CheckoutController extends Controller
                 ], 422);
             }
 
-            $rates = $this->shipbubble->getRates([
+            $rates    = $this->shipbubble->getRates([
                 'sender_address_code'   => $senderAddressCode,
                 'reciever_address_code' => $recipientAddressCode,
                 'weight'                => $totalWeight,
@@ -385,8 +423,8 @@ class CheckoutController extends Controller
                 'item_name'             => $itemName,
             ]);
 
-            // Store request_token from rates response
-            $rateData = $rates['data'] ?? $rates;
+            $rateData = is_array($rates) && isset($rates['data']) ? $rates['data'] : $rates;
+
             if (!empty($rateData['request_token'])) {
                 session(['shipbubble_request_token' => $rateData['request_token']]);
                 \Log::info('Stored shipbubble_request_token', ['token' => $rateData['request_token']]);
@@ -488,6 +526,19 @@ class CheckoutController extends Controller
         } catch (\Exception $e) {
             \Log::error('sendOrderEmails failed: ' . $e->getMessage());
         }
+    }
+
+    private function getCart(): \App\Models\Cart
+    {
+        if (auth('web')->check()) {
+            return \App\Models\Cart::firstOrCreate(
+                ['user_id' => auth('web')->id()],
+                ['session_id' => null]
+            );
+        }
+        return \App\Models\Cart::firstOrCreate(
+            ['session_id' => session()->getId(), 'user_id' => null]
+        );
     }
 
     // protected function fallbackRates(string $country): array

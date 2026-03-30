@@ -1752,3 +1752,13 @@ img {
 /* ##### The End ##### */
 
 /*# sourceMappingURL=core-style.css.map */
+/* Product card inner spacing fix */
+.single-product-wrapper {
+    padding: 10px !important;
+}
+
+.single-product-wrapper .product-description {
+    padding-top: 15px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+}

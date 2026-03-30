@@ -15,7 +15,7 @@ class Ad extends Model
         'title', 'media_url', 'cloudinary_public_id', 'media_type',
         'click_url', 'budget', 'cost_per_day', 'amount_spent',
         'start_date', 'end_date', 'status', 'approved_by',
-        'rejection_reason', 'total_impressions', 'total_clicks',
+        'rejection_reason', 'total_impressions', 'total_clicks','region'
     ];
 
     protected $casts = [

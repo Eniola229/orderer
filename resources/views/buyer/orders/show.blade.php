@@ -8,6 +8,25 @@
 
 @section('content')
 
+@php
+function orderStatusBadge(string $status): string {
+    return match($status) {
+        'pending'    => 'bg-warning text-dark',
+        'confirmed'  => 'bg-info text-white',
+        'processing' => 'bg-primary text-white',
+        'shipped'    => 'bg-primary text-white',
+        'delivered'  => 'bg-success text-white',
+        'completed'  => 'bg-success text-white',
+        'cancelled'  => 'bg-danger text-white',
+        'disputed'   => 'bg-danger text-white',
+        'paid'       => 'bg-success text-white',
+        'failed'     => 'bg-danger text-white',
+        'refunded'   => 'bg-secondary text-white',
+        default      => 'bg-secondary text-white',
+    };
+}
+@endphp
+
 <div class="row">
     <div class="col-lg-8">
 
@@ -15,7 +34,7 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">Order Items</h5>
-                <span class="badge orderer-badge badge-{{ $order->status }}">
+                <span class="badge {{ orderStatusBadge($order->status) }}">
                     {{ ucfirst($order->status) }}
                 </span>
             </div>
@@ -47,7 +66,7 @@
                                 <td>{{ $item->quantity }}</td>
                                 <td class="fw-bold">${{ number_format($item->total_price, 2) }}</td>
                                 <td>
-                                    <span class="badge orderer-badge badge-{{ $item->status }}">
+                                    <span class="badge {{ orderStatusBadge($item->status) }}">
                                         {{ ucfirst($item->status) }}
                                     </span>
                                 </td>
@@ -91,7 +110,7 @@
                     </div>
                     <div>
                         <p class="mb-0 fw-semibold fs-13">
-                            {{ $log->from_status ? ucfirst($log->from_status).' → ' : '' }}
+                            {{ $log->from_status ? ucfirst($log->from_status) . ' → ' : '' }}
                             {{ ucfirst($log->to_status) }}
                         </p>
                         @if($log->note)
@@ -136,7 +155,7 @@
                 </div>
                 <div class="mt-2">
                     <small class="text-muted d-block">Payment status</small>
-                    <span class="badge orderer-badge badge-{{ $order->payment_status }}">
+                    <span class="badge {{ orderStatusBadge($order->payment_status) }}">
                         {{ ucfirst($order->payment_status) }}
                     </span>
                 </div>
@@ -146,10 +165,77 @@
                     <code class="fs-12">{{ $order->payment_reference }}</code>
                 </div>
                 @endif
+                <div class="mt-3">
+                    <small class="text-muted d-block">Payment method</small>
+                <strong>{{ ucfirst($order->payment_method) }}</strong>
+            </div>
             </div>
         </div>
 
-        {{-- Shipping address --}}
+        {{-- Shipping / Courier info --}}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Shipping Info</h5>
+            </div>
+            <div class="card-body">
+
+                {{-- Carrier --}}
+                @if($order->shipping_carrier)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Carrier</small>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="feather-truck text-primary"></i>
+                        <span class="fw-semibold">{{ $order->shipping_carrier }}</span>
+                        @if($order->shipping_service_name)
+                        <span class="text-muted fs-12">— {{ $order->shipping_service_name }}</span>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                {{-- Shipbubble order ID --}}
+                @if($order->shipbubble_shipment_id)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Shipment ID</small>
+                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
+                </div>
+                @endif
+
+                {{-- Tracking number --}}
+                @if($order->tracking_number)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Tracking Number</small>
+                    <code class="fs-12">{{ $order->tracking_number }}</code>
+                </div>
+                @endif
+
+                {{-- Estimated delivery --}}
+                @if($order->estimated_delivery_date)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Estimated Delivery</small>
+                    <span class="fw-semibold text-success">
+                        <i class="feather-calendar me-1"></i>
+                        {{ $order->estimated_delivery_date }}
+                    </span>
+                </div>
+                @endif
+
+                {{-- Track button --}}
+                @if($order->tracking_url)
+                <a href="{{ $order->tracking_url }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="feather-map-pin me-2"></i> Track Shipment
+                </a>
+                @else
+                <div class="text-muted fs-12 text-center py-2">
+                    <i class="feather-clock me-1"></i>
+                    Tracking details will appear here once your order is shipped.
+                </div>
+                @endif
+
+            </div>
+        </div>
+
+        {{-- Delivery address --}}
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Delivery Address</h5>

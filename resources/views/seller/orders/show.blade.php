@@ -8,6 +8,25 @@
 
 @section('content')
 
+@php
+function sellerOrderStatusBadge(string $status): string {
+    return match($status) {
+        'pending'    => 'bg-warning text-dark',
+        'confirmed'  => 'bg-info text-white',
+        'processing' => 'bg-primary text-white',
+        'shipped'    => 'bg-primary text-white',
+        'delivered'  => 'bg-success text-white',
+        'completed'  => 'bg-success text-white',
+        'cancelled'  => 'bg-danger text-white',
+        'disputed'   => 'bg-danger text-white',
+        'paid'       => 'bg-success text-white',
+        'failed'     => 'bg-danger text-white',
+        'refunded'   => 'bg-secondary text-white',
+        default      => 'bg-secondary text-white',
+    };
+}
+@endphp
+
 <div class="row">
     <div class="col-lg-8">
 
@@ -15,7 +34,7 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">Order Items (Your Listings)</h5>
-                <span class="badge orderer-badge badge-{{ $order->status }}">
+                <span class="badge {{ sellerOrderStatusBadge($order->status) }}">
                     {{ ucfirst($order->status) }}
                 </span>
             </div>
@@ -52,7 +71,7 @@
                                 </td>
                                 <td class="fw-bold text-success">${{ number_format($item->seller_earnings, 2) }}</td>
                                 <td>
-                                    <span class="badge orderer-badge badge-{{ $item->status }}">
+                                    <span class="badge {{ sellerOrderStatusBadge($item->status) }}">
                                         {{ ucfirst($item->status) }}
                                     </span>
                                 </td>
@@ -73,7 +92,6 @@
             <div class="card-body">
                 <form action="{{ route('seller.orders.status', $order->id) }}" method="POST">
                     @csrf @method('PUT')
-
                     <div class="row">
                         <div class="col-md-5 mb-3">
                             <label class="form-label fw-bold">New Status</label>
@@ -82,9 +100,6 @@
                                 @if($order->status === 'pending')
                                     <option value="confirmed">Confirmed — Accept &amp; prepare</option>
                                     <option value="cancelled">Cancelled — Reject order</option>
-                                @endif
-                                @if(in_array($order->status, ['pending','confirmed']))
-                                    <option value="shipped">Shipped — Mark as dispatched</option>
                                 @endif
                             </select>
                         </div>
@@ -95,89 +110,12 @@
                         </div>
                     </div>
 
-                    {{-- Shipping details — shown when "Shipped" selected --}}
-                    <div id="shippingFields" style="display:none;">
-                        <div class="alert alert-info mb-3">
-                            <i class="feather-info me-2"></i>
-                            Enter tracking details, or use the <strong>Shipbubble Rate Finder</strong> below to book shipment automatically.
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Carrier</label>
-                                <input type="text" name="shipping_carrier" class="form-control"
-                                       placeholder="e.g. DHL, GIG">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Service Name</label>
-                                <input type="text" name="shipping_service_name" class="form-control"
-                                       placeholder="e.g. DHL Express">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Tracking Number</label>
-                                <input type="text" name="tracking_number" class="form-control"
-                                       placeholder="e.g. 1Z9999999...">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Tracking URL</label>
-                                <input type="url" name="tracking_url" class="form-control"
-                                       placeholder="https://track.dhl.com/...">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Estimated Delivery Date</label>
-                                <input type="text" name="estimated_delivery_date" class="form-control"
-                                       placeholder="e.g. Jan 15 – Jan 18, 2026">
-                            </div>
-                        </div>
-                    </div>
-
                     <button type="submit" class="btn btn-primary">
                         <i class="feather-refresh-cw me-2"></i> Update Status
                     </button>
                 </form>
             </div>
         </div>
-
-        {{-- Shipbubble rate finder --}}
-        @if(in_array($order->status, ['pending','confirmed']))
-        <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">
-                    <i class="feather-truck me-2 text-primary"></i>
-                    Book Shipment via Shipbubble
-                </h5>
-                <button type="button" class="btn btn-sm btn-outline-primary" onclick="fetchSellerRates()">
-                    <i class="feather-zap me-1"></i> Get Rates
-                </button>
-            </div>
-            <div class="card-body">
-                <p class="text-muted fs-13 mb-3">
-                    Automatically fetch shipping rates and book a shipment for this order.
-                    The tracking number will be applied automatically.
-                </p>
-
-                <div id="sellerRatesLoading" style="display:none;text-align:center;padding:20px;">
-                    <div class="spinner-border text-success" role="status"></div>
-                    <p style="margin-top:8px;color:#888;font-size:13px;">Fetching rates...</p>
-                </div>
-
-                <div id="sellerRatesList"></div>
-
-                <form id="bookShipmentForm"
-                      action="{{ route('seller.orders.ship', $order->id) }}"
-                      method="POST"
-                      style="display:none;">
-                    @csrf
-                    <input type="hidden" name="service_code" id="shipServiceCode">
-                    <input type="hidden" name="carrier"      id="shipCarrier">
-                    <input type="hidden" name="service_name" id="shipServiceName">
-                    <input type="hidden" name="rate_data"    id="shipRateData">
-                    <button type="submit" class="btn btn-success mt-3">
-                        <i class="feather-check me-2"></i> Confirm &amp; Book Shipment
-                    </button>
-                </form>
-            </div>
-        </div>
-        @endif
         @endif
 
         {{-- Timeline --}}
@@ -231,16 +169,39 @@
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between mb-3">
-                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold">Order Total</span>
                     <span class="fw-bold text-primary">${{ number_format($order->total, 2) }}</span>
                 </div>
+
+                {{-- Seller earnings breakdown --}}
+                @php
+                    $myCommissionTotal = $myItems->sum('commission_amount');
+                    $myEarningsTotal   = $myItems->sum('seller_earnings');
+                @endphp
+                <div class="p-3 rounded mb-3" style="background:#f0faf5;border:1px solid #d4edda;">
+                    <p class="fw-bold mb-2 text-success" style="font-size:13px;">Your Earnings Breakdown</p>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fs-13">Your Items Total</span>
+                        <span class="fw-semibold fs-13">${{ number_format($myItems->sum('total_price'), 2) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted fs-13">Platform Commission</span>
+                        <span class="fw-semibold fs-13 text-danger">-${{ number_format($myCommissionTotal, 2) }}</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-bold fs-13">Your Net Earnings</span>
+                        <span class="fw-bold text-success">${{ number_format($myEarningsTotal, 2) }}</span>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted fs-13">Payment method</span>
                     <span class="fw-semibold fs-13">{{ ucfirst($order->payment_method) }}</span>
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted fs-13">Payment status</span>
-                    <span class="badge orderer-badge badge-{{ $order->payment_status }}">
+                    <span class="badge {{ sellerOrderStatusBadge($order->payment_status) }}">
                         {{ ucfirst($order->payment_status) }}
                     </span>
                 </div>
@@ -253,8 +214,72 @@
             </div>
         </div>
 
-        {{-- Shipping details --}}
+        {{-- Shipping info --}}
         <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Shipping Info</h5>
+            </div>
+            <div class="card-body">
+
+                {{-- Carrier --}}
+                @if($order->shipping_carrier)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Carrier</small>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="feather-truck text-primary"></i>
+                        <span class="fw-semibold">{{ $order->shipping_carrier }}</span>
+                        @if($order->shipping_service_name)
+                        <span class="text-muted fs-12">— {{ $order->shipping_service_name }}</span>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                {{-- Shipbubble shipment ID --}}
+                @if($order->shipbubble_shipment_id)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Shipment ID</small>
+                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
+                </div>
+                @endif
+
+                {{-- Tracking number --}}
+                @if($order->tracking_number)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Tracking Number</small>
+                    <code class="fs-12 text-primary">{{ $order->tracking_number }}</code>
+                </div>
+                @endif
+
+                {{-- Estimated delivery --}}
+                @if($order->estimated_delivery_date)
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Estimated Delivery</small>
+                    <span class="fw-semibold text-success">
+                        <i class="feather-calendar me-1"></i>
+                        {{ $order->estimated_delivery_date }}
+                    </span>
+                </div>
+                @endif
+
+                {{-- Track button --}}
+                @if($order->tracking_url)
+                <a href="{{ $order->tracking_url }}" target="_blank"
+                   class="btn btn-outline-primary btn-sm w-100">
+                    <i class="feather-map-pin me-2"></i> Track Shipment
+                </a>
+                @else
+                <div class="text-muted fs-12 text-center py-2">
+                    <i class="feather-clock me-1"></i>
+                    Tracking details will appear once the shipment is booked.
+                </div>
+                @endif
+
+            </div>
+        </div>
+
+        {{-- Delivery address --}}
+        <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Delivery Address</h5>
             </div>
@@ -267,131 +292,17 @@
             </div>
         </div>
 
-        {{-- Shipment info if available --}}
-        @if($order->tracking_number)
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Shipment Details</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-2">
-                    <small class="text-muted d-block">Carrier</small>
-                    <strong>{{ $order->shipping_carrier }} — {{ $order->shipping_service_name }}</strong>
-                </div>
-                <div class="mb-2">
-                    <small class="text-muted d-block">Tracking Number</small>
-                    <code class="text-primary">{{ $order->tracking_number }}</code>
-                </div>
-                @if($order->tracking_url)
-                <a href="{{ $order->tracking_url }}" target="_blank"
-                   class="btn btn-sm btn-outline-primary w-100 mt-2">
-                    <i class="feather-external-link me-1"></i> Track Shipment
-                </a>
-                @endif
-                @if($order->estimated_delivery_date)
-                <div class="mt-2">
-                    <small class="text-muted d-block">Est. Delivery</small>
-                    <strong>{{ $order->estimated_delivery_date }}</strong>
-                </div>
-                @endif
-            </div>
-        </div>
-        @endif
-
     </div>
 </div>
 
 @push('scripts')
 <script>
-// Show/hide shipping fields
-document.getElementById('statusSelect')?.addEventListener('change', function() {
-    document.getElementById('shippingFields').style.display =
-        this.value === 'shipped' ? 'block' : 'none';
+document.getElementById('statusSelect')?.addEventListener('change', function () {
+    const shippingFields = document.getElementById('shippingFields');
+    if (shippingFields) {
+        shippingFields.style.display = this.value === 'shipped' ? 'block' : 'none';
+    }
 });
-
-// Fetch Shipbubble rates for seller
-function fetchSellerRates() {
-    document.getElementById('sellerRatesLoading').style.display = 'block';
-    document.getElementById('sellerRatesList').innerHTML = '';
-    document.getElementById('bookShipmentForm').style.display = 'none';
-
-    fetch('{{ route("seller.orders.rates", $order->id) }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({})
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById('sellerRatesLoading').style.display = 'none';
-
-        if (!data.success || !data.rates || !data.rates.length) {
-            document.getElementById('sellerRatesList').innerHTML =
-                '<div class="alert alert-warning">No rates available. Enter tracking details manually above.</div>';
-            return;
-        }
-
-        let html = '';
-        data.rates.forEach(function(rate, idx) {
-            const courier     = rate.courier?.name || 'Courier';
-            const service     = rate.service?.name || 'Standard';
-            const price       = parseFloat(rate.total || 0).toFixed(2);
-            const eta         = rate.delivery_eta || '';
-            const serviceCode = rate.service_code || '';
-
-            html += `
-            <label class="d-block border rounded p-3 mb-2"
-                   style="cursor:pointer;transition:border-color .2s;"
-                   for="srate_${idx}">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
-                        <input type="radio" name="_srate" id="srate_${idx}"
-                               value="${serviceCode}"
-                               data-carrier="${courier}"
-                               data-service="${service}"
-                               data-ratedata='${JSON.stringify(rate)}'
-                               onchange="selectSellerRate(this)"
-                               class="form-check-input mt-0"
-                               ${idx === 0 ? 'checked' : ''}>
-                        <div>
-                            <p class="mb-0 fw-bold fs-13">${courier}</p>
-                            <p class="mb-0 text-muted" style="font-size:12px;">${service}</p>
-                            ${eta ? `<small class="text-muted"><i class="feather-clock me-1"></i>${eta}</small>` : ''}
-                        </div>
-                    </div>
-                    <span class="fw-bold text-success">$${price}</span>
-                </div>
-            </label>`;
-        });
-
-        document.getElementById('sellerRatesList').innerHTML = html;
-        document.getElementById('bookShipmentForm').style.display = 'block';
-
-        const first = document.querySelector('[name="_srate"]');
-        if (first) selectSellerRate(first);
-    })
-    .catch(() => {
-        document.getElementById('sellerRatesLoading').style.display = 'none';
-        document.getElementById('sellerRatesList').innerHTML =
-            '<div class="alert alert-danger">Failed to fetch rates. Try again or enter tracking manually.</div>';
-    });
-}
-
-function selectSellerRate(radio) {
-    document.getElementById('shipServiceCode').value = radio.value;
-    document.getElementById('shipCarrier').value     = radio.dataset.carrier;
-    document.getElementById('shipServiceName').value = radio.dataset.service;
-    document.getElementById('shipRateData').value    = radio.dataset.ratedata;
-
-    document.querySelectorAll('label[for^="srate_"]').forEach(l => {
-        l.style.borderColor = '#dee2e6';
-        l.style.background  = '#fff';
-    });
-    radio.closest('label').style.borderColor = '#2ECC71';
-    radio.closest('label').style.background  = '#f0faf5';
-}
 </script>
 @endpush
 

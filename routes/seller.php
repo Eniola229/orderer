@@ -88,9 +88,9 @@ Route::prefix('seller')->name('seller.')->group(function () {
 
         // Ads
         Route::get('/ads',               [SellerAdController::class, 'index'])->name('ads.index');
-        Route::get('/ads/{ad}', [SellerAdController::class, 'show'])->name('ads.show');
         Route::get('/ads/create',        [SellerAdController::class, 'create'])->name('ads.create');
         Route::post('/ads',              [SellerAdController::class, 'store'])->name('ads.store');
+        Route::get('/ads/{ad}', [SellerAdController::class, 'show'])->name('ads.show');
         Route::delete('/ads/{ad}',       [SellerAdController::class, 'destroy'])->name('ads.destroy');
         Route::put('/ads/{ad}/pause',    [SellerAdController::class, 'pause'])->name('ads.pause');
         Route::put('/ads/{ad}/resume',   [SellerAdController::class, 'resume'])->name('ads.resume');

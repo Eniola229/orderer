@@ -25,7 +25,7 @@ class Order extends Model
         // Shipping carrier & service
         'shipping_carrier', 'shipping_service_code', 'shipping_service_name',
         // Shipbubble tracking
-        'shipbubble_order_id', 'shipbubble_shipment_id',
+        'shipbubble_shipment_id', 'courier_id', 'shipping_status',
         'tracking_number', 'tracking_url', 'estimated_delivery_date',
         // Package
         'declared_value', 'package_weight',
@@ -34,7 +34,6 @@ class Order extends Model
         // Misc
         'notes', 'delivered_at', 'completed_at',
     ];
-
     protected $casts = [
         'subtotal'           => 'decimal:2',
         'shipping_fee'       => 'decimal:2',

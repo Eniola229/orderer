@@ -7,12 +7,12 @@
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
-<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }});">
+<div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }}); background-size: cover; background-position: center;">
     <div class="container h-100">
         <div class="row h-100 align-items-center">
             <div class="col-12">
                 <div class="page-title text-center">
-                    <h2>{{ Str::limit($product->name, 40) }}</h2>
+                    <h2 class="fs-2 fs-md-1">{{ Str::limit($product->name, 40) }}</h2>
                     <button onclick="shareProduct()" style="background: none; border: 1px solid #2ECC71; border-radius: 50px; padding: 6px 20px; margin-top: 10px; font-size: 13px; color: #2ECC71; cursor: pointer;">
                         <i class="fa fa-share-alt mr-1"></i> Share
                     </button>
@@ -21,11 +21,79 @@
         </div>
     </div>
 </div>
+ 
+<style>
+    @media (max-width: 768px) {
+        .single_product_area {
+            padding: 40px 0;
+        }
+        .single_product_desc h2 {
+            font-size: 20px !important;
+        }
+        .single_product_desc [style*="font-size:32px"] {
+            font-size: 24px !important;
+        }
+        .product-img img {
+            width: 100%;
+            height: auto;
+        }
+        .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .trust-badges {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px !important;
+        }
+        .seller-info {
+            flex-direction: column;
+            text-align: center;
+        }
+        .seller-info .ml-auto {
+            margin-left: 0 !important;
+            margin-top: 10px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .single_product_desc h2 {
+            font-size: 18px !important;
+        }
+        .single_product_desc [style*="font-size:32px"] {
+            font-size: 20px !important;
+        }
+        .d-flex.gap-3 {
+            gap: 12px !important;
+        }
+        .thumbnail-list {
+            justify-content: center;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .breadcumb_area {
+            padding: 40px 0;
+        }
+        .breadcumb_area h2 {
+            font-size: 1.2rem;
+        }
+        .nav-tabs .nav-link {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .trust-badges div {
+            font-size: 10px;
+        }
+    }
+</style>
 
 <section class="single_product_area section-padding-80">
     <div class="container">
-        <div class="row">
-
+        <div class="row g-4">
             {{-- Images --}}
             <div class="col-12 col-lg-6">
                 <div class="single_product_img">
@@ -34,11 +102,11 @@
                     <div id="mainImgWrap" style="border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:16px;">
                         <img id="mainProductImg"
                              src="{{ $primaryImg->image_url ?? asset('img/product-img/product-1.jpg') }}"
-                             style="width:100%;height:400px;object-fit:contain;background:#fafafa;"
+                             style="width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fafafa;"
                              alt="{{ $product->name }}">
                     </div>
                     {{-- Thumbnails --}}
-                    <div class="d-flex gap-2 flex-wrap">
+                    <div class="d-flex gap-2 flex-wrap justify-content-start">
                         @foreach($product->images as $img)
                         <img src="{{ $img->image_url }}"
                              style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:2px solid {{ $img->is_primary ? '#2ECC71' : '#eee' }};cursor:pointer;"
@@ -74,7 +142,7 @@
             <div class="col-12 col-lg-6">
                 <div class="single_product_desc">
                     {{-- Seller / category --}}
-                    <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
                         <span style="font-size:13px;color:#2ECC71;font-weight:600;">
                             {{ $product->category->name ?? '' }}
                         </span>
@@ -83,12 +151,12 @@
                         @endif
                     </div>
 
-                    <h2 style="font-size:24px;font-weight:800;margin-bottom:12px;color:#1a1a1a;">
+                    <h2 style="font-size:24px;font-weight:800;margin-bottom:12px;color:#1a1a1a;word-break:break-word;">
                         {{ $product->name }}
                     </h2>
 
                     {{-- Rating --}}
-                    <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <div style="color:#F39C12;">
                             @for($i = 1; $i <= 5; $i++)
                                 {{ $i <= round($product->average_rating) ? '★' : '☆' }}
@@ -104,27 +172,28 @@
                     {{-- Price --}}
                     <div class="mb-3">
                         @if($product->sale_price)
-                        <span style="font-size:32px;font-weight:800;color:#2ECC71;">
+                        <span style="font-size:32px;font-weight:800;color:#2ECC71;" class="price-large">
                             ${{ number_format($product->sale_price, 2) }}
                         </span>
                         <span style="font-size:18px;color:#aaa;text-decoration:line-through;margin-left:10px;">
                             ${{ number_format($product->price, 2) }}
                         </span>
-                        <span style="background:#FADBD8;color:#E74C3C;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-left:8px;">
+                        <span style="background:#FADBD8;color:#E74C3C;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-left:8px;display:inline-block;">
                             -{{ round((($product->price - $product->sale_price) / $product->price) * 100) }}% OFF
                         </span>
                         @else
-                        <span style="font-size:32px;font-weight:800;color:#1a1a1a;">
+                        <span style="font-size:32px;font-weight:800;color:#1a1a1a;" class="price-large">
                             ${{ number_format($product->price, 2) }}
                         </span>
                         @endif
                     </div>
 
                     {{-- Stock / condition --}}
-                    <div class="d-flex gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <span style="font-size:13px;color:#888;">
                             Condition: <strong>{{ ucfirst($product->condition) }}</strong>
                         </span>
+                        <span style="font-size:13px;color:#888;">·</span>
                         <span style="font-size:13px;color:{{ $product->stock > 0 ? '#2ECC71' : '#E74C3C' }};font-weight:600;">
                             {{ $product->stock > 0 ? $product->stock . ' in stock' : 'Out of stock' }}
                         </span>
@@ -142,7 +211,7 @@
                     @if($product->stock > 0)
                     <form id="addToCartForm" class="mb-3">
                         @csrf
-                        <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
                             <label style="font-weight:600;font-size:14px;">Quantity:</label>
                             <div class="d-flex align-items-center border rounded" style="overflow:hidden;">
                                 <button type="button" onclick="changeQty(-1)"
@@ -153,7 +222,7 @@
                                         style="width:36px;height:36px;border:none;background:#f5f5f5;font-size:18px;cursor:pointer;">+</button>
                             </div>
                         </div>
-                        <div class="d-flex gap-3">
+                        <div class="d-flex gap-3 flex-wrap">
                             <button type="button" class="btn essence-btn flex-grow-1"
                                     onclick="addToCart('{{ $product->id }}')">
                                 <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
@@ -173,7 +242,7 @@
 
                     {{-- Seller info --}}
                     <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin-top:16px;">
-                        <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-3 flex-wrap seller-info">
                             @if($product->seller->avatar)
                                 <img src="{{ $product->seller->avatar }}"
                                      style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="">
@@ -182,7 +251,7 @@
                                     {{ strtoupper(substr($product->seller->business_name, 0, 1)) }}
                                 </div>
                             @endif
-                            <div>
+                            <div style="flex:1;">
                                 <p style="margin:0;font-weight:700;font-size:14px;">
                                     {{ $product->seller->business_name }}
                                 </p>
@@ -197,7 +266,7 @@
                             </div>
                             @if($product->seller->brand)
                             <a href="{{ route('brands.show', $product->seller->brand->slug) }}"
-                               class="btn btn-sm ml-auto"
+                               class="btn btn-sm"
                                style="border:1px solid #2ECC71;color:#2ECC71;border-radius:4px;font-size:12px;">
                                 Visit Store
                             </a>
@@ -206,7 +275,7 @@
                     </div>
 
                     {{-- Trust badges --}}
-                    <div class="d-flex gap-3 flex-wrap mt-3">
+                    <div class="d-flex gap-3 flex-wrap mt-3 trust-badges">
                         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;">
                             <i class="fa fa-lock" style="color:#2ECC71;"></i> Escrow Protection
                         </div>
@@ -220,8 +289,45 @@
 
                 </div>
             </div>
-
         </div>
+
+
+        {{-- Sidebar Ads - full width banner --}}
+        @if(isset($sidebarAds) && $sidebarAds->count())
+        <div class="row mt-4">
+            @foreach($sidebarAds as $ad)
+            <div class="col-12 col-md-6 mb-3">
+                <div style="position:relative;border-radius:12px;overflow:hidden;background:#1a1a2e;height:140px;">
+
+                    @if($ad->media_type === 'video' && $ad->media_url)
+                        <video autoplay muted loop playsinline
+                               style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
+                            <source src="{{ $ad->media_url }}">
+                        </video>
+                    @elseif($ad->media_url)
+                        <div style="position:absolute;inset:0;background-image:url('{{ $ad->media_url }}');background-size:cover;background-position:center;z-index:0;"></div>
+                    @endif
+
+                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.50);z-index:1;"></div>
+
+                    <div style="position:relative;z-index:2;padding:16px 20px;height:100%;display:flex;flex-direction:column;justify-content:center;">
+                        <span style="display:inline-block;background:#2ECC71;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;width:fit-content;">
+                            Sponsored
+                        </span>
+                        <p style="color:#fff;font-size:13px;font-weight:700;margin-bottom:10px;line-height:1.4;">
+                            {{ Str::limit($ad->title, 70) }}
+                        </p>
+                        <a href="{{ $ad->clickTrackingUrl() }}"
+                           style="display:inline-block;background:#2ECC71;color:#fff;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none;width:fit-content;">
+                            Shop Now
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
 
         {{-- Description + Reviews --}}
         <div class="row mt-5">
@@ -239,18 +345,20 @@
 
                 <div class="tab-content mt-4">
                     <div class="tab-pane fade show active" id="description">
-                        <div style="line-height:1.9;color:#444;font-size:15px;">
+                        <div style="line-height:1.9;color:#444;font-size:15px;word-break:break-word;">
                             {!! nl2br(e($product->description)) !!}
                         </div>
                         @if($product->weight_kg)
                         <div class="mt-4">
-                            <table class="table table-bordered" style="max-width:400px;">
-                                <tr><td class="fw-bold">Weight</td><td>{{ $product->weight_kg }} kg</td></tr>
-                                <tr><td class="fw-bold">Condition</td><td>{{ ucfirst($product->condition) }}</td></tr>
-                                @if($product->sku)
-                                <tr><td class="fw-bold">SKU</td><td>{{ $product->sku }}</td></tr>
-                                @endif
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" style="max-width:400px;">
+                                    <tr><td class="fw-bold">Weight</td><td>{{ $product->weight_kg }} kg</td></tr>
+                                    <tr><td class="fw-bold">Condition</td><td>{{ ucfirst($product->condition) }}</td></tr>
+                                    @if($product->sku)
+                                    <tr><td class="fw-bold">SKU</td><td>{{ $product->sku }}</td></tr>
+                                    @endif
+                                </table>
+                            </div>
                         </div>
                         @endif
                     </div>
@@ -258,12 +366,12 @@
                     <div class="tab-pane fade" id="reviews">
                         @if($product->reviews->count())
                         @foreach($product->reviews->where('is_visible',true)->take(10) as $review)
-                        <div class="d-flex gap-3 mb-4 pb-4 border-bottom">
+                        <div class="d-flex gap-3 mb-4 pb-4 border-bottom flex-wrap">
                             <div style="width:44px;height:44px;border-radius:50%;background:#2ECC71;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
                                 {{ strtoupper(substr($review->user->first_name ?? 'U', 0, 1)) }}
                             </div>
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-1">
+                            <div style="flex:1;">
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                     <strong>{{ $review->user->first_name ?? 'Buyer' }}</strong>
                                     <span style="color:#F39C12;">
                                         @for($i=1;$i<=5;$i++) {{ $i<=$review->rating?'★':'☆' }} @endfor
@@ -274,7 +382,7 @@
                                     </span>
                                     @endif
                                 </div>
-                                <p style="color:#555;font-size:14px;margin:0;">{{ $review->review ?? 'No comment.' }}</p>
+                                <p style="color:#555;font-size:14px;margin:0;word-break:break-word;">{{ $review->review ?? 'No comment.' }}</p>
                                 <small style="color:#aaa;">{{ $review->created_at->format('M d, Y') }}</small>
                             </div>
                         </div>
@@ -298,11 +406,11 @@
             </div>
             @foreach($relatedProducts as $related)
             @php $rImg = $related->images->where('is_primary',true)->first() ?? $related->images->first(); @endphp
-            <div class="col-12 col-sm-6 col-lg-3 mb-4">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <div class="single-product-wrapper">
                     <div class="product-img">
                         <a href="{{ route('product.show', $related->slug) }}">
-                            <img src="{{ $rImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
+                            <img src="{{ $rImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;">
                         </a>
                         <div class="product-favourite">
                             <a href="#" class="favme fa fa-heart" data-product="{{ $related->id }}"></a>
@@ -352,13 +460,24 @@ function addToCart(productId) {
     const qty = document.getElementById('qty').value;
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
         body: JSON.stringify({ product_id: productId, quantity: parseInt(qty) })
-    }).then(r => r.json()).then(data => {
+    })
+    .then(r => r.json())
+    .then(data => {
         if (data.success) {
-            document.querySelectorAll('#cart-count, #cart-count-sidebar').forEach(el => el.textContent = data.count);
-            alert('Added to cart!');
+            window.loadCart();
+            window.cartToast('Item added to cart!');
+        } else {
+            window.cartToast(data.message ?? 'Could not add item.', 'error');
         }
+    })
+    .catch(() => {
+        window.cartToast('Something went wrong.', 'error');
     });
 }
 
@@ -366,9 +485,15 @@ function toggleWishlist(productId, btn) {
     @auth('web')
     fetch('{{ route("buyer.wishlist.toggle") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
         body: JSON.stringify({ product_id: productId })
-    }).then(r => r.json()).then(data => {
+    })
+    .then(r => r.json())
+    .then(data => {
         const icon = btn.querySelector('i');
         if (data.added) {
             icon.classList.remove('fa-heart-o');
@@ -377,6 +502,25 @@ function toggleWishlist(productId, btn) {
             icon.classList.remove('fa-heart');
             icon.classList.add('fa-heart-o');
         }
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: data.added ? 'success' : 'info',
+            title: data.message,
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+        });
+    })
+    .catch(() => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Something went wrong.',
+            showConfirmButton: false,
+            timer: 2500,
+        });
     });
     @else
     window.location.href = '{{ route("login") }}';
@@ -389,11 +533,73 @@ document.querySelectorAll('.add-to-cart').forEach(function(btn) {
         addToCart(this.dataset.product);
     });
 });
+
 function shareProduct() {
-    const url = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent("{{ $product->name }}");
-    const whatsappUrl = `https://wa.me/?text=${title}%20${url}`;
-    window.open(whatsappUrl, '_blank', 'width=600,height=400');
+    const url = window.location.href;
+    const title = "{{ $product->name }}";
+    const text = `Check out this product: {{ $product->name }}`;
+    
+    // Check if Web Share API is supported (mobile devices)
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: text,
+            url: url,
+        }).catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error('Share failed:', err);
+                fallbackShare(url, title);
+            }
+        });
+    } else {
+        // Fallback for desktop browsers
+        fallbackShare(url, title);
+    }
+}
+
+function fallbackShare(url, title) {
+    // Create a modal with social sharing options
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.6)';
+    modal.style.zIndex = '999999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 12px; max-width: 400px; width: 90%; padding: 20px; animation: fadeIn 0.3s ease;">
+            <h3 style="margin: 0 0 15px 0; font-size: 18px;">Share this product</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+                <button onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}', '_blank', 'width=600,height=400')" style="background: #1877F2; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-facebook"></i></button>
+                <button onclick="window.open('https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}', '_blank', 'width=600,height=400')" style="background: #1DA1F2; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-twitter"></i></button>
+                <button onclick="window.open('https://wa.me/?text=${encodeURIComponent(title)}%20${encodeURIComponent(url)}', '_blank', 'width=600,height=400')" style="background: #25D366; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-whatsapp"></i></button>
+                <button onclick="window.open('https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}', '_blank', 'width=600,height=400')" style="background: #0088cc; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-telegram"></i></button>
+                <button onclick="window.open('https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}', '_blank', 'width=600,height=400')" style="background: #0077B5; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-linkedin"></i></button>
+                <button onclick="window.open('https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}', '_blank', 'width=600,height=400')" style="background: #FF4500; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-reddit"></i></button>
+                <button onclick="navigator.clipboard.writeText('${url}').then(() => alert('Link copied!'))" style="background: #6c757d; border: none; border-radius: 50%; width: 44px; height: 44px; color: white; cursor: pointer;"><i class="fa fa-link"></i></button>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 20px; width: 100%; padding: 10px; background: #f5f5f5; border: none; border-radius: 8px; cursor: pointer;">Close</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add animation style
+    const style = document.createElement('style');
+    style.textContent = `@keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }`;
+    document.head.appendChild(style);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
 </script>
 </body>

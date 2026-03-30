@@ -115,12 +115,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/admins/{adminUser}/activate', [AdminController::class, 'activate'])->name('admins.activate');
 
         // ==================== Ads ====================
-        Route::get('/ads', [AdController::class, 'index'])->name('ads.index');
-        Route::get('/ads/{ad}', [AdController::class, 'show'])->name('ads.show');
+        // Ad Management
         Route::get('/ads/pending', [AdController::class, 'pending'])->name('ads.pending');
-        Route::put('/ads/{ad}/approve', [AdController::class, 'approve'])->name('ads.approve');
-        Route::put('/ads/{ad}/reject', [AdController::class, 'reject'])->name('ads.reject');
-        Route::put('/ads/{ad}/suspend', [AdController::class, 'suspend'])->name('ads.suspend');
         Route::get('/ads/categories', [AdController::class, 'categories'])->name('ads.categories');
         Route::post('/ads/categories', [AdController::class, 'storeCategory'])->name('ads.categories.store');
         Route::put('/ads/categories/{category}/toggle', [AdController::class, 'toggleCategory'])->name('ads.categories.toggle');
@@ -129,6 +125,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/ads/slots/{slot}/price', [AdController::class, 'updateSlotPrice'])->name('ads.slots.price');
         Route::put('/ads/slots/{slot}/toggle', [AdController::class, 'toggleSlot'])->name('ads.slots.toggle');
 
+        // Generic routes
+        Route::get('/ads', [AdController::class, 'index'])->name('ads.index');
+        Route::get('/ads/{ad}', [AdController::class, 'show'])->name('ads.show');
+        Route::put('/ads/{ad}/approve', [AdController::class, 'approve'])->name('ads.approve');
+        Route::put('/ads/{ad}/reject', [AdController::class, 'reject'])->name('ads.reject');
+        Route::put('/ads/{ad}/suspend', [AdController::class, 'suspend'])->name('ads.suspend');
         // Admin Profile
         Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');

@@ -28,6 +28,7 @@ Route::get('/brands',               [StorefrontController::class, 'brands'])->na
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
 
+
 // Ad click tracking & redirect
 Route::get('/ads/{ad}/click', [App\Http\Controllers\AdClickController::class, 'click'])
      ->name('ads.click');
@@ -104,6 +105,9 @@ Route::post('/address/validate', function (\Illuminate\Http\Request $request, \A
 })->name('address.validate');
 
 // Cart (session-based, no auth required to add)
+//Cart
+Route::get('/cart/count',   [CartController::class, 'count'])  ->name('cart.count');
+Route::get('/cart/sidebar', [CartController::class, 'sidebar'])->name('cart.sidebar');
 Route::post('/cart/add',    [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');

@@ -16,6 +16,14 @@
             </div>
         @endif
         <h1 style="color:#fff;font-size:32px;font-weight:800;margin-bottom:8px;">{{ $brand->name }}</h1>
+
+        {{-- ADDED: verified badge in hero --}}
+        @if($brand->seller && $brand->seller->is_verified_business)
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#2ECC71;color:#fff;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:10px;">
+            <i class="fa fa-check-circle" style="font-size:12px;"></i> Verified Seller
+        </div>
+        @endif
+
         <div style="color:#F39C12;font-size:16px;margin-bottom:8px;">
             @for($i=1;$i<=5;$i++) {{ $i<=round($brand->average_rating)?'★':'☆' }} @endfor
             <span style="color:rgba(255,255,255,.7);font-size:13px;">({{ $brand->total_reviews }} reviews)</span>
@@ -25,6 +33,7 @@
         @endif
     </div>
 </div>
+
 {{-- Brand Share Bar --}}
 <div style="background:#fff;border-bottom:1px solid #eee;padding:12px 0;">
     <div class="container">
@@ -120,6 +129,12 @@
                                 <a href="{{ route('product.show', $product->slug) }}">
                                     <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                                 </a>
+                                {{-- ADDED: verified badge on product cards --}}
+                                @if($product->seller->is_verified_business)
+                                <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                    <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                </div>
+                                @endif
                                 <div class="product-favourite">
                                     <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
                                 </div>
@@ -203,12 +218,27 @@
 document.querySelectorAll('.add-to-cart').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
+        const productId = this.dataset.product;
         fetch('{{ route("cart.add") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ product_id: this.dataset.product, quantity: 1 })
-        }).then(r => r.json()).then(data => {
-            if (data.success) document.querySelectorAll('#cart-count,#cart-count-sidebar').forEach(el => el.textContent = data.count);
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.loadCart();
+                window.cartToast('Item added to cart!');
+            } else {
+                window.cartToast(data.message ?? 'Could not add item.', 'error');
+            }
+        })
+        .catch(() => {
+            window.cartToast('Something went wrong.', 'error');
         });
     });
 });

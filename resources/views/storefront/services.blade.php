@@ -151,6 +151,12 @@
                                 <i class="fa fa-star"></i> {{ number_format($service->average_rating, 1) }}
                             </span>
                         @endif
+                        {{-- ADDED: verified badge for service seller --}}
+                        @if($service->seller->is_verified_business)
+                            <span style="position:absolute;top:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                                <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                            </span>
+                        @endif
                     </div>
                     <div style="padding:15px;">
                         <span style="font-size:11px;color:#2ECC71;font-weight:600;">{{ $service->category->name ?? 'Uncategorized' }}</span>

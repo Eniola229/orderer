@@ -45,12 +45,34 @@
                         <td class="text-muted fs-13">{{ $order->items->count() }} item(s)</td>
                         <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
                         <td>
-                            <span class="badge orderer-badge badge-{{ $order->payment_status }}">
+                            @php
+                            $paymentBadge = match($order->payment_status) {
+                                'paid'     => 'bg-success text-white',
+                                'pending'  => 'bg-warning text-dark',
+                                'failed'   => 'bg-danger text-white',
+                                'refunded' => 'bg-secondary text-white',
+                                default    => 'bg-secondary text-white',
+                            };
+                            @endphp
+                            <span class="badge {{ $paymentBadge }}">
                                 {{ ucfirst($order->payment_status) }}
                             </span>
                         </td>
                         <td>
-                            <span class="badge orderer-badge badge-{{ $order->status }}">
+                            @php
+                            $statusBadge = match($order->status) {
+                                'pending'    => 'bg-warning text-dark',
+                                'confirmed'  => 'bg-info text-white',
+                                'processing' => 'bg-primary text-white',
+                                'shipped'    => 'bg-primary text-white',
+                                'delivered'  => 'bg-success text-white',
+                                'completed'  => 'bg-success text-white',
+                                'cancelled'  => 'bg-danger text-white',
+                                'disputed'   => 'bg-danger text-white',
+                                default      => 'bg-secondary text-white',
+                            };
+                            @endphp
+                            <span class="badge {{ $statusBadge }}">
                                 {{ ucfirst($order->status) }}
                             </span>
                         </td>

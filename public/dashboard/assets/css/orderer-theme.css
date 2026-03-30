@@ -603,19 +603,22 @@ html, body {
     border: 1px solid #eee;
     border-radius: 14px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-    padding: 20px;
-    gap: 24px;
-    min-width: 500px;
+    padding: 24px;
+    min-width: 600px;
     z-index: 100;
+
+    /* Grid so each category gets its own column */
+    display: none;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
 }
 .has-mega:hover .ord-megamenu {
-    display: flex;
+    display: grid;
 }
 .mega-col {
     list-style: none;
     margin: 0;
     padding: 0;
-    min-width: 140px;
 }
 .mega-col .mega-title {
     font-size: 11px;
@@ -625,20 +628,30 @@ html, body {
     color: #3d9b22;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 2px solid #eee;
+    display: block;
+}
+.mega-col li {
+    display: block;
+    width: 100%;
 }
 .mega-col li a {
+    display: block !important;
     font-size: 13px !important;
     font-weight: 500 !important;
     color: #555 !important;
     padding: 5px 0 !important;
     border-radius: 0 !important;
     background: none !important;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 .mega-col li a:hover {
     color: #3d9b22 !important;
+    padding-left: 4px !important;
+    transition: all 0.15s;
 }
-
 /* ── Actions ──────────────────────────────────── */
 .ord-actions {
     display: flex;
@@ -1029,22 +1042,22 @@ html, body {
     }
 
     /* Megamenu on mobile */
-    .ord-megamenu {
-        position: static !important;
-        box-shadow: none !important;
-        border: none !important;
-        border-radius: 0 !important;
-        padding: 4px 12px 12px 24px !important;
-        flex-direction: column !important;
-        gap: 6px !important;
-        min-width: unset !important;
-        background: #f9f9f9 !important;
-        display: none;
-        width: 100%;
-    }
-    .has-mega:hover .ord-megamenu {
-        display: flex;
-    }
+.ord-megamenu {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 4px 12px 12px 24px !important;
+    gap: 12px !important;
+    min-width: unset !important;
+    background: #f9f9f9 !important;
+    display: none !important;
+    width: 100% !important;
+    grid-template-columns: 1fr 1fr !important;
+}
+.has-mega:hover .ord-megamenu {
+    display: grid !important;
+}
 
     /* User dropdown on mobile */
     .ord-user-drop {
@@ -1457,5 +1470,10 @@ html, body {
         min-width: 0;
         width: 100%;
     }
+
+    
 }
 
+.new-badge{
+    background: green !important;
+}

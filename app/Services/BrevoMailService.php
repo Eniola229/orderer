@@ -265,7 +265,7 @@ class BrevoMailService
                 <p>Hi <strong>{$seller->first_name}</strong>,</p>
                 <p>You have a new order <strong>#{$order->order_number}</strong> waiting for you.</p>
                 <div style='text-align:center;margin:30px 0;'>
-                    <a href='" . route('seller.orders') . "' style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
+                    <a href='" . route('seller.orders.index') . "' style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
                         View Order
                     </a>
                 </div>

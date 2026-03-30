@@ -9,7 +9,7 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        // Auto-release escrow for orders shipped 7+ days ago
+        // Auto-release escrow for orders shipped 3+ days ago
         $schedule->command('escrow:auto-release')->daily()->at('02:00');
 
         // Check price drop alerts — run every 6 hours
@@ -24,6 +24,9 @@ class Kernel extends ConsoleKernel
                 ->where('is_active', true)
                 ->update(['is_active' => false]);
         })->hourly();
+        
+        //For ads
+        $schedule->command('ads:charge')->dailyAt('00:00');
     }
 
     protected function commands(): void

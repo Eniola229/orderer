@@ -169,7 +169,7 @@
         {{-- END BANNER AD --}}
 
 
-        {{-- Properties Grid (unchanged) --}}
+        {{-- Properties Grid --}}
         <div class="row g-3 g-md-4">
             @forelse($houses as $house)
             @php $img = $house->images->where('is_primary',true)->first() ?? $house->images->first(); @endphp
@@ -184,6 +184,12 @@
                         <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;">
                             {{ ucfirst($house->property_type) }}
                         </span>
+                        {{-- ADDED: verified badge for property seller --}}
+                        @if($house->seller->is_verified_business)
+                        <span style="position:absolute;bottom:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </span>
+                        @endif
                     </div>
                     <div style="padding:15px;">
                         <h6 style="font-weight:700;margin-bottom:6px;font-size:16px;">{{ Str::limit($house->title, 45) }}</h6>
