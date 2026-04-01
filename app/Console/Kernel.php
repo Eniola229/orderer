@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
                 ->update(['is_active' => false]);
         })->hourly();
         
+        //Check order status 
+        $schedule->command('orders:sync-shipping-status')->everyFifteenMinutes();
+        
         //For ads
         $schedule->command('ads:charge')->dailyAt('00:00');
     }

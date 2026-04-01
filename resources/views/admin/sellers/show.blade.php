@@ -24,17 +24,49 @@
                 <h5 class="fw-bold">{{ $seller->business_name }}</h5>
                 <p class="text-muted fs-13">{{ $seller->full_name }}</p>
                 <p class="text-muted fs-13">{{ $seller->email }}</p>
-                <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
-                    <span class="badge orderer-badge {{ $seller->is_approved ? 'badge-approved' : 'badge-pending' }}">
-                        {{ $seller->is_approved ? 'Approved' : 'Pending' }}
-                    </span>
-                    @if($seller->is_verified_business)
-                    <span class="badge orderer-badge badge-approved">Verified Business</span>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
+                        @if($seller->verification_status === 'rejected')
+                            <span class="badge orderer-badge badge-rejected">
+                                <i class="feather-x-circle me-1"></i> Account Rejected
+                            </span>
+                        @else
+                            <span class="badge orderer-badge {{ $seller->is_approved ? 'badge-approved' : 'badge-pending' }}">
+                                {{ $seller->is_approved ? 'Approved' : 'Pending' }}
+                            </span>
+                        @endif
+                        
+                        @if($seller->is_verified_business)
+                            <span class="badge orderer-badge badge-verified">
+                                <i class="feather-check-circle me-1"></i> Verified Business
+                            </span>
+                        @endif
+                        
+                        @if($seller->document && $seller->document->status === 'rejected')
+                            <span class="badge orderer-badge badge-document-rejected">
+                                <i class="feather-file-text me-1"></i> Document Rejected
+                            </span>
+                        @endif
+                        
+                        @if($seller->is_active == 0)
+                            <span class="badge orderer-badge badge-suspended">
+                                <i class="feather-alert-circle me-1"></i> Suspended
+                            </span>
+                        @endif
+                    </div>
+
+                    @if($seller->verification_status === 'rejected' && $seller->rejection_reason)
+                        <div class="alert alert-danger mt-3">
+                            <i class="feather-alert-triangle me-2"></i>
+                            <strong>Account Rejection Reason:</strong> {{ $seller->rejection_reason }}
+                        </div>
                     @endif
-                    @if($seller->is_active == 0)
-                    <span class="badge orderer-badge badge-rejected">Suspended</span>
+
+                    @if($seller->document && $seller->document->status === 'rejected' && $seller->document->rejection_reason)
+                        <div class="alert alert-warning mt-2">
+                            <i class="feather-file-text me-2"></i>
+                            <strong>Document Rejection Reason:</strong> {{ $seller->document->rejection_reason }}
+                        </div>
                     @endif
-                </div>
                 <div class="border rounded p-3 text-start">
                     <div class="d-flex justify-content-between mb-2">
                         <small class="text-muted">Total Orders</small>

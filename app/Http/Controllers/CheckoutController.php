@@ -14,7 +14,7 @@ use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
- 
+  
 class CheckoutController extends Controller
 {
     public function __construct(
@@ -35,14 +35,20 @@ class CheckoutController extends Controller
 
         $cartItems = $items->map(function ($item) {
             $product = $item->product;
-            $img     = $product?->images->where('is_primary', true)->first()
-                       ?? $product?->images->first();
+            $img = $product?->images->where('is_primary', true)->first()
+                   ?? $product?->images->first();
+
+            // Check if this item was added at flash sale price
+            $regularPrice = $product?->sale_price ?? $product?->price;
+            $isFlashSale  = $product && (float) $item->price < (float) $regularPrice;
+
             return [
-                'id'       => $item->product_id,
-                'name'     => $product?->name,
-                'price'    => (float) $item->price,
-                'quantity' => $item->quantity,
-                'image'    => $img?->image_url ?? null,
+                'id'           => $item->product_id,
+                'name'         => $product?->name,
+                'price'        => (float) $item->price,  
+                'quantity'     => $item->quantity,
+                'image'        => $img?->image_url ?? null,
+                'is_flash_sale' => $isFlashSale,
             ];
         })->toArray();
 
@@ -68,7 +74,7 @@ class CheckoutController extends Controller
         ]);
 
         $cartModel = $this->getCart();
-        $cartItems = $cartModel->items()->with(['product.images'])->get();
+        $cartItems = $cartModel->items()->with(['product.images', 'product.category'])->get();
         if ($cartItems->isEmpty()) {
             return redirect()->route('shop.index')->with('error', 'Cart is empty.');
         }
@@ -245,17 +251,17 @@ class CheckoutController extends Controller
             $rateData  = $order->shipping_rate_data ?? [];
             $courierId = $rateData['courier_id'] ?? $rateData['id'] ?? null;
 
-            \Log::info('bookShipmentForOrder — rate data', [
-                'order_id'  => $order->id,
-                'rate_data' => $rateData,
-                'courier_id'=> $courierId,
-            ]);
+            // \Log::info('bookShipmentForOrder — rate data', [
+            //     'order_id'  => $order->id,
+            //     'rate_data' => $rateData,
+            //     'courier_id'=> $courierId,
+            // ]);
 
             if (!$courierId) {
-                \Log::warning('bookShipmentForOrder — no courier_id found in rate_data', [
-                    'order_id'  => $order->id,
-                    'rate_data' => $rateData,
-                ]);
+                // \Log::warning('bookShipmentForOrder — no courier_id found in rate_data', [
+                //     'order_id'  => $order->id,
+                //     'rate_data' => $rateData,
+                // ]);
                 return;
             }
 
@@ -294,10 +300,10 @@ class CheckoutController extends Controller
                 $requestToken
             );
 
-            \Log::info('Shipbubble createShipment response', [
-                'order_id' => $order->id,
-                'shipment' => $shipment,
-            ]);
+            // \Log::info('Shipbubble createShipment response', [
+            //     'order_id' => $order->id,
+            //     'shipment' => $shipment,
+            // ]);
 
             // Save using correct field names from API response
             $order->update([
@@ -427,7 +433,7 @@ class CheckoutController extends Controller
 
             if (!empty($rateData['request_token'])) {
                 session(['shipbubble_request_token' => $rateData['request_token']]);
-                \Log::info('Stored shipbubble_request_token', ['token' => $rateData['request_token']]);
+                //\Log::info('Stored shipbubble_request_token', ['token' => $rateData['request_token']]);
             }
 
             return response()->json([
@@ -475,7 +481,7 @@ class CheckoutController extends Controller
                     'gateway_response'  => $data,
                 ]);
 
-                $order = Order::where('payment_reference', $reference)->first();
+                $order = Order::where('payment_reference', $reference)->with(['items.seller'])->first();
 
                 if ($order) {
                     $order->update(['payment_status' => 'paid']);
@@ -506,7 +512,7 @@ class CheckoutController extends Controller
         try {
             $this->brevo->sendOrderPlacedBuyer($user, $order);
 
-            $order->load('items');
+            $order->load('items.seller');
             $sellerIds = $order->items->pluck('seller_id')->unique();
 
             foreach ($sellerIds as $sellerId) {

@@ -81,12 +81,15 @@ class OrderController extends Controller
     public function forceComplete(Order $order)
     {
         if (!auth('admin')->user()->canEditOrders()) abort(403);
-
+     
         if (in_array($order->status, ['completed', 'cancelled'])) {
             return back()->with('error', 'Order already finalised.');
         }
 
         $this->wallet->releaseEscrow($order);
+
+        // Update all order items to completed
+        $order->items()->update(['status' => 'completed']);
 
         OrderStatusLog::create([
             'order_id'        => $order->id,
@@ -104,13 +107,16 @@ class OrderController extends Controller
     {
         if (!auth('admin')->user()->canEditOrders()) abort(403);
 
+        $previousStatus = $order->status; // ← capture before update
+
         $this->wallet->refundEscrow($order);
 
+        $order->items()->update(['status' => 'cancelled']);
         $order->update(['status' => 'cancelled']);
 
         OrderStatusLog::create([
             'order_id'        => $order->id,
-            'from_status'     => $order->status,
+            'from_status'     => $previousStatus, // ← correct previous status
             'to_status'       => 'cancelled',
             'changed_by_type' => 'admin',
             'changed_by_id'   => auth('admin')->id(),
@@ -119,4 +125,4 @@ class OrderController extends Controller
 
         return back()->with('success', 'Order refunded to buyer wallet.');
     }
-}
+} 

@@ -18,7 +18,7 @@ class OrderController extends Controller
         protected ShipbubbleService $shipbubble,
         protected BrevoMailService  $brevo
     ) {}
-
+ 
     public function index(Request $request)
     {
         $sellerId = auth('seller')->id();

@@ -46,6 +46,7 @@
                         <li><a href="{{ route('seller.register') }}">Start Selling</a></li>
                         <li><a href="{{ route('seller.login') }}">Seller Login</a></li>
                         <li><a href="#">Seller Guide</a></li>
+                        <li><a href="{{ route('legal.seller-terms') }}">Seller Terms</a></li>
                         <li><a href="#">Fees &amp; Commission</a></li>
                     </ul>
                 </div>
@@ -56,15 +57,32 @@
                     <ul class="ord-footer-links">
                         <li><a href="#">Order Status</a></li>
                         <li><a href="#">Payment Options</a></li>
-                        <li><a href="#">Shipping &amp; Delivery</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Use</a></li>
-                        <li><a href="#">Refund Policy</a></li>
+                        <li><a href="{{ route('legal.shipping') }}">Shipping &amp; Delivery</a></li>
+                        <li><a href="{{ route('legal.refund') }}">Refund Policy</a></li>
+                        <li><a href="{{ route('buyer.support') }}">Help Center</a></li>
                     </ul>
                 </div>
 
-                {{-- Col 5: Newsletter --}}
-                <div class="col-12 col-md-2 col-lg-2 mb-40">
+                {{-- Col 5: Legal --}}
+                <div class="col-6 col-md-2 col-lg-2 mb-40">
+                    <h6 class="ord-footer-heading">Legal</h6>
+                    <ul class="ord-footer-links">
+                        <li><a href="{{ route('legal.terms') }}">Terms of Use</a></li>
+                        <li><a href="{{ route('legal.privacy') }}">Privacy Policy</a></li>
+                        <li><a href="{{ route('legal.buyer-terms') }}">Buyer Terms</a></li>
+                        <li><a href="{{ route('legal.seller-terms') }}">Seller Terms</a></li>
+                        <li><a href="{{ route('legal.cookies') }}">Cookie Policy</a></li>
+                        <li><a href="{{ route('legal.aml') }}">AML Policy</a></li>
+                        <li><a href="{{ route('legal.acceptable-use') }}">Acceptable Use</a></li>
+                        <li><a href="{{ route('legal.disclaimer') }}">Disclaimer</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            {{-- Newsletter — full width below columns --}}
+            <div class="row">
+                <div class="col-12 col-md-6 col-lg-5 mb-40">
                     <h6 class="ord-footer-heading">Newsletter</h6>
                     <p class="ord-footer-newsletter-text">Get deals, new arrivals and updates straight to your inbox.</p>
                     <form class="ord-footer-newsletter" action="{{ route('newsletter.subscribe') }}" method="POST">
@@ -73,8 +91,8 @@
                         <button type="submit"><i class="fa fa-paper-plane"></i></button>
                     </form>
                 </div>
-
             </div>
+
         </div>
     </div>
 
@@ -84,8 +102,9 @@
             <div class="ord-footer-bottom-inner">
                 <p>&copy; {{ date('Y') }} Orderer — <span>AfricGEM International Company Limited</span>. All rights reserved.</p>
                 <div class="ord-footer-bottom-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Use</a>
+                    <a href="{{ route('legal.privacy') }}">Privacy Policy</a>
+                    <a href="{{ route('legal.terms') }}">Terms of Use</a>
+                    <a href="{{ route('legal.cookies') }}">Cookies</a>
                     <a href="{{ route('contact') }}">Contact</a>
                 </div>
             </div>

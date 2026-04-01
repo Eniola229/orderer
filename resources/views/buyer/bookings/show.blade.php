@@ -12,8 +12,79 @@
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Booking Details</h5>
-                <span class="badge orderer-badge badge-{{ $booking->status }}">
-                    {{ ucfirst(str_replace('_',' ',$booking->status)) }}
+                <span class="badge" style="
+                    @php
+                        $status = $booking->status ?? 'unknown';
+                        
+                        $statusStyles = [
+                            'pending' => [
+                                'background' => '#ffc107',
+                                'color' => '#212529'
+                            ],
+                            'confirmed' => [
+                                'background' => '#17a2b8',
+                                'color' => '#ffffff'
+                            ],
+                            'picked_up' => [
+                                'background' => '#6f42c1',
+                                'color' => '#ffffff'
+                            ],
+                            'in_transit' => [
+                                'background' => '#007bff',
+                                'color' => '#ffffff'
+                            ],
+                            'delivered' => [
+                                'background' => '#28a745',
+                                'color' => '#ffffff'
+                            ],
+                            'cancelled' => [
+                                'background' => '#dc3545',
+                                'color' => '#ffffff'
+                            ],
+                            'failed' => [
+                                'background' => '#dc3545',
+                                'color' => '#ffffff'
+                            ],
+                            'processing' => [
+                                'background' => '#007bff',
+                                'color' => '#ffffff'
+                            ],
+                            'completed' => [
+                                'background' => '#28a745',
+                                'color' => '#ffffff'
+                            ],
+                            'refunded' => [
+                                'background' => '#6c757d',
+                                'color' => '#ffffff'
+                            ],
+                            'disputed' => [
+                                'background' => '#fd7e14',
+                                'color' => '#ffffff'
+                            ],
+                            'approved' => [
+                                'background' => '#28a745',
+                                'color' => '#ffffff'
+                            ],
+                            'rejected' => [
+                                'background' => '#dc3545',
+                                'color' => '#ffffff'
+                            ]
+                        ];
+                        
+                        $style = $statusStyles[$status] ?? [
+                            'background' => '#6c757d',
+                            'color' => '#ffffff'
+                        ];
+                    @endphp
+                    background-color: {{ $style['background'] }};
+                    color: {{ $style['color'] }};
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    display: inline-block;
+                ">
+                    {{ ucfirst(str_replace('_', ' ', $status)) }}
                 </span>
             </div>
             <div class="card-body">

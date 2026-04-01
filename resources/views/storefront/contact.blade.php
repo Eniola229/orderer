@@ -21,7 +21,7 @@
                         </div>
                         <div>
                             <p style="margin:0;font-weight:600;font-size:14px;">Email</p>
-                            <a href="mailto:support@orderer.com" style="color:#2ECC71;font-size:13px;">support@orderer.com</a>
+                            <a href="mailto:support@ordererweb.shop" style="color:#2ECC71;font-size:13px;">support@ordererweb.shop</a>
                         </div>
                     </div>
                     <div style="display:flex;gap:14px;margin-bottom:20px;">

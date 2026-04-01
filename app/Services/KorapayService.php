@@ -35,13 +35,14 @@ class KorapayService
     ): array {
         $payload = [
             'reference'    => $reference,
-            'amount'       => $amount,          // Korapay expects a number (e.g. 10.00 for USD)
-            'currency'     => 'USD',
+            'amount'       => $amount,          // Korapay expects a number (e.g. 10.00 for NGN)
+            'currency'     => 'NGN',
             'customer'     => [
                 'email' => $email,
                 'name'  => $customerName,       // ← docs support customer.name
             ],
             'redirect_url' => $redirectUrl,
+            'merchant_bears_cost' => false, 
         ];
 
         // Only add optional fields if provided
@@ -126,7 +127,7 @@ class KorapayService
             'payable_type' => get_class($payable),
             'payable_id'   => $payable->id,
             'amount'       => $amount,
-            'currency'     => 'USD',
+            'currency'     => 'NGN',
             'type'         => $type,
             'status'       => 'pending',
         ]);
@@ -191,7 +192,7 @@ class KorapayService
     /**
      * Disburse a payout to a seller's bank account.
      *
-     * For local currency payouts (NGN, KES, GHS, ZAR, etc.) funded from your USD balance,
+     * For local currency payouts (NGN, KES, GHS, ZAR, etc.) funded from your NGN balance,
      * Korapay handles the FX automatically.
      *
      * $destination shape:

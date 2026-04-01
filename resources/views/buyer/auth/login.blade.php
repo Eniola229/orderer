@@ -100,7 +100,7 @@
                 <div class="mb-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <label class="form-label fw-bold mb-0">Password</label>
-                        <a href="{{ route('password.request') }}" class="auth-link fs-13">
+                        <a href="{{ route('front.password.request') }}" class="auth-link fs-13">
                             Forgot password?
                         </a>
                     </div>
@@ -140,3 +140,4 @@
 
 </div>
 @endsection
+@include('layouts.partials.auth-buyer-footer')

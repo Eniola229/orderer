@@ -186,13 +186,26 @@ class StorefrontController extends Controller
         // ── Ads ──────────────────────────────────────────────────
         $sidebarAds = AdHelper::forSlot('product_page_sidebar', 2);
 
+            // ── Flash sale check ─────────────────────────────────────────────────
+        $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+            ->where('is_active', true)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->where(function ($q) {
+                $q->whereNull('quantity_limit')
+                  ->orWhereColumn('quantity_sold', '<', 'quantity_limit');
+            })
+            ->first();
+        // ────────────────────────────────────────────────────────────────────
+
+
         foreach ($sidebarAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
 
         return view('storefront.product', compact(
             'product', 'relatedProducts', 'inWishlist',
-            'sidebarAds'
+            'sidebarAds', 'flashSale'
         ));
     }
 

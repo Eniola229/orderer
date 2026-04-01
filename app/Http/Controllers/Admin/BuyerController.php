@@ -69,7 +69,7 @@ class BuyerController extends Controller
             // Check sufficient balance for debit
             if ($request->type === 'debit' && $wallet->balance < $request->amount) {
                 return back()->with('error', 
-                    "Insufficient balance. Current balance: $" . number_format($wallet->balance, 2)
+                    "Insufficient balance. Current balance: ₦" . number_format($wallet->balance, 2)
                 );
             }
             
@@ -99,7 +99,7 @@ class BuyerController extends Controller
                 'notifiable_id'   => $user->id,
                 'type'            => 'wallet_adjusted',
                 'title'           => 'Wallet Balance Updated',
-                'body'            => "System adjustment: {$request->reason} - Amount: $" . number_format($request->amount, 2),
+                'body'            => "System adjustment: {$request->reason} - Amount: ₦" . number_format($request->amount, 2),
                 'action_url'      => route('buyer.wallet'),
             ]);
             

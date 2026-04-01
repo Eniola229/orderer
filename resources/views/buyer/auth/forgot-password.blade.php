@@ -62,7 +62,7 @@
                      class="auth-logo-img" alt="Orderer">
             </a>
 
-            <h2>Forgot password?</h2>
+            <h2>Forgot password?</h2> 
             <p class="subtitle">
                 <a href="{{ route('login') }}" class="auth-link">
                     <i class="feather-arrow-left me-1"></i> Back to login
@@ -76,7 +76,7 @@
             </div>
             @endif
 
-            <form action="{{ route('password.email') }}" method="POST">
+            <form action="{{ route('front.password.email') }}" method="POST">
                 @csrf
 
                 <div class="mb-4">
@@ -101,3 +101,4 @@
 
 </div>
 @endsection
+@include('layouts.partials.auth-buyer-footer')

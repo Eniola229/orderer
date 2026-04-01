@@ -54,7 +54,7 @@
         <div class="card">
             <div class="card-body py-3">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Revenue</p>
-                <h2 class="fw-bold mb-0 text-success">${{ number_format($stats['revenue'], 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-success">₦{{ number_format($stats['revenue'], 2) }}</h2>
                 @if(request()->anyFilled(['status', 'payment_status', 'date_from', 'date_to', 'search']))
                     <small class="text-muted">Filtered results</small>
                 @endif

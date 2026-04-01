@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class FlashSaleController extends Controller
 {
     public function index()
-    {
+    { 
         $flashSales = FlashSale::with('product.seller')
             ->latest()
             ->paginate(20);

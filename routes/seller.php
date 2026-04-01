@@ -16,6 +16,7 @@ use App\Http\Controllers\Seller\AdController             as SellerAdController;
 use App\Http\Controllers\Seller\BrandController;
 use App\Http\Controllers\Seller\SupportController        as SellerSupportController;
 use App\Http\Controllers\Seller\NotificationController   as SellerNotificationController;
+use App\Http\Controllers\Seller\Auth\ResubmitVerificationController;
 
 Route::prefix('seller')->name('seller.')->group(function () {
 
@@ -35,6 +36,10 @@ Route::prefix('seller')->name('seller.')->group(function () {
 
     // ── Authenticated seller ────────────────────────────────
     Route::middleware('auth.seller')->group(function () {
+
+        //Resubmit Verification 
+        Route::put('/seller/resubmit', [ResubmitVerificationController::class, 'resubmit'])->name('resubmit');
+
 
         Route::post('/logout',   [SellerLoginController::class, 'logout'])->name('logout');
         Route::get('/pending',   fn() => view('seller.auth.pending'))->name('pending');

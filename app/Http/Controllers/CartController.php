@@ -58,7 +58,6 @@ class CartController extends Controller
     }
 
     // ── Add ───────────────────────────────────────────────────
-
     public function add(Request $request)
     {
         $request->validate([
@@ -66,35 +65,50 @@ class CartController extends Controller
             'quantity'   => ['required', 'integer', 'min:1'],
         ]);
 
-        $product = Product::where('id', $request->product_id)
-            ->where('status', 'approved')
-            ->firstOrFail();
+        $product = \App\Models\Product::findOrFail($request->product_id);
 
-        $cart     = $this->getCart();
-        $existing = $cart->items()->where('product_id', $product->id)->first();
+        // ── Flash sale price check ───────────────────────────────────────────
+        $price = $product->sale_price ?? $product->price;
 
-        if ($existing) {
-            $newQty = min($existing->quantity + $request->quantity, $product->stock);
-            $existing->update(['quantity' => $newQty]);
+        if ($request->boolean('flash_sale')) {
+            $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                ->where('is_active', true)
+                ->where('starts_at', '<=', now())
+                ->where('ends_at', '>=', now())
+                ->where(function ($q) {
+                    $q->whereNull('quantity_limit')
+                      ->orWhereColumn('quantity_sold', '<', 'quantity_limit');
+                })
+                ->first();
+
+            if ($flashSale) {
+                $price = $flashSale->sale_price;
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
+        $cart = $this->getCart();
+
+        $item = $cart->items()->where('product_id', $product->id)->first();
+
+        if ($item) {
+            $newQty = $item->quantity + $request->quantity;
+            if ($newQty > $product->stock) {
+                return response()->json(['success' => false, 'message' => 'Not enough stock.']);
+            }
+            $item->update(['quantity' => $newQty, 'price' => $price]);
         } else {
+            if ($request->quantity > $product->stock) {
+                return response()->json(['success' => false, 'message' => 'Not enough stock.']);
+            }
             $cart->items()->create([
                 'product_id' => $product->id,
-                'quantity'   => min($request->quantity, $product->stock),
-                'price'      => $product->sale_price ?? $product->price,
+                'quantity'   => $request->quantity,
+                'price'      => $price,
             ]);
         }
 
-        $count = $cart->items()->sum('quantity');
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'count'   => $count,
-                'message' => 'Added to cart',
-            ]);
-        }
-
-        return back()->with('success', 'Added to cart!');
+        return response()->json(['success' => true, 'message' => 'Added to cart.']);
     }
 
     // ── Remove ────────────────────────────────────────────────

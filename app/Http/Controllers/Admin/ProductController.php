@@ -14,7 +14,7 @@ class ProductController extends Controller
     {
         if (!auth('admin')->user()->canView()) abort(403);
 
-        $query = Product::with(['seller', 'category']);
+        $query = Product::with(['seller', 'category', 'images', 'subcategory']);
 
         // Filter by status
         if ($request->status && $request->status !== 'all') {
@@ -62,6 +62,7 @@ class ProductController extends Controller
 
         return view('admin.products.index', compact('products', 'categories'));
     }
+
     public function show(Product $product)
     {
         if (!auth('admin')->user()->canView()) abort(403);

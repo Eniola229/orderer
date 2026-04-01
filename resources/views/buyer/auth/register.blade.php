@@ -189,8 +189,8 @@
                         <input type="checkbox" name="terms" id="terms" class="form-check-input" required>
                         <label class="form-check-label text-muted fs-13" for="terms">
                             I agree to the
-                            <a href="#" class="auth-link">Terms of Service</a> and
-                            <a href="#" class="auth-link">Privacy Policy</a>
+                            <a href="{{ route('legal.terms') }}" class="auth-link">Terms of Service</a> and
+                            <a href="{{ route('legal.privacy') }}" class="auth-link">Privacy Policy</a>
                         </label>
                     </div>
                 </div>
@@ -211,6 +211,7 @@
     </div>
 
 </div>
+@include('layouts.partials.auth-buyer-footer')
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>

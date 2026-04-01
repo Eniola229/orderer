@@ -147,3 +147,5 @@
 
 </div>
 @endsection
+
+@include('layouts.partials.auth-seller-footer')

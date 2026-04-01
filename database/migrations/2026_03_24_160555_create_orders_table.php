@@ -61,7 +61,7 @@ return new class extends Migration
             $table->decimal('commission_amount', 12, 2)->default(0.00);
             $table->decimal('seller_earnings', 12, 2)->default(0.00);
             $table->enum('status', [
-                'pending', 'confirmed',
+                'pending', 'confirmed', 'completed',
                 'shipped', 'delivered', 'cancelled'
             ])->default('pending');
             $table->timestamps();

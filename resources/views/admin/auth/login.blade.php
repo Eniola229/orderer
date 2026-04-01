@@ -85,7 +85,7 @@
                     <input type="email"
                            name="email"
                            value="{{ old('email') }}"
-                           placeholder="admin@orderer.com"
+                           placeholder="admin@ordererweb.shop"
                            class="form-control form-control-lg @error('email') is-invalid @enderror"
                            required autofocus>
                     @error('email')

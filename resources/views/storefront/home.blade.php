@@ -88,9 +88,9 @@
                                 <span style="display:inline-block;background:#2ECC71;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
                                     Sponsored
                                 </span>
-                                <h2 style="color:#fff;font-size:clamp(24px,4vw,46px);font-weight:800;line-height:1.2;margin-bottom:16px;text-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8);">
+                                <h3 style="color:#fff;font-size:clamp(24px,4vw,46px);font-weight:800;line-height:1.2;margin-bottom:16px;text-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8);">
                                     {{ $ad->title }}
-                                </h2>
+                                </h3>
                                 <a href="{{ $ad->clickTrackingUrl() }}" class="btn essence-btn">Shop Now</a>
                             </div>
                         </div>
@@ -593,7 +593,42 @@
         transition: all 0.3s ease;
     }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Destroy any existing carousel init and reinitialize
+    $('#heroAdCarousel').carousel({
+        interval: 5000,
+        ride: 'carousel'
+    });
 
+    // Force backgrounds back after theme JS runs
+    function fixAdBackgrounds() {
+        document.querySelectorAll('#heroAdCarousel .ad-bg').forEach(function(el) {
+            var bg = el.getAttribute('style');
+            if (bg) {
+                el.style.cssText = bg + 
+                    'position:absolute!important;' +
+                    'top:0!important;left:0!important;' +
+                    'width:100%!important;height:100%!important;' +
+                    'background-size:cover!important;' +
+                    'background-position:center!important;' +
+                    'display:block!important;' +
+                    'opacity:1!important;' +
+                    'visibility:visible!important;' +
+                    'z-index:0!important;';
+            }
+        });
+    }
+
+    // Run immediately and also after carousel slides
+    fixAdBackgrounds();
+    $('#heroAdCarousel').on('slide.bs.carousel slid.bs.carousel', fixAdBackgrounds);
+
+    // Run again after 500ms to catch any late theme JS
+    setTimeout(fixAdBackgrounds, 500);
+    setTimeout(fixAdBackgrounds, 1000);
+});
+</script>
 <script>
     // Re-initialize Feather icons after the page loads
     document.addEventListener('DOMContentLoaded', function() {

@@ -27,7 +27,7 @@ class WalletService
                 'balance'        => 0.00,
                 'escrow_balance' => 0.00,
                 'ads_balance'    => 0.00,
-                'currency'       => 'USD',
+                'currency'       => 'NGN',
             ]
         );
     }
@@ -114,6 +114,8 @@ class WalletService
      */
     public function holdEscrow(Order $order): void
     {
+        $order->loadMissing('items.seller');
+        
         DB::transaction(function () use ($order) {
             foreach ($order->items as $item) {
                 $seller = $item->seller;
@@ -154,6 +156,7 @@ class WalletService
         DB::transaction(function () use ($order) {
             $escrows = EscrowHold::where('order_id', $order->id)
                 ->where('status', 'held')
+                ->with('seller')
                 ->get();
 
             foreach ($escrows as $escrow) {
@@ -190,6 +193,7 @@ class WalletService
         DB::transaction(function () use ($order) {
             $escrows = EscrowHold::where('order_id', $order->id)
                 ->where('status', 'held')
+                ->with('seller')
                 ->get();
 
             foreach ($escrows as $escrow) {

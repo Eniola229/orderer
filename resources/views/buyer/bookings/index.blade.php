@@ -66,19 +66,105 @@
                         </td>
                         <td>
                             @php
-                                $icons = [
-                                    'pending'    => 'feather-clock',
-                                    'confirmed'  => 'feather-check-circle',
-                                    'picked_up'  => 'feather-package',
-                                    'in_transit' => 'feather-truck',
-                                    'delivered'  => 'feather-check-circle',
-                                    'cancelled'  => 'feather-x-circle',
+                                // Define status configurations
+                                $statusConfig = [
+                                    'pending' => [
+                                        'icon' => 'feather-clock',
+                                        'color' => '#ffc107',
+                                        'text_color' => '#212529',
+                                        'label' => 'Pending'
+                                    ],
+                                    'confirmed' => [
+                                        'icon' => 'feather-check-circle',
+                                        'color' => '#17a2b8',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Confirmed'
+                                    ],
+                                    'picked_up' => [
+                                        'icon' => 'feather-package',
+                                        'color' => '#6f42c1',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Picked Up'
+                                    ],
+                                    'in_transit' => [
+                                        'icon' => 'feather-truck',
+                                        'color' => '#007bff',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'In Transit'
+                                    ],
+                                    'delivered' => [
+                                        'icon' => 'feather-check-circle',
+                                        'color' => '#28a745',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Delivered'
+                                    ],
+                                    'cancelled' => [
+                                        'icon' => 'feather-x-circle',
+                                        'color' => '#dc3545',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Cancelled'
+                                    ],
+                                    'failed' => [
+                                        'icon' => 'feather-alert-circle',
+                                        'color' => '#dc3545',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Failed'
+                                    ],
+                                    'processing' => [
+                                        'icon' => 'feather-loader',
+                                        'color' => '#007bff',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Processing'
+                                    ],
+                                    'completed' => [
+                                        'icon' => 'feather-check-circle',
+                                        'color' => '#28a745',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Completed'
+                                    ],
+                                    'refunded' => [
+                                        'icon' => 'feather-rotate-ccw',
+                                        'color' => '#6c757d',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Refunded'
+                                    ],
+                                    'disputed' => [
+                                        'icon' => 'feather-alert-triangle',
+                                        'color' => '#fd7e14',
+                                        'text_color' => '#ffffff',
+                                        'label' => 'Disputed'
+                                    ]
                                 ];
-                                $icon = $icons[$booking->status] ?? 'feather-help-circle';
+                                
+                                // Get current status or default to 'unknown'
+                                $status = $booking->status ?? 'unknown';
+                                
+                                // Get config for status or use fallback
+                                $config = $statusConfig[$status] ?? [
+                                    'icon' => 'feather-help-circle',
+                                    'color' => '#6c757d',
+                                    'text_color' => '#ffffff',
+                                    'label' => ucfirst(str_replace('_', ' ', $status))
+                                ];
+                                
+                                // Format label to be more readable
+                                $label = $config['label'];
                             @endphp
-                            <span class="badge orderer-badge badge-{{ $booking->status }}">
-                                <i class="{{ $icon }} me-1" style="font-size:11px;"></i>
-                                {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
+                            
+                            <span class="badge" style="
+                                background-color: {{ $config['color'] }};
+                                color: {{ $config['text_color'] }};
+                                padding: 6px 12px;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 6px;
+                                white-space: nowrap;
+                            ">
+                                <i class="{{ $config['icon'] }}" style="font-size: 11px;"></i>
+                                {{ $label }}
                             </span>
                         </td>
                         <td class="text-muted fs-12">{{ $booking->created_at->format('M d, Y') }}</td>

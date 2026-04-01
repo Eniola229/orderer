@@ -77,7 +77,7 @@ class SellerController extends Controller
         return view('admin.sellers.show', compact(
             'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions'
         ));
-    }
+    } 
     public function approve(Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) {
@@ -86,10 +86,19 @@ class SellerController extends Controller
 
         $seller->update([
             'is_approved' => true,
+            'verification_status' => "approved",
             'approved_by' => auth('admin')->id(),
             'approved_at' => now(),
         ]);
 
+        // Also approve the document if specified
+        // Check if seller has a document and update it
+        if ($seller->document) {
+            $seller->document->update([
+                'status' => 'approved',
+            ]);
+        }
+     
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
             'notifiable_id'   => $seller->id,
@@ -112,21 +121,39 @@ class SellerController extends Controller
             'reason' => ['required', 'string', 'max:500'],
         ]);
 
-        $seller->update(['rejection_reason' => $request->reason]);
+        // Update seller with rejection reason and status
+        $seller->update([
+            'verification_status' => 'rejected',
+            'is_approved' => false,
+            'rejection_reason' => $request->reason,
+            'rejected_at' => now(),
+            'rejected_by' => auth('admin')->id(),
+        ]);
 
+    // Also reject the document if specified
+    if ($seller->document) {
+        $seller->document->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->reason
+        ]);
+    }
+
+        // Create notification
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
             'notifiable_id'   => $seller->id,
             'type'            => 'account_rejected',
             'title'           => 'Application Not Approved',
-            'body'            => "Your seller application was not approved. Reason: {$request->reason}",
+            'body'            => "Your seller application was not approved. Reason: {$request->reason}" . 
+                                 ($request->required_fields ? " Please update the following: " . implode(', ', $request->required_fields) : ""),
+            'action_url'      => route('seller.pending'),
         ]);
 
+        // Send rejection email
         $this->brevo->sendSellerRejected($seller, $request->reason);
 
-        return back()->with('success', 'Seller application rejected.');
+        return back()->with('success', 'Seller application rejected. The seller can now update their information.');
     }
-
     public function suspend(Request $request, Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) abort(403);
@@ -185,12 +212,12 @@ class SellerController extends Controller
             if ($actionType === 'debit') {
                 if ($walletType === 'balance' && $wallet->balance < $amount) {
                     return redirect()->back()->with('error', 
-                        "Insufficient main wallet balance. Current balance: $" . number_format($wallet->balance, 2)
+                        "Insufficient main wallet balance. Current balance: ₦" . number_format($wallet->balance, 2)
                     );
                 }
                 if ($walletType === 'ads' && $wallet->ads_balance < $amount) {
                     return redirect()->back()->with('error', 
-                        "Insufficient ads balance. Current balance: $" . number_format($wallet->ads_balance, 2)
+                        "Insufficient ads balance. Current balance: ₦" . number_format($wallet->ads_balance, 2)
                     );
                 }
             }
@@ -208,7 +235,7 @@ class SellerController extends Controller
                         $seller->id
                     );
                     
-                    $message = "Successfully added $" . number_format($amount, 2) . " to seller's main wallet.";
+                    $message = "Successfully added ₦" . number_format($amount, 2) . " to seller's main wallet.";
                     
                 } else { // debit
                     $transaction = $walletService->debit(
@@ -220,7 +247,7 @@ class SellerController extends Controller
                         $seller->id
                     );
                     
-                    $message = "Successfully deducted $" . number_format($amount, 2) . " from seller's main wallet.";
+                    $message = "Successfully deducted ₦" . number_format($amount, 2) . " from seller's main wallet.";
                 }
                 
             } else { // Ads balance adjustment
@@ -228,13 +255,13 @@ class SellerController extends Controller
                     // Top up ads balance
                     $walletService->topupAdsBalance($seller, $amount);
                     
-                    $message = "Successfully added $" . number_format($amount, 2) . " to seller's ads balance.";
+                    $message = "Successfully added ₦" . number_format($amount, 2) . " to seller's ads balance.";
                     
                 } else { // debit
                     // Debit ads balance
                     $walletService->debitAdsBalance($seller, $amount, 'admin_adjustment_' . time());
                     
-                    $message = "Successfully deducted $" . number_format($amount, 2) . " from seller's ads balance.";
+                    $message = "Successfully deducted ₦" . number_format($amount, 2) . " from seller's ads balance.";
                 }
                 
                 $transaction = null;
@@ -246,7 +273,7 @@ class SellerController extends Controller
                 'notifiable_id'   => $seller->id,
                 'type'            => 'wallet_adjusted',
                 'title'           => 'Wallet Balance Updated',
-                'body'            => "System adjustment: {$reason} - Amount: $" . number_format($amount, 2),
+                'body'            => "System adjustment: {$reason} - Amount: ₦" . number_format($amount, 2),
                 'action_url'      => route('seller.wallet.index'),
                 'data'            => json_encode([
                     'wallet_type' => $walletType,

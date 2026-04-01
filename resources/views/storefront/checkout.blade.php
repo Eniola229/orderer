@@ -16,7 +16,7 @@
     </div>
 </div>
 
-<style>
+<style> 
     .rate-card {
         cursor: pointer;
         transition: all 0.2s ease;
@@ -265,12 +265,17 @@
 
                         <ul class="order-details-form mb-4">
                             <li><span>Product</span><span>Total</span></li>
-                            @foreach($cartItems as $item)
-                            <li>
-                                <span>{{ Str::limit($item['name'], 30) }} × {{ $item['quantity'] }}</span>
-                                <span>₦{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
-                            </li>
-                            @endforeach
+                                @foreach($cartItems as $item)
+                                <li>
+                                    <span>
+                                        {{ Str::limit($item['name'], 30) }} × {{ $item['quantity'] }}
+                                        @if(isset($item['is_flash_sale']) && $item['is_flash_sale'])
+                                            <span style="font-size:10px;background:#FADBD8;color:#E74C3C;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px;">⚡ Flash</span>
+                                        @endif
+                                    </span>
+                                    <span>₦{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                </li>
+                                @endforeach
                             <li>
                                 <span>Subtotal</span>
                                 <span id="displaySubtotal" data-value="{{ $subtotal }}">
@@ -347,7 +352,7 @@
                         <div class="custom-control custom-checkbox d-block mb-4">
                             <input type="checkbox" class="custom-control-input" id="terms" required>
                             <label class="custom-control-label" for="terms">
-                                I agree to the <a href="#" style="color:#2ECC71;">Terms &amp; Conditions</a>
+                                I agree to the <a href="{{ route('legal.terms') }}" style="color:#2ECC71;">Terms &amp; Conditions</a>
                             </label>
                         </div>
 

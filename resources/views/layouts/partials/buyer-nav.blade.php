@@ -40,12 +40,25 @@
                         </li>
                     </ul>
                 </li>
-
-                <li class="nxl-item {{ request()->routeIs('buyer.bookings*') ? 'active' : '' }}">
-                    <a href="{{ route('buyer.bookings') }}" class="nxl-link">
+                
+                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('buyer.bookings*') || request()->routeIs('rider.booking*') ? 'active' : '' }}">
+                    <a href="javascript:void(0);" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-truck"></i></span>
-                        <span class="nxl-mtext">My Deliveries</span>
+                        <span class="nxl-mtext">Deliveries</span>
+                        <span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
                     </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item {{ request()->routeIs('buyer.bookings*') ? 'active' : '' }}">
+                            <a class="nxl-link" href="{{ route('buyer.bookings') }}">
+                                My Deliveries
+                            </a>
+                        </li>
+                        <li class="nxl-item {{ request()->routeIs('rider.booking*') ? 'active' : '' }}">
+                            <a class="nxl-link" href="{{ route('rider.booking') }}">
+                                Book a Delivery
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 <li class="nxl-item nxl-hasmenu {{ request()->routeIs('buyer.wallet*') ? 'active' : '' }}">
@@ -92,13 +105,6 @@
                             <a class="nxl-link" href="{{ route('buyer.support') }}">My Tickets</a>
                         </li>
                     </ul>
-                </li>
-
-                <li class="nxl-item {{ request()->routeIs('rider.booking*') ? 'active' : '' }}">
-                    <a href="{{ route('rider.booking') }}" class="nxl-link">
-                        <span class="nxl-micon"><i class="feather-truck"></i></span>
-                        <span class="nxl-mtext">Book a Rider</span>
-                    </a>
                 </li>
 
                 <li class="nxl-item nxl-caption">

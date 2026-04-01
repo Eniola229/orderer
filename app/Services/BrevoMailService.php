@@ -179,7 +179,7 @@ class BrevoMailService
                 <p>Thank you for applying to sell on Orderer. Your application for <strong>{$seller->business_name}</strong> is currently under review.</p>
                 <p>Our team will review your details within <strong>24 hours</strong> and notify you via email once approved.</p>
                 <p style='color:#888;font-size:13px;margin-top:24px;'>
-                    Questions? Email us at support@orderer.com
+                    Questions? Email us at support@ordererweb.shop
                 </p>
             </div>
             <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
@@ -223,7 +223,7 @@ class BrevoMailService
                 <div style='background:#FEF9E7;border-left:3px solid #F39C12;padding:12px 16px;margin:16px 0;font-size:14px;'>
                     <strong>Reason:</strong> {$reason}
                 </div>
-                <p>You can re-apply or upload updated documents from your dashboard. If you have questions, contact support@orderer.com.</p>
+                <p>You can re-apply or upload updated documents from your dashboard. If you have questions, contact support@ordererweb.shop.</p>
             </div>
             <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
                 &copy; " . date('Y') . " Orderer. All rights reserved.
@@ -366,7 +366,7 @@ class BrevoMailService
                 </div>
                 
                 <p style='color:#888;font-size:13px;margin-top:24px;'>
-                    Questions about your withdrawal? Contact us at support@orderer.com
+                    Questions about your withdrawal? Contact us at support@ordererweb.shop
                 </p>
             </div>
             <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
@@ -423,7 +423,7 @@ protected function withdrawalRejectedHtml($withdrawal, $seller, $amount, $reason
             </div>
             
             <p style='color:#888;font-size:13px;margin-top:24px;'>
-                If you have questions, please contact support@orderer.com
+                If you have questions, please contact support@ordererweb.shop
             </p>
         </div>
         <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>

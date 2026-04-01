@@ -73,6 +73,9 @@
                         <li class="nxl-item">
                             <a class="nxl-link" href="{{ route('admin.products.pending') }}">Pending Review</a>
                         </li>
+                        <li class="nxl-item">
+                            <a class="nxl-link" href="{{ route('admin.flash-sales.index') }}">Flash Sales</a>
+                        </li>
                     </ul>
                 </li>
 

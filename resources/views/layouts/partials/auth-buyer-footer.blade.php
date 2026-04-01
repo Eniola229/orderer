@@ -1,42 +1,3 @@
-<footer class="footer">
-    <div class="container-fluid">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
-                    <span>Copyright &copy;</span>
-                    <script>document.write(new Date().getFullYear());</script>
-                    <span class="ms-1">Orderer. All rights reserved.</span>
-                </p>
-            </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-center justify-content-md-end gap-3 mt-3 mt-md-0">
-                    <a href="{{ route('home') }}"
-                       class="fs-11 fw-semibold text-uppercase text-muted footer-link">
-                        <i class="feather-shopping-bag me-1" style="font-size:12px;"></i>
-                        Shop
-                    </a>
-                    <span class="text-muted">|</span>
-                    <a href="#" class="fs-11 fw-semibold text-uppercase text-muted footer-link">
-                        <i class="feather-file-text me-1" style="font-size:12px;"></i>
-                        Terms
-                    </a>
-                    <span class="text-muted">|</span>
-                    <a href="#" class="fs-11 fw-semibold text-uppercase text-muted footer-link">
-                        <i class="feather-rotate-ccw me-1" style="font-size:12px;"></i>
-                        Refund Policy
-                    </a>
-                    <span class="text-muted">|</span>
-                    <a href="{{ route('buyer.support') }}"
-                       class="fs-11 fw-semibold text-uppercase text-muted footer-link">
-                        <i class="feather-headphones me-1" style="font-size:12px;"></i>
-                        Support
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
-
 <div class="support-float-btn" id="supportBtn">
     <i class="feather-headphones"></i>
     <span>Support</span>
@@ -51,15 +12,6 @@
         <div class="support-modal-body">
             <p class="text-muted mb-4">How would you like to reach us?</p>
             <div class="support-options">
-                <a href="{{ route('buyer.support') }}" class="support-option">
-                    <div class="support-option-icon">
-                        <i class="feather-message-circle"></i>
-                    </div>
-                    <div class="support-option-content">
-                        <h6>Open a Ticket</h6>
-                        <p>Submit a support ticket</p>
-                    </div>
-                </a>
                 <a href="https://wa.me/YOUR_WHATSAPP_NUMBER" target="_blank" class="support-option">
                     <div class="support-option-icon whatsapp">
                         <i class="feather-message-square"></i>

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class Order extends Model
 {
-    use HasUuid;
+    use HasUuid; 
 
     protected $fillable = [
         // Core

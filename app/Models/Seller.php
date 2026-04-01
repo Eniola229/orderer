@@ -40,6 +40,10 @@ class Seller extends Authenticatable
         'last_login_at',
         'last_login_ip',
         'rejection_reason',
+        'rejected_at',
+        'rejected_by',
+        'approved_by',
+        'approved_at'
     ];
 
     protected $hidden = [
@@ -66,6 +70,11 @@ class Seller extends Authenticatable
     public function documents()
     {
         return $this->hasMany(SellerDocument::class);
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(SellerDocument::class, 'id', 'seller_id');
     }
 
     public function products()

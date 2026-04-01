@@ -65,7 +65,7 @@
             <h2>Set new password</h2>
             <p class="subtitle">Enter and confirm your new password below.</p>
 
-            <form action="{{ route('password.update') }}" method="POST">
+            <form action="{{ route('front.password.update') }}" method="POST">
                 @csrf
                 <input type="hidden" name="token" value="{{ $token }}">
                 <input type="hidden" name="email" value="{{ $email ?? old('email') }}">
@@ -98,4 +98,5 @@
     </div>
 
 </div>
+@include('layouts.partials.auth-buyer-footer')
 @endsection

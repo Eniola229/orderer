@@ -14,6 +14,8 @@ use App\Http\Controllers\Buyer\SupportController        as BuyerSupport;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LegalController;
+
 
 // -------------------------------------------------------
 // STOREFRONT (public)
@@ -27,6 +29,20 @@ Route::get('/search',               [StorefrontController::class, 'search'])->na
 Route::get('/brands',               [StorefrontController::class, 'brands'])->name('brands.index');
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+
+// ── Legal Pages ───────────────────────────────────────────────────────────────
+Route::prefix('legal')->name('legal.')->group(function () {
+    Route::get('/terms-and-conditions',    [LegalController::class, 'terms'])->name('terms');
+    Route::get('/privacy-policy',          [LegalController::class, 'privacy'])->name('privacy');
+    Route::get('/refund-policy',           [LegalController::class, 'refundPolicy'])->name('refund');
+    Route::get('/seller-terms',            [LegalController::class, 'sellerTerms'])->name('seller-terms');
+    Route::get('/buyer-terms',             [LegalController::class, 'buyerTerms'])->name('buyer-terms');
+    Route::get('/shipping-policy',         [LegalController::class, 'shippingPolicy'])->name('shipping');
+    Route::get('/cookie-policy',           [LegalController::class, 'cookiePolicy'])->name('cookies');
+    Route::get('/aml-policy',              [LegalController::class, 'amlPolicy'])->name('aml');
+    Route::get('/acceptable-use-policy',   [LegalController::class, 'acceptableUse'])->name('acceptable-use');
+    Route::get('/disclaimer',              [LegalController::class, 'disclaimer'])->name('disclaimer');
+});
 
 
 // Ad click tracking & redirect
@@ -66,7 +82,7 @@ Route::post('/address/validate', function (\Illuminate\Http\Request $request, \A
     try {
         $result = $shipbubble->validateAddress([
             'name'    => $request->name,
-            'email'   => $request->email ?? 'noreply@orderer.com',
+            'email'   => $request->email ?? 'noreply@ordererweb.shop',
             'phone'   => $request->phone,
             'address' => $request->address,
             'city'    => $request->city ?? $request->state,
@@ -133,10 +149,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',             [BuyerLoginController::class,    'login']);
 
     // Password reset
-    Route::get('/password/reset',          [BuyerPasswordReset::class, 'showForgotForm'])->name('password.request');
-    Route::post('/password/email',         [BuyerPasswordReset::class, 'sendResetLink'])->name('password.email');
-    Route::get('/password/reset/{token}',  [BuyerPasswordReset::class, 'showResetForm'])->name('password.reset');
-    Route::post('/password/reset',         [BuyerPasswordReset::class, 'resetPassword'])->name('password.update');
+    Route::get('/password/reset',          [BuyerPasswordReset::class, 'showForgotForm'])->name('front.password.request');
+    Route::post('/password/email',         [BuyerPasswordReset::class, 'sendResetLink'])->name('front.password.email');
+    Route::get('/password/reset/{token}',  [BuyerPasswordReset::class, 'showResetForm'])->name('front.password.reset');
+    Route::post('/password/reset',         [BuyerPasswordReset::class, 'resetPassword'])->name('front.password.update');
 });
 
 Route::post('/logout', [BuyerLoginController::class, 'logout'])
@@ -165,6 +181,7 @@ Route::post('/logout', [BuyerLoginController::class, 'logout'])
 // BUYER DASHBOARD (authenticated)
 // -------------------------------------------------------
 Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () {
+
 
     // Dashboard
     Route::get('/dashboard', [BuyerDashboard::class, 'index'])->name('dashboard');

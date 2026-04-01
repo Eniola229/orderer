@@ -1477,3 +1477,23 @@ html, body {
 .new-badge{
     background: green !important;
 }
+
+.badge-rejected {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+.badge-verified {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+.badge-suspended {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.badge-document-rejected {
+    background-color: #fd7e14;
+    color: #ffffff;
+}

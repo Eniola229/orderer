@@ -58,7 +58,7 @@
                                 Original Price (NGN)
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">₦</span>
                                 <input type="text" id="originalPriceDisplay"
                                        class="form-control" disabled
                                        placeholder="Select product first"

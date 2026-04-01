@@ -16,7 +16,7 @@
     </a>
     @endforeach
 </div>
-
+ 
 <div class="card">
     <div class="card-body p-0">
         @if($items->count())
@@ -65,7 +65,41 @@
                         <td><span class="fw-bold">₦{{ number_format($item->total_price, 2) }}</span></td>
                         <td><span class="fw-bold text-success">₦{{ number_format($item->seller_earnings, 2) }}</span></td>
                         <td>
-                            <span class="badge orderer-badge badge-{{ $item->status }}">
+                           <span style="
+                                padding: 4px 10px;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                display: inline-block;
+                                @switch($item->status)
+                                    @case('pending')
+                                        background-color: #ffc107; color: #212529;
+                                        @break
+                                    @case('confirmed')
+                                        background-color: #0d6efd; color: #ffffff;
+                                        @break
+                                    @case('processing')
+                                        background-color: #6f42c1; color: #ffffff;
+                                        @break
+                                    @case('shipped')
+                                        background-color: #0dcaf0; color: #212529;
+                                        @break
+                                    @case('delivered')
+                                        background-color: #20c997; color: #212529;
+                                        @break
+                                    @case('completed')
+                                        background-color: #28a745; color: #ffffff;
+                                        @break
+                                    @case('cancelled')
+                                        background-color: #dc3545; color: #ffffff;
+                                        @break
+                                    @case('disputed')
+                                        background-color: #fd7e14; color: #212529;
+                                        @break
+                                    @default
+                                        background-color: #6c757d; color: #ffffff;
+                                @endswitch
+                            ">
                                 {{ ucfirst($item->status) }}
                             </span>
                         </td>

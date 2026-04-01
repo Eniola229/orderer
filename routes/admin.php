@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\HouseController;
+use App\Http\Controllers\Admin\FlashSaleController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
 
@@ -136,7 +137,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Admin Profile
         Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
-
+        // ==================== Flash Sale ====================
+        Route::get('/flash-sales', [FlashSaleController::class, 'index'])->name('flash-sales.index');
+        Route::get('/flash-sales/create', [FlashSaleController::class, 'create'])->name('flash-sales.create');
+        Route::post('/flash-sales/store', [FlashSaleController::class, 'store'])->name('flash-sales.store');
+        Route::put('/flash-sales/{flashSale}/toggle', [FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
+        Route::delete('/flash-sales/{flashSale}/destroy', [FlashSaleController::class, 'destroy'])->name('flash-sales.destroy');
         // ==================== Logs ====================
         Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
     });

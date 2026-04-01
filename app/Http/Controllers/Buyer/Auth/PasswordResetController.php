@@ -38,7 +38,7 @@ class PasswordResetController extends Controller
         $request->validate([
             'email' => ['required', 'email'],
         ]);
-
+ 
         $user = User::where('email', $request->email)->first();
 
         // Always show success to prevent user enumeration
@@ -57,7 +57,7 @@ class PasswordResetController extends Controller
             'created_at' => Carbon::now(),
         ]);
 
-        $resetUrl = route('password.reset', [
+        $resetUrl = route('front.password.reset', [
             'token' => $token,
             'email' => $request->email,
         ]);
@@ -88,7 +88,7 @@ class PasswordResetController extends Controller
     // Step 4 — Update password
     // -------------------------------------------------------
 
-    public function updatePassword(Request $request)
+    public function resetPassword(Request $request)
     {
         $request->validate([
             'token'                 => ['required'],

@@ -20,9 +20,9 @@
             </div>
         </div>
     </div>
-</div>
+</div> 
  
-<style>
+<style> 
     @media (max-width: 768px) {
         .single_product_area {
             padding: 40px 0;
@@ -169,9 +169,43 @@
                         <span style="font-size:13px;color:#888;">{{ $product->total_sold }} sold</span>
                     </div>
 
+                    {{-- ⚡ Flash Sale Banner --}}
+                    @if(isset($flashSale) && $flashSale?->isActive())
+                    <div style="background:#FEF9EC;border:1.5px solid #F39C12;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:20px;">⚡</span>
+                            <div>
+                                <p style="margin:0;font-weight:800;font-size:14px;color:#B7770D;">Flash Sale — Limited Time!</p>
+                                <p style="margin:0;font-size:12px;color:#888;">
+                                    @if($flashSale->quantity_limit)
+                                        {{ $flashSale->quantity_limit - $flashSale->quantity_sold }} units left at this price ·
+                                    @endif
+                                    Ends <strong style="color:#E74C3C;" id="flashCountdown" data-ends="{{ $flashSale->ends_at->toISOString() }}">
+                                        {{ $flashSale->ends_at->diffForHumans() }}
+                                    </strong>
+                                </p>
+                            </div>
+                        </div>
+                        <span style="background:#F39C12;color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;white-space:nowrap;">
+                            -{{ round((($flashSale->original_price - $flashSale->sale_price) / $flashSale->original_price) * 100) }}% OFF
+                        </span>
+                    </div>
+                    @endif
+
                     {{-- Price --}}
                     <div class="mb-3">
-                        @if($product->sale_price)
+                        @if(isset($flashSale) && $flashSale?->isActive())
+                        {{-- Flash sale price takes priority --}}
+                        <span style="font-size:32px;font-weight:800;color:#E74C3C;" class="price-large">
+                            ₦{{ number_format($flashSale->sale_price, 2) }}
+                        </span>
+                        <span style="font-size:18px;color:#aaa;text-decoration:line-through;margin-left:10px;">
+                            ₦{{ number_format($flashSale->original_price, 2) }}
+                        </span>
+                        <span style="background:#FADBD8;color:#E74C3C;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-left:8px;display:inline-block;">
+                            ⚡ Flash Price
+                        </span>
+                        @elseif($product->sale_price)
                         <span style="font-size:32px;font-weight:800;color:#2ECC71;" class="price-large">
                             ₦{{ number_format($product->sale_price, 2) }}
                         </span>
@@ -223,10 +257,11 @@
                             </div>
                         </div>
                         <div class="d-flex gap-3 flex-wrap">
-                            <button type="button" class="btn essence-btn flex-grow-1"
-                                    onclick="addToCart('{{ $product->id }}')">
-                                <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
-                            </button>
+                        {{-- Add to cart form — update the button to pass flash price --}}
+                        <button type="button" class="btn essence-btn flex-grow-1"
+                                onclick="addToCart('{{ $product->id }}', {{ isset($flashSale) && $flashSale?->isActive() ? 'true' : 'false' }})">
+                            <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
+                        </button>
                             <button type="button" class="btn"
                                     style="border:2px solid #2ECC71;color:#2ECC71;padding:0 16px;border-radius:4px;"
                                     onclick="toggleWishlist('{{ $product->id }}', this)">
@@ -447,6 +482,35 @@
 <script src="{{ asset('js/classy-nav.min.js') }}"></script>
 <script src="{{ asset('js/active.js') }}"></script>
 <script>
+// Flash sale countdown timer
+(function() {
+    const el = document.getElementById('flashCountdown');
+    if (!el) return;
+    const endsAt = new Date(el.dataset.ends);
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+        const diff = endsAt - Date.now();
+        if (diff <= 0) {
+            el.textContent = 'Expired';
+            // Reload to reflect actual pricing
+            setTimeout(() => location.reload(), 1500);
+            return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.textContent = h > 0
+            ? pad(h) + ':' + pad(m) + ':' + pad(s)
+            : pad(m) + ':' + pad(s);
+    }
+
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+<script>
 function changeQty(delta) {
     const input = document.getElementById('qty');
     const max   = parseInt(input.max);
@@ -456,8 +520,11 @@ function changeQty(delta) {
     input.value = val;
 }
 
-function addToCart(productId) {
+function addToCart(productId, isFlashSale = false) {
     const qty = document.getElementById('qty').value;
+    const payload = { product_id: productId, quantity: parseInt(qty) };
+    if (isFlashSale) payload.flash_sale = true;
+
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {
@@ -465,7 +532,7 @@ function addToCart(productId) {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
         },
-        body: JSON.stringify({ product_id: productId, quantity: parseInt(qty) })
+        body: JSON.stringify(payload)
     })
     .then(r => r.json())
     .then(data => {
@@ -476,9 +543,7 @@ function addToCart(productId) {
             window.cartToast(data.message ?? 'Could not add item.', 'error');
         }
     })
-    .catch(() => {
-        window.cartToast('Something went wrong.', 'error');
-    });
+    .catch(() => window.cartToast('Something went wrong.', 'error'));
 }
 
 function toggleWishlist(productId, btn) {

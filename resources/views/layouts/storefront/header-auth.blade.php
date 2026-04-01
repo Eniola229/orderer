@@ -138,7 +138,7 @@
 
             <!-- Wallet -->
             <a href="{{ route('buyer.wallet') }}" class="ord-wallet">
-                <i class="fa fa-usd"></i>
+                ₦
                 {{ number_format(auth('web')->user()->wallet_balance, 2) }}
             </a>
 

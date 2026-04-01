@@ -73,7 +73,7 @@ function adminOrderStatusBadge(string $status): string {
                                     </a>
                                 </td>
                                 <td>{{ $item->quantity }}</td>
-                                <td class="fw-bold">${{ number_format($item->total_price, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($item->total_price, 2) }}</td>
                                 <td class="text-danger">
                                     ₦{{ number_format($item->commission_amount, 2) }}
                                     <small class="text-muted">({{ $item->commission_rate }}%)</small>
