@@ -8,7 +8,7 @@
 
 @section('content')
 
-@php
+@php 
 function orderStatusBadge(string $status): string {
     return match($status) {
         'pending'    => 'bg-warning text-dark',
@@ -42,17 +42,17 @@ function orderStatusBadge(string $status): string {
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
-                            <tr>
+                             <tr>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Item</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Qty</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
                             @foreach($order->items as $item)
-                            <tr>
+                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         @if($item->item_image)
@@ -70,10 +70,10 @@ function orderStatusBadge(string $status): string {
                                         {{ ucfirst($item->status) }}
                                     </span>
                                 </td>
-                            </tr>
+                             </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                     </table>
                 </div>
             </div>
         </div>
@@ -165,76 +165,123 @@ function orderStatusBadge(string $status): string {
                     <code class="fs-12">{{ $order->payment_reference }}</code>
                 </div>
                 @endif
-                <div class="mt-3">
-                    <small class="text-muted d-block">Payment method</small>
-                <strong>{{ ucfirst($order->payment_method) }}</strong>
-            </div>
-            </div>
-        </div>
-
-        {{-- Shipping / Courier info --}}
-        <div class="card mb-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Shipping Info</h5>
-            </div>
-            <div class="card-body">
-
-                {{-- Carrier --}}
-                @if($order->shipping_carrier)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Carrier</small>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="feather-truck text-primary"></i>
-                        <span class="fw-semibold">{{ $order->shipping_carrier }}</span>
-                        @if($order->shipping_service_name)
-                        <span class="text-muted fs-12">— {{ $order->shipping_service_name }}</span>
-                        @endif
-                    </div>
-                </div>
-                @endif
-
-                {{-- Shipbubble order ID --}}
-                @if($order->shipbubble_shipment_id)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Shipment ID</small>
-                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
-                </div>
-                @endif
-
-                {{-- Tracking number --}}
-                @if($order->tracking_number)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Tracking Number</small>
-                    <code class="fs-12">{{ $order->tracking_number }}</code>
-                </div>
-                @endif
-
-                {{-- Estimated delivery --}}
-                @if($order->estimated_delivery_date)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Estimated Delivery</small>
-                    <span class="fw-semibold text-success">
-                        <i class="feather-calendar me-1"></i>
-                        {{ $order->estimated_delivery_date }}
+                @if($order->is_multi_seller)
+                <div class="mt-3 p-2 bg-light rounded">
+                    <small class="text-muted d-block">Order Type</small>
+                    <span class="badge bg-info text-white">
+                        <i class="feather-layers me-1"></i> Multi-Seller Order
                     </span>
                 </div>
                 @endif
-
-                {{-- Track button --}}
-                @if($order->tracking_url)
-                <a href="{{ $order->tracking_url }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
-                    <i class="feather-map-pin me-2"></i> Track Shipment
-                </a>
-                @else
-                <div class="text-muted fs-12 text-center py-2">
-                    <i class="feather-clock me-1"></i>
-                    Tracking details will appear here once your order is shipped.
-                </div>
-                @endif
-
             </div>
         </div>
 
+        {{-- Shipping / Courier info with Track Buttons --}}
+        {{-- Shipment tracking — one card per seller shipment --}}
+        @php
+            $itemsByShipment = $order->items->groupBy('shipbubble_shipment_id');
+        @endphp
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                    <i class="feather-truck me-2"></i>
+                    Shipment{{ $itemsByShipment->count() > 1 ? 's (' . $itemsByShipment->count() . ')' : '' }}
+                </h5>
+                @if($order->is_multi_seller)
+                <span class="badge bg-info text-white">
+                    <i class="feather-layers me-1"></i> Multi-Seller
+                </span>
+                @endif
+            </div>
+            <div class="card-body">
+                @forelse($itemsByShipment as $shipmentId => $shipmentItems)
+                @php $firstItem = $shipmentItems->first(); @endphp
+                <div class="mb-4 pb-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+
+                    @if($order->is_multi_seller)
+                    <p class="fw-semibold mb-2" style="font-size:13px;">
+                        <i class="feather-box me-1 text-primary"></i>
+                        Shipment #{{ $loop->iteration }}
+                        <span class="text-muted fw-normal">
+                            — {{ $shipmentItems->first()->seller->business_name ?? 'Seller' }}
+                        </span>
+                    </p>
+                    @endif
+
+                    {{-- Items in this shipment --}}
+                    <div class="mb-3">
+                        @foreach($shipmentItems as $sItem)
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            @if($sItem->item_image)
+                            <img src="{{ $sItem->item_image }}"
+                                 style="width:32px;height:32px;object-fit:cover;border-radius:6px;" alt="">
+                            @endif
+                            <span class="fs-13">{{ $sItem->item_name }}
+                                <span class="text-muted">×{{ $sItem->quantity }}</span>
+                            </span>
+                            <span class="badge ms-auto {{ match($sItem->status) {
+                                'delivered' => 'bg-success',
+                                'shipped'   => 'bg-primary',
+                                'confirmed' => 'bg-info',
+                                'cancelled' => 'bg-danger',
+                                default     => 'bg-warning text-dark'
+                            } }}">{{ ucfirst($sItem->status) }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Tracking info --}}
+                    @if($firstItem->shipbubble_shipment_id)
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Shipment ID</small>
+                        <code class="fs-12">{{ $firstItem->shipbubble_shipment_id }}</code>
+                    </div>
+                    @endif
+
+                    @if($firstItem->tracking_number)
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Tracking Number</small>
+                        <code class="fs-12">{{ $firstItem->tracking_number }}</code>
+                    </div>
+                    @endif
+
+                    @if($firstItem->estimated_delivery_date)
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Estimated Delivery</small>
+                        <span class="fw-semibold text-success">
+                            <i class="feather-calendar me-1"></i>
+                            {{ $firstItem->estimated_delivery_date }}
+                        </span>
+                    </div>
+                    @endif
+
+                    @if($firstItem->tracking_url)
+                    <a href="{{ $firstItem->tracking_url }}" target="_blank"
+                       class="btn btn-outline-primary btn-sm w-100 mt-1">
+                        <i class="feather-map-pin me-2"></i>
+                        Track{{ $order->is_multi_seller ? ' Shipment #' . $loop->iteration : ' My Order' }}
+                    </a>
+                    @elseif($firstItem->tracking_number)
+                    <div class="alert alert-info py-2 fs-12 mb-0 mt-1">
+                        <i class="feather-info me-1"></i> Tracking link will be available shortly.
+                    </div>
+                    @else
+                    <div class="text-muted fs-12 text-center py-2 bg-light rounded mt-1">
+                        <i class="feather-clock me-1"></i>
+                        Tracking details will appear once your order is shipped.
+                    </div>
+                    @endif
+
+                </div>
+                @empty
+                <div class="text-muted fs-13 text-center py-3">
+                    <i class="feather-clock me-1"></i>
+                    Shipment not yet booked. Check back shortly.
+                </div>
+                @endforelse
+                    </div>
+                </div>
         {{-- Delivery address --}}
         <div class="card">
             <div class="card-header">

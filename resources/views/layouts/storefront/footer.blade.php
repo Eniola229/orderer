@@ -55,8 +55,8 @@
                 <div class="col-6 col-md-2 col-lg-2 mb-40">
                     <h6 class="ord-footer-heading">Support</h6>
                     <ul class="ord-footer-links">
-                        <li><a href="#">Order Status</a></li>
-                        <li><a href="#">Payment Options</a></li>
+                        <li><a href="{{ route('buyer.orders') }}">Order Status</a></li>
+                        <li><a href="{{ route('buyer.wallet') }}">Payment Options</a></li>
                         <li><a href="{{ route('legal.shipping') }}">Shipping &amp; Delivery</a></li>
                         <li><a href="{{ route('legal.refund') }}">Refund Policy</a></li>
                         <li><a href="{{ route('buyer.support') }}">Help Center</a></li>

@@ -42,4 +42,5 @@ class ServiceListing extends Model
 
     public function seller()   { return $this->belongsTo(Seller::class); }
     public function category() { return $this->belongsTo(Category::class); }
+    public function reviews() { return $this->hasMany(BrandReview::class); }
 }

@@ -44,7 +44,7 @@ function adminOrderStatusBadge(string $status): string {
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
-                            <tr>
+                             <tr>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Item</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Qty</th>
@@ -52,11 +52,11 @@ function adminOrderStatusBadge(string $status): string {
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Commission</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Earnings</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
-                            </tr>
+                             </tr>
                         </thead>
                         <tbody>
                             @foreach($order->items as $item)
-                            <tr>
+                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         @if($item->item_image)
@@ -81,18 +81,149 @@ function adminOrderStatusBadge(string $status): string {
                                 <td class="text-success fw-bold">
                                     ₦{{ number_format($item->seller_earnings, 2) }}
                                 </td>
-                                <td>
-                                    <span class="badge {{ adminOrderStatusBadge($item->status) }}">
-                                        {{ ucfirst($item->status) }}
-                                    </span>
-                                </td>
-                            </tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge {{ adminOrderStatusBadge($item->status) }}">
+                                                {{ ucfirst($item->status) }}
+                                            </span>
+                                            @if(auth('admin')->user()->canEditOrders() && !in_array($item->status, ['cancelled','delivered','completed']))
+                                            <form action="{{ route('admin.orders.items.cancel', [$order->id, $item->id]) }}"
+                                                  method="POST"
+                                                  onsubmit="return confirm('Cancel \'{{ addslashes($item->item_name) }}\' and refund ₦{{ number_format($item->total_price, 2) }} to buyer?')">
+                                                @csrf @method('PUT')
+                                                <button type="submit"
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        title="Cancel this item and refund buyer">
+                                                    <i class="feather-x" style="font-size:11px;"></i> Cancel Item
+                                                </button>
+                                            </form>
+                                            @endif
+                                        </div>
+                                    </td>
+                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        {{-- Escrow Breakdown --}}
+        @php
+            $escrows = $order->escrowHolds->sortBy('created_at');
+        @endphp
+        @if($escrows->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                    <i class="feather-shield me-2"></i> Escrow Breakdown
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark border">
+                        {{ $escrows->count() }} row(s)
+                    </span>
+                    <span class="badge bg-warning text-dark">
+                        Held: ₦{{ number_format($escrows->where('status','held')->sum('amount'), 2) }}
+                    </span>
+                    <span class="badge bg-success text-white">
+                        Released: ₦{{ number_format($escrows->where('status','released')->sum('amount'), 2) }}
+                    </span>
+                    <span class="badge bg-secondary text-white">
+                        Refunded: ₦{{ number_format($escrows->where('status','refunded')->sum('amount'), 2) }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Order Item</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Item Amount</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Commission</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Seller Gets</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Escrow Status</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Released At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($escrows as $escrow)
+                            <tr>
+                                <td>
+                                    @if($escrow->orderItem)
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($escrow->orderItem->item_image)
+                                        <img src="{{ $escrow->orderItem->item_image }}"
+                                             style="width:34px;height:34px;object-fit:cover;border-radius:6px;" alt="">
+                                        @endif
+                                        <div>
+                                            <p class="mb-0 fw-semibold fs-13">
+                                                {{ Str::limit($escrow->orderItem->item_name, 35) }}
+                                            </p>
+                                            <small class="text-muted">
+                                                qty {{ $escrow->orderItem->quantity }}
+                                                · status:
+                                                <span class="badge {{ adminOrderStatusBadge($escrow->orderItem->status) }}" style="font-size:10px;">
+                                                    {{ ucfirst($escrow->orderItem->status) }}
+                                                </span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    @else
+                                    <span class="text-muted fs-13">Item not found</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($escrow->seller)
+                                    <a href="{{ route('admin.sellers.show', $escrow->seller_id) }}"
+                                       class="fs-13 text-primary">
+                                        {{ $escrow->seller->business_name ?? '—' }}
+                                    </a>
+                                    @else
+                                    <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td class="fw-bold fs-13">
+                                    ₦{{ number_format($escrow->amount, 2) }}
+                                </td>
+                                <td class="text-danger fs-13">
+                                    ₦{{ number_format($escrow->commission_amount, 2) }}
+                                </td>
+                                <td class="text-success fw-bold fs-13">
+                                    ₦{{ number_format($escrow->seller_amount, 2) }}
+                                </td>
+                                <td>
+                                    <span class="badge {{ match($escrow->status) {
+                                        'held'     => 'bg-warning text-dark',
+                                        'released' => 'bg-success text-white',
+                                        'refunded' => 'bg-secondary text-white',
+                                        default    => 'bg-light text-dark',
+                                    } }}">
+                                        {{ ucfirst($escrow->status) }}
+                                    </span>
+                                </td>
+                                <td class="text-muted fs-12">
+                                    {{ $escrow->released_at?->format('M d, Y H:i') ?? '—' }}
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="2" class="fw-bold fs-13 text-end">Totals</td>
+                                <td class="fw-bold fs-13">₦{{ number_format($escrows->sum('amount'), 2) }}</td>
+                                <td class="fw-bold text-danger fs-13">₦{{ number_format($escrows->sum('commission_amount'), 2) }}</td>
+                                <td class="fw-bold text-success fs-13">₦{{ number_format($escrows->sum('seller_amount'), 2) }}</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
 
         {{-- Admin actions --}}
         @if(auth('admin')->user()->canEditOrders() && !in_array($order->status, ['completed','cancelled']))
@@ -171,20 +302,20 @@ function adminOrderStatusBadge(string $status): string {
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Subtotal</span>
-                    <span class="fw-semibold">${{ number_format($order->subtotal, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->subtotal, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Shipping</span>
-                    <span class="fw-semibold">${{ number_format($order->shipping_fee, 2) }}</span>
+                    <span class="fw-semibold">₦{{ number_format($order->shipping_fee, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Commission</span>
-                    <span class="fw-semibold text-primary">${{ number_format($order->commission_total ?? 0, 2) }}</span>
+                    <span class="fw-semibold text-primary">₦{{ number_format($order->commission_total ?? 0, 2) }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="fw-bold">Total</span>
-                    <span class="fw-bold text-primary">${{ number_format($order->total, 2) }}</span>
+                    <span class="fw-bold text-primary">₦{{ number_format($order->total, 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted fs-13">Payment</span>
@@ -202,18 +333,42 @@ function adminOrderStatusBadge(string $status): string {
                     <code class="fs-12">{{ $order->payment_reference }}</code>
                 </div>
                 @endif
-                @if($order->escrow)
+                @php
+                    $heldTotal     = $escrows->where('status', 'held')->sum('amount');
+                    $releasedTotal = $escrows->where('status', 'released')->sum('amount');
+                    $refundedTotal = $escrows->where('status', 'refunded')->sum('amount');
+                @endphp
+                @if($escrows->isNotEmpty())
                 <div class="mt-2 p-2 rounded" style="background:#FEF9E7;">
-                    <small class="text-muted d-block">Escrow</small>
-                    <span class="badge {{ adminOrderStatusBadge($order->escrow->status) }}">
-                        {{ ucfirst($order->escrow->status) }}
+                    <small class="text-muted d-block mb-1">Escrow</small>
+                    @if($heldTotal > 0)
+                    <div class="d-flex justify-content-between fs-12">
+                        <span class="text-muted">Held</span>
+                        <span class="badge bg-warning text-dark">₦{{ number_format($heldTotal, 2) }}</span>
+                    </div>
+                    @endif
+                    @if($releasedTotal > 0)
+                    <div class="d-flex justify-content-between fs-12 mt-1">
+                        <span class="text-muted">Released</span>
+                        <span class="badge bg-success text-white">₦{{ number_format($releasedTotal, 2) }}</span>
+                    </div>
+                    @endif
+                    @if($refundedTotal > 0)
+                    <div class="d-flex justify-content-between fs-12 mt-1">
+                        <span class="text-muted">Refunded</span>
+                        <span class="badge bg-secondary text-white">₦{{ number_format($refundedTotal, 2) }}</span>
+                    </div>
+                    @endif
+                </div>
+                @endif
+                @if($order->is_multi_seller)
+                <div class="mt-2 p-2 rounded" style="background:#E8F4FD;">
+                    <small class="text-muted d-block">Order Type</small>
+                    <span class="badge bg-info text-white">
+                        <i class="feather-layers me-1"></i> Multi-Seller Order
                     </span>
                 </div>
                 @endif
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted fs-13">Payment</span>
-                    <span class="fw-semibold fs-13">{{ ucfirst($order->payment_method) }}</span>
-                </div>
             </div>
         </div>
 
@@ -233,6 +388,118 @@ function adminOrderStatusBadge(string $status): string {
             </div>
         </div>
 
+        
+        {{-- Shipping info — shows multiple or single --}}
+        {{-- Admin sees all shipments grouped --}}
+        @php
+            $itemsByShipment = $order->items->groupBy('shipbubble_shipment_id');
+        @endphp
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="feather-truck me-2"></i>
+                    Shipment Details
+                    @if($order->is_multi_seller)
+                    <span class="badge bg-info text-white ms-2">{{ $itemsByShipment->count() }} Shipments</span>
+                    @endif
+                </h5>
+            </div>
+            <div class="card-body">
+                @forelse($itemsByShipment as $shipmentId => $shipmentItems)
+                @php $fi = $shipmentItems->first(); @endphp
+                <div class="mb-4 pb-3 {{ !$loop->last ? 'border-bottom' : '' }}">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">
+                            <i class="feather-box me-1"></i>
+                            Shipment #{{ $loop->iteration }}
+                            @if($order->is_multi_seller)
+                            <small class="text-muted">({{ $fi->seller->business_name ?? 'Seller' }})</small>
+                            @endif
+                        </h6>
+                        <span class="badge {{ match($fi->shipping_status ?? 'pending') {
+                            'delivered' => 'bg-success',
+                            'shipped'   => 'bg-primary',
+                            'confirmed' => 'bg-info',
+                            'cancelled' => 'bg-danger',
+                            default     => 'bg-warning text-dark'
+                        } }}">{{ ucfirst($fi->shipping_status ?? 'pending') }}</span>
+                    </div>
+
+                    <div class="ms-3">
+                        {{-- Items --}}
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Items</small>
+                            @foreach($shipmentItems as $si)
+                            <div class="fs-13">
+                                {{ $si->item_name }} ×{{ $si->quantity }}
+                                <span class="badge ms-1 {{ match($si->status) {
+                                    'delivered' => 'bg-success',
+                                    'shipped'   => 'bg-primary',
+                                    default     => 'bg-warning text-dark'
+                                } }}">{{ ucfirst($si->status) }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        @if($fi->shipbubble_shipment_id)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Shipment ID</small>
+                            <code class="fs-12">{{ $fi->shipbubble_shipment_id }}</code>
+                        </div>
+                        @endif
+
+                        @if($fi->courier_id)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Courier</small>
+                            <span class="fw-semibold">{{ $fi->courier_id }}</span>
+                        </div>
+                        @endif
+
+                        @if($fi->tracking_number)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Tracking Number</small>
+                            <code class="fs-12 text-primary">{{ $fi->tracking_number }}</code>
+                        </div>
+                        @endif
+
+                        @if($fi->estimated_delivery_date)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Estimated Delivery</small>
+                            <span class="fw-semibold text-success">
+                                <i class="feather-calendar me-1"></i>
+                                {{ $fi->estimated_delivery_date }}
+                            </span>
+                        </div>
+                        @endif
+
+                        @if($fi->delivered_at)
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Delivered At</small>
+                            <span class="text-success">
+                                <i class="feather-check-circle me-1"></i>
+                                {{ $fi->delivered_at->format('M d, Y H:i') }}
+                            </span>
+                        </div>
+                        @endif
+
+                        @if($fi->tracking_url)
+                        <a href="{{ $fi->tracking_url }}" target="_blank"
+                           class="btn btn-outline-primary btn-sm w-100 mt-1">
+                            <i class="feather-map-pin me-2"></i> Track Shipment #{{ $loop->iteration }}
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                @empty
+                <div class="text-muted fs-13 text-center py-3">
+                    No shipments booked yet.
+                </div>
+                @endforelse
+                    </div>
+                </div>
+
         {{-- Delivery address --}}
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">Delivery Address</h5></div>
@@ -244,85 +511,6 @@ function adminOrderStatusBadge(string $status): string {
                 <p class="mb-0 text-muted fs-13">{{ $order->shipping_country }}</p>
             </div>
         </div>
-
-        {{-- Shipping info — always shown, full detail --}}
-        <div class="card">
-            <div class="card-header"><h5 class="card-title mb-0">Shipping Info</h5></div>
-            <div class="card-body">
-
-                {{-- Carrier --}}
-                @if($order->shipping_carrier)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Carrier</small>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="feather-truck text-primary"></i>
-                        <span class="fw-semibold">{{ $order->shipping_carrier }}</span>
-                        @if($order->shipping_service_name)
-                        <span class="text-muted fs-12">— {{ $order->shipping_service_name }}</span>
-                        @endif
-                    </div>
-                </div>
-                @endif
-
-                {{-- Shipbubble shipment ID --}}
-                @if($order->shipbubble_shipment_id)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Shipment ID</small>
-                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
-                </div>
-                @endif
-
-                {{-- Courier ID --}}
-                @if($order->courier_id)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Courier ID</small>
-                    <code class="fs-12">{{ $order->courier_id }}</code>
-                </div>
-                @endif
-
-                {{-- Tracking number --}}
-                @if($order->tracking_number)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Tracking Number</small>
-                    <code class="fs-12 text-primary">{{ $order->tracking_number }}</code>
-                </div>
-                @endif
-
-                {{-- Estimated delivery --}}
-                @if($order->estimated_delivery_date)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Estimated Delivery</small>
-                    <span class="fw-semibold text-success">
-                        <i class="feather-calendar me-1"></i>
-                        {{ $order->estimated_delivery_date }}
-                    </span>
-                </div>
-                @endif
-
-                {{-- Package info --}}
-                @if($order->package_weight)
-                <div class="mb-3">
-                    <small class="text-muted d-block mb-1">Package Weight</small>
-                    <span class="fw-semibold">{{ $order->package_weight }} kg</span>
-                </div>
-                @endif
-
-                {{-- Track button --}}
-                @if($order->tracking_url)
-                <a href="{{ $order->tracking_url }}" target="_blank"
-                   class="btn btn-outline-primary btn-sm w-100">
-                    <i class="feather-map-pin me-2"></i> Track Shipment
-                </a>
-                @else
-                <div class="text-muted fs-12 text-center py-2">
-                    <i class="feather-clock me-1"></i>
-                    Tracking details will appear once shipment is booked.
-                </div>
-                @endif
-
-            </div>
-        </div>
-
     </div>
 </div>
 

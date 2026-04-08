@@ -19,7 +19,9 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\HouseController;
 use App\Http\Controllers\Admin\FlashSaleController;
+use App\Http\Controllers\Admin\DeliveryBookingController;
 
+ 
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // Guest only
@@ -80,6 +82,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}/complete', [OrderController::class, 'forceComplete'])->name('orders.complete');
         Route::put('/orders/{order}/refund', [OrderController::class, 'forceRefund'])->name('orders.refund');
+        Route::put('orders/{order}/items/{item}/cancel', [OrderController::class, 'cancelOrderItem'])
+            ->name('orders.items.cancel');
 
         // ==================== Finance ====================
         Route::get('/finance/transactions', [FinanceController::class, 'transactions'])->name('finance.transactions');
@@ -145,5 +149,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/flash-sales/{flashSale}/destroy', [FlashSaleController::class, 'destroy'])->name('flash-sales.destroy');
         // ==================== Logs ====================
         Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+
+        Route::get('/delivery-bookings',                      [DeliveryBookingController::class, 'index'])->name('delivery-bookings.index');
+        Route::get('/delivery-bookings/{deliveryBooking}',    [DeliveryBookingController::class, 'show'])->name('delivery-bookings.show');
+        Route::put('/delivery-bookings/{deliveryBooking}/status', [DeliveryBookingController::class, 'updateStatus'])->name('delivery-bookings.update-status');
     });
 });

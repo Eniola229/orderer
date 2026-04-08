@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -8,7 +7,7 @@ use Illuminate\Support\Str;
 
 class Order extends Model
 {
-    use HasUuid; 
+    use HasUuid;
 
     protected $fillable = [
         // Core
@@ -22,18 +21,18 @@ class Order extends Model
         // Delivery address
         'shipping_name', 'shipping_phone', 'shipping_address',
         'shipping_city', 'shipping_state', 'shipping_country', 'shipping_zip',
-        // Shipping carrier & service
+        // Shipping carrier & service (kept for display/reference)
         'shipping_carrier', 'shipping_service_code', 'shipping_service_name',
-        // Shipbubble tracking
-        'shipbubble_shipment_id', 'courier_id', 'shipping_status',
-        'tracking_number', 'tracking_url', 'estimated_delivery_date',
-        // Package
+        // Package info
         'declared_value', 'package_weight',
-        // Raw rate data from Shipbubble stored for reference
+        // Raw rate data from Shipbubble
         'shipping_rate_data',
+        // Flags
+        'is_multi_seller',
         // Misc
         'notes', 'delivered_at', 'completed_at',
     ];
+
     protected $casts = [
         'subtotal'           => 'decimal:2',
         'shipping_fee'       => 'decimal:2',
@@ -41,6 +40,7 @@ class Order extends Model
         'total'              => 'decimal:2',
         'declared_value'     => 'decimal:2',
         'shipping_rate_data' => 'array',
+        'is_multi_seller'    => 'boolean',
         'delivered_at'       => 'datetime',
         'completed_at'       => 'datetime',
     ];
@@ -60,12 +60,12 @@ class Order extends Model
     public function items()      { return $this->hasMany(OrderItem::class); }
     public function statusLogs() { return $this->hasMany(OrderStatusLog::class); }
     public function escrow()     { return $this->hasOne(EscrowHold::class); }
-    public function tracking()   { return $this->hasMany(ShipmentTracking::class, 'tracking_number', 'tracking_number'); }
+    public function escrowHolds() { return $this->hasMany(EscrowHold::class); }
 
     // ── Helpers ──────────────────────────────────────────────
-    public function hasTracking(): bool
+    public function allItemsDelivered(): bool
     {
-        return !empty($this->tracking_number);
+        return $this->items()->whereNotIn('status', ['delivered', 'completed'])->doesntExist();
     }
 
     public function getShippingLabelAttribute(): string

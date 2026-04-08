@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +19,7 @@ class DeliveryBooking extends Model
         // Package
         'item_description', 'weight_kg', 'declared_value',
         // Pricing
-        'fee', 'payment_status',
+        'fee', 'service_fee', 'payment_status',
         // Status
         'status',
         // Shipbubble
@@ -34,16 +33,33 @@ class DeliveryBooking extends Model
     protected $casts = [
         'weight_kg'      => 'decimal:2',
         'fee'            => 'decimal:2',
+        'service_fee'    => 'decimal:2',
         'declared_value' => 'decimal:2',
         'rate_data'      => 'array',
     ];
 
+    // Service fee constant — change here to update everywhere
+    const SERVICE_FEE = 200.00;
+
+    /**
+     * Total amount = shipping fee + service fee
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) $this->fee + (float) $this->service_fee;
+    }
+
     protected static function boot()
     {
         parent::boot();
+
         static::creating(function ($model) {
             if (empty($model->booking_number)) {
                 $model->booking_number = 'BKG-' . strtoupper(Str::random(8));
+            }
+            // Always stamp the service fee at creation time
+            if (empty($model->service_fee)) {
+                $model->service_fee = self::SERVICE_FEE;
             }
         });
     }

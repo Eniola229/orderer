@@ -240,13 +240,13 @@
                                     </div>
                                 </div>
                                 <div class="product-description">
-                                    <span>{{ $sp->seller->business_name ?? '' }}</span>
+                                    <span>{{ Str::limit($sp->seller->business_name ?? '', 10) }}</span>
                                     <a href="{{ $ad->clickTrackingUrl() }}">
                                         <h6>{{ Str::limit($sp->name, 40) }}</h6>
                                     </a>
                                     <p class="product-price">
                                         @if($sp->sale_price)
-                                            <span class="old-price">${{ number_format($sp->price, 2) }}</span>
+                                            <span class="old-price">₦{{ number_format($sp->price, 2) }}</span>
                                             ₦{{ number_format($sp->sale_price, 2) }}
                                         @else
                                             ₦{{ number_format($sp->price, 2) }}
@@ -306,13 +306,13 @@
                                     </div>
                                 </div>
                                 <div class="product-description">
-                                    <span>{{ $product->seller->business_name ?? '' }}</span>
+                                    <span>{{ Str::limit($product->seller->business_name ?? '', 10) }}</span>
                                     <a href="{{ route('product.show', $product->slug) }}">
                                         <h6>{{ Str::limit($product->name, 40) }}</h6>
                                     </a>
                                     <p class="product-price">
                                         @if($product->sale_price)
-                                            <span class="old-price">${{ number_format($product->price, 2) }}</span>
+                                            <span class="old-price">₦{{ number_format($product->price, 2) }}</span>
                                             ₦{{ number_format($product->sale_price, 2) }}
                                         @else
                                             ₦{{ number_format($product->price, 2) }}

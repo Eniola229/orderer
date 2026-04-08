@@ -18,7 +18,7 @@
     --text-muted:  #888;
     --text-dim:    #555;
     --red:         #e74c3c;
-    --radius:      14px;
+    --radius:      14px; 
     --radius-sm:   8px;
 }
 
@@ -879,8 +879,38 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                             <span class="value" id="displayRiderService">—</span>
                         </div>
                         <div class="summary-row">
-                            <span class="label">Shipping fee</span>
-                            <span class="value green" id="displayRiderFee">₦0.00</span>
+                            <span class="label">Shipping Fee</span>
+                            <span class="value" id="displayRiderFee">₦0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label" style="display:flex;align-items:center;gap:6px;">
+                                Service Fee
+                                {{-- Tooltip icon --}}
+                                <span id="sfTooltipBtn"
+                                      style="display:inline-flex;align-items:center;justify-content:center;
+                                             width:16px;height:16px;border-radius:50%;background:var(--text-dim);
+                                             color:var(--text);font-size:10px;font-weight:700;cursor:pointer;
+                                             position:relative;flex-shrink:0;"
+                                      onmouseenter="document.getElementById('sfTooltip').style.display='block'"
+                                      onmouseleave="document.getElementById('sfTooltip').style.display='none'">
+                                    ?
+                                    <span id="sfTooltip"
+                                          style="display:none;position:absolute;bottom:130%;left:50%;
+                                                 transform:translateX(-50%);background:#fff;color:#111;
+                                                 border:1px solid var(--border);border-radius:8px;
+                                                 padding:8px 12px;font-size:12px;font-weight:400;
+                                                 white-space:nowrap;z-index:999;
+                                                 box-shadow:0 4px 16px rgba(0,0,0,0.35);
+                                                 width:220px;text-align:center;line-height:1.5;">
+                                        A one-time platform fee that covers order processing, support, and secure payment handling.
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="value" style="color:var(--text-muted);font-size:15px;">₦200.00</span>
+                        </div>
+                        <div class="summary-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:4px;">
+                            <span class="label" style="font-weight:700;color:var(--text);">Total</span>
+                            <span class="value green" id="displayRiderTotal">₦200.00</span>
                         </div>
                     </div>
                 </div>
@@ -905,7 +935,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         <div class="pay-icon">💳</div>
                         <div>
                             <div class="pay-label">Pay with Korapay</div>
-                            <div class="pay-sub">Secure card / bank transfer in USD</div>
+                            <div class="pay-sub">Secure card / bank transfer in NGN</div>
                         </div>
                     </div>
 
@@ -1195,6 +1225,10 @@ function selectRiderRate(el, serviceCode, courierId, price, carrier, service, ra
     document.getElementById('displayRiderFee').textContent = '₦' + (parseFloat(price) || 0).toFixed(2);
     document.getElementById('displayRiderCarrier').textContent = carrier || '—';
     document.getElementById('displayRiderService').textContent = service || '—';
+    const SERVICE_FEE = 200;
+    const total = (parseFloat(price) || 0) + SERVICE_FEE;
+    document.getElementById('displayRiderTotal').textContent = '₦' + total.toFixed(2);
+ 
     
     // Debug: log all hidden field values
     console.log('Hidden fields after selection:', {

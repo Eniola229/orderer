@@ -125,7 +125,7 @@
                             @if($brand->seller)
                             <p style="font-size:11px;color:#999;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                                 <i class="fa fa-store" style="color:#2ECC71;margin-right:3px;"></i>
-                                {{ $brand->seller->business_name ?? '' }}
+                                {{ Str::limit( $brand->seller->business_name ?? '', 10) }}
                             </p>
                             @endif
                         </div>

@@ -17,7 +17,7 @@
                 <li class="nxl-item nxl-caption">
                     <label>Main</label>
                 </li>
-
+ 
                 <li class="nxl-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.dashboard') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-airplay"></i></span>
@@ -109,6 +109,13 @@
                             <a class="nxl-link" href="{{ route('admin.orders.disputes') }}">Disputes</a>
                         </li>
                     </ul>
+                </li>
+
+                <li class="nxl-item {{ request()->routeIs('admin.delivery-bookings.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.delivery-bookings.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-truck"></i></span>
+                        <span class="nxl-mtext">Delivery Bookings</span>
+                    </a>
                 </li>
                 @endif
 

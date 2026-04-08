@@ -41,4 +41,5 @@ class HouseListing extends Model
 
     public function seller() { return $this->belongsTo(Seller::class); }
     public function images() { return $this->hasMany(HouseImage::class)->orderBy('sort_order'); }
+    public function reviews() { return $this->hasMany(BrandReview::class); }
 }

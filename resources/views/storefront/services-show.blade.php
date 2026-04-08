@@ -84,14 +84,6 @@
         color: #212529;
         word-break: break-word;
     }
-    .feature-badge {
-        background: #f8f9fa;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        margin: 0 5px 5px 0;
-        display: inline-block;
-    }
     .share-btn {
         cursor: pointer;
         transition: all 0.3s;
@@ -128,6 +120,32 @@
     .rating-stars {
         color: #FFA500;
         font-size: 14px;
+    }
+    
+    /* Seller Info Card */
+    .seller-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .seller-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .seller-avatar-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #2ECC71;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
     }
     
     /* Responsive Styles */
@@ -246,20 +264,6 @@
                                 <span class="d-inline-flex align-items-center gap-1">
                                     <i class="fa fa-calendar"></i> Posted {{ $service->created_at->format('M d, Y') }}
                                 </span>
-                                @if($service->average_rating)
-                                    <span class="rating-stars d-inline-flex align-items-center gap-1">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            @if($i <= floor($service->average_rating))
-                                                <i class="fa fa-star"></i>
-                                            @elseif($i - 0.5 <= $service->average_rating)
-                                                <i class="fa fa-star-half-o"></i>
-                                            @else
-                                                <i class="fa fa-star-o"></i>
-                                            @endif
-                                        @endfor
-                                        ({{ $service->total_reviews ?? 0 }} reviews)
-                                    </span>
-                                @endif
                             </div>
                         </div>
                         <div>
@@ -339,20 +343,95 @@
                     </div>
                 </div>
 
-                {{-- Contact Service Provider --}}
-                <div class="contact-card">
-                    <i class="fa fa-user-circle" style="font-size: 48px; color: #2ECC71; margin-bottom: 15px;"></i>
-                    <h5 class="mb-2 fs-6 fw-bold">{{ $service->seller->business_name ?? $service->seller->name ?? 'Service Provider' }}</h5>
-                    <p class="text-muted small mb-3">Member since {{ $service->seller->created_at->format('M Y') }}</p>
+                {{-- SELLER INFO CARD (Like product page - shows brand and brand reviews) --}}
+                <div class="seller-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        @if($service->seller->avatar)
+                            <img src="{{ $service->seller->avatar }}" class="seller-avatar" alt="">
+                        @else
+                            <div class="seller-avatar-placeholder">
+                                {{ strtoupper(substr($service->seller->business_name ?? $service->seller->name ?? 'S', 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-bold">{{ $service->seller->business_name ?? $service->seller->name ?? 'Service Provider' }}</p>
+                            @if($service->seller->is_verified_business)
+                                <small style="color:#2ECC71;">
+                                    <i class="fa fa-check-circle"></i> Verified Seller
+                                </small>
+                            @else
+                                <small class="text-muted">Individual Seller</small>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- SHOW SELLER'S BRAND (if they have one) - Like product page --}}
+                    @if($service->seller->brand)
+                        @php
+                            $brand = $service->seller->brand;
+                            $brandAvgRating = $brand->average_rating ?? 0;
+                            $brandTotalReviews = $brand->total_reviews ?? 0;
+                        @endphp
+                        <div class="mb-3 pb-2 border-bottom">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <small class="text-muted d-block mb-1">Brand</small>
+                                    <strong style="color:#2ECC71;">
+                                        <i class="fa fa-building-o mr-1"></i> {{ $brand->name }}
+                                    </strong>
+                                </div>
+                                <a href="{{ route('brands.show', $brand->slug) }}" 
+                                   class="btn btn-sm" 
+                                   style="border:1px solid #2ECC71; color:#2ECC71; border-radius: 20px; padding: 4px 12px; font-size: 11px;">
+                                    Visit Brand <i class="fa fa-external-link ml-1"></i>
+                                </a>
+                            </div>
+                            
+                            {{-- Brand Rating & Reviews (like product page shows seller rating) --}}
+                            <div class="mt-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <div class="rating-stars">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <= floor($brandAvgRating))
+                                                <i class="fa fa-star"></i>
+                                            @elseif($i - 0.5 <= $brandAvgRating)
+                                                <i class="fa fa-star-half-o"></i>
+                                            @else
+                                                <i class="fa fa-star-o"></i>
+                                            @endif
+                                        @endfor
+                                    </div>
+                                    <small class="text-muted">({{ $brandTotalReviews }} reviews)</small>
+                                </div>
+                                @if($brandTotalReviews > 0)
+                                    <a href="{{ route('brands.show', $brand->slug) }}#reviews" 
+                                       class="small d-block mt-1" 
+                                       style="color: #2ECC71; text-decoration: none;">
+                                        <i class="fa fa-comments-o mr-1"></i> See all brand reviews →
+                                    </a>
+                                @else
+                                    <small class="text-muted d-block mt-1">No brand reviews yet</small>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        {{-- No brand - just show seller info without brand rating --}}
+                        <div class="mb-3 pb-2 border-bottom">
+                            <small class="text-muted d-block mb-1">Seller since</small>
+                            <small>{{ $service->seller->created_at->format('M Y') }}</small>
+                        </div>
+                    @endif
+
+                    <hr class="my-3">
                     
                     @if($service->seller->email)
                         <div class="mb-2 small">
-                            <i class="fa fa-envelope mr-2"></i> {{ $service->seller->email }}
+                            <i class="fa fa-envelope mr-2" style="color:#2ECC71;"></i> {{ $service->seller->email }}
                         </div>
                     @endif
                     @if($service->seller->phone)
                         <div class="mb-3 small">
-                            <i class="fa fa-phone mr-2"></i> {{ $service->seller->phone }}
+                            <i class="fa fa-phone mr-2" style="color:#2ECC71;"></i> {{ $service->seller->phone }}
                         </div>
                     @endif
                     
@@ -364,7 +443,7 @@
                 </div>
 
                 {{-- Service Stats --}}
-                <div class="info-section">
+                <div class="info-section mt-3">
                     <h5 class="mb-3 fs-6 fw-bold">Service Information</h5>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted small">Service ID:</span>

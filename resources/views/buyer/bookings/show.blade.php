@@ -111,8 +111,18 @@
                         <strong>{{ $booking->weight_kg }} kg</strong>
                     </div>
                     <div class="col-md-4">
-                        <small class="text-muted d-block">Fee Paid</small>
+                        <small class="text-muted d-block">Shipping Fee</small>
                         <strong class="text-success">₦{{ number_format($booking->fee, 2) }}</strong>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block" style="display:flex;align-items:center;gap:4px;">
+                            Service Fee
+                            <span title="A one-time platform fee that covers order processing, support, and secure payment handling."
+                                  style="display:inline-flex;align-items:center;justify-content:center;
+                                         width:14px;height:14px;border-radius:50%;background:#6c757d;
+                                         color:#fff;font-size:9px;font-weight:700;cursor:default;">?</span>
+                        </small>
+                        <strong class="text-muted">₦{{ number_format($booking->service_fee, 2) }}</strong>
                     </div>
                     @if($booking->tracking_number)
                     <div class="col-12">
@@ -174,10 +184,24 @@
                     <strong>{{ $booking->created_at->format('M d, Y') }}</strong>
                 </div>
                 <hr>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping Fee</span>
+                    <span>₦{{ number_format($booking->fee, 2) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 align-items-center">
+                    <span class="text-muted d-flex align-items-center gap-1">
+                        Service Fee
+                        <span title="A one-time platform fee that covers order processing, support, and secure payment handling."
+                              style="display:inline-flex;align-items:center;justify-content:center;
+                                     width:14px;height:14px;border-radius:50%;background:#6c757d;
+                                     color:#fff;font-size:9px;font-weight:700;cursor:default;">?</span>
+                    </span>
+                    <span>₦{{ number_format($booking->service_fee, 2) }}</span>
+                </div>
                 <div class="d-flex justify-content-between">
                     <span class="fw-bold">Total Paid</span>
                     <span class="fw-bold text-success" style="font-size:18px;">
-                        ₦{{ number_format($booking->fee, 2) }}
+                        ₦{{ number_format($booking->fee + $booking->service_fee, 2) }}
                     </span>
                 </div>
             </div>

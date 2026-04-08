@@ -825,13 +825,14 @@ img {
     .single-product-wrapper .product-description .hover-content {
       position: absolute;
       width: calc(100% - 40px);
-      top: -70px;
+      top: -70px;  /* Keep this position */
       left: 20px;
       right: 20px;
-      opacity: 0;
-      visibility: hidden;
+      opacity: 1;  /* Changed from 0 */
+      visibility: visible;  /* Changed from hidden */
       -webkit-transition-duration: 500ms;
-      transition-duration: 500ms; }
+      transition-duration: 500ms;
+    }
       .single-product-wrapper .product-description .hover-content .essence-btn {
         width: 100%; }
   .single-product-wrapper .favme {
@@ -847,9 +848,9 @@ img {
   .single-product-wrapper:hover .product-img .product-favourite a {
     opacity: 1;
     visibility: visible; }
-  .single-product-wrapper:hover .hover-content {
+/*  .single-product-wrapper:hover .hover-content {
     opacity: 1;
-    visibility: visible; }
+    visibility: visible; }*/
 
 @keyframes favme-anime {
   0% {
@@ -1761,4 +1762,16 @@ img {
     padding-top: 15px !important;
     padding-left: 5px !important;
     padding-right: 5px !important;
+}
+
+/* Make favorite/heart icon always visible */
+.single-product-wrapper .product-img .product-favourite a {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* If you want to remove the hover effect completely for the heart */
+.single-product-wrapper:hover .product-img .product-favourite a {
+  opacity: 1 !important;
+  visibility: visible !important;
 }

@@ -6,16 +6,14 @@ use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Models\EscrowHold;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderStatusLog;
 use App\Models\Seller;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class WalletService
 {
-    /**
-     * Get or create a wallet for any model (User or Seller)
-     */
     public function getOrCreate($owner): Wallet
     {
         return Wallet::firstOrCreate(
@@ -32,9 +30,6 @@ class WalletService
         );
     }
 
-    /**
-     * Credit a wallet
-     */
     public function credit(
         $owner,
         float $amount,
@@ -46,13 +41,10 @@ class WalletService
         return DB::transaction(function () use (
             $owner, $amount, $type, $description, $relatedType, $relatedId
         ) {
-            $wallet = $this->getOrCreate($owner);
-
+            $wallet        = $this->getOrCreate($owner);
             $balanceBefore = $wallet->balance;
             $wallet->increment('balance', $amount);
             $wallet->refresh();
-
-            // Also sync the denormalized balance on the model
             $owner->update(['wallet_balance' => $wallet->balance]);
 
             return WalletTransaction::create([
@@ -69,9 +61,6 @@ class WalletService
         });
     }
 
-    /**
-     * Debit a wallet
-     */
     public function debit(
         $owner,
         float $amount,
@@ -92,7 +81,6 @@ class WalletService
             $balanceBefore = $wallet->balance;
             $wallet->decrement('balance', $amount);
             $wallet->refresh();
-
             $owner->update(['wallet_balance' => $wallet->balance]);
 
             return WalletTransaction::create([
@@ -110,46 +98,116 @@ class WalletService
     }
 
     /**
-     * Hold money in escrow when order is placed
+     * Create ONE escrow row per order item.
+     * Simple, clean — no merging, no incrementing.
      */
     public function holdEscrow(Order $order): void
     {
-        $order->loadMissing('items.seller');
-        
+        // Hard guard — never run twice on the same order
+        $alreadyExists = EscrowHold::where('order_id', $order->id)->exists();
+        if ($alreadyExists) {
+            \Log::warning("holdEscrow — escrow already exists for order #{$order->order_number}, skipping.");
+            return;
+        }
+
+        $order->loadMissing('items');
+
         DB::transaction(function () use ($order) {
             foreach ($order->items as $item) {
-                $seller = $item->seller;
-                $category = \App\Models\Category::find(
-                    \App\Models\Product::find($item->orderable_id)?->category_id
-                );
+                if ($item->status === 'cancelled') continue;
 
-                $commissionRate   = $category?->commission_rate ?? 10.00;
-                $commissionAmount = round($item->total_price * ($commissionRate / 100), 2);
-                $sellerAmount     = $item->total_price - $commissionAmount;
+                $commissionRate   = (float) ($item->commission_rate ?? 10.00);
+                $commissionAmount = round((float) $item->total_price * ($commissionRate / 100), 2);
+                $sellerAmount     = (float) $item->total_price - $commissionAmount;
 
                 EscrowHold::create([
-                    'order_id'           => $order->id,
-                    'seller_id'          => $seller->id,
-                    'buyer_id'           => $order->user_id,
-                    'amount'             => $item->total_price,
-                    'commission_amount'  => $commissionAmount,
-                    'seller_amount'      => $sellerAmount,
-                    'status'             => 'held',
-                    'release_at'         => now()->addDays(7),
+                    'order_id'          => $order->id,
+                    'order_item_id'     => $item->id,        // ← one row per item
+                    'seller_id'         => $item->seller_id,
+                    'buyer_id'          => $order->user_id,
+                    'amount'            => $item->total_price,
+                    'commission_amount' => $commissionAmount,
+                    'seller_amount'     => $sellerAmount,
+                    'status'            => 'held',
+                    'release_at'        => now()->addDays(7),
                 ]);
 
-                // Update order item with commission
+                // Keep item commission fields in sync
                 $item->update([
                     'commission_rate'   => $commissionRate,
                     'commission_amount' => $commissionAmount,
                     'seller_earnings'   => $sellerAmount,
+                ]);
+
+                \Log::info("holdEscrow — created escrow for item '{$item->item_name}' seller #{$item->seller_id}, amount ₦{$item->total_price}");
+            }
+        });
+    }
+
+    /**
+     * Release escrow for a single delivered item → credit seller.
+     * If all items delivered → mark order completed.
+     */
+    public function releaseEscrowForItem(OrderItem $item): void
+    {
+        DB::transaction(function () use ($item) {
+            $order  = $item->order;
+            $seller = $item->seller;
+
+            // Find this item's specific escrow row
+            $escrow = EscrowHold::where('order_item_id', $item->id)
+                ->where('status', 'held')
+                ->first();
+
+            if (!$escrow) {
+                \Log::warning("releaseEscrowForItem — no held escrow for item #{$item->id} '{$item->item_name}'");
+                return;
+            }
+
+            // Credit seller with this item's earnings
+            $this->credit(
+                $seller,
+                (float) $escrow->seller_amount,
+                'escrow_release',
+                "Payment released for item '{$item->item_name}' in order #{$order->order_number}",
+                'order',
+                $order->id
+            );
+
+            $escrow->update([
+                'status'      => 'released',
+                'released_at' => now(),
+            ]);
+
+            $item->update([
+                'status'       => 'delivered',
+                'delivered_at' => now(),
+            ]);
+
+            \Log::info("releaseEscrowForItem — ₦{$escrow->seller_amount} released to seller #{$seller->id} for item '{$item->item_name}'");
+
+            // Check if ALL items are now delivered/completed
+            $order->load('items');
+            if ($order->allItemsDelivered()) {
+                $order->update([
+                    'status'       => 'completed',
+                    'completed_at' => now(),
+                ]);
+
+                OrderStatusLog::create([
+                    'order_id'        => $order->id,
+                    'from_status'     => 'delivered',
+                    'to_status'       => 'completed',
+                    'changed_by_type' => 'system',
+                    'changed_by_id'   => null,
+                    'note'            => 'All items delivered. Order auto-completed.',
                 ]);
             }
         });
     }
 
     /**
-     * Release escrow to seller wallet when order is delivered
+     * Force-release ALL held escrows to sellers (admin force-complete).
      */
     public function releaseEscrow(Order $order): void
     {
@@ -162,10 +220,9 @@ class WalletService
             foreach ($escrows as $escrow) {
                 $seller = $escrow->seller;
 
-                // Credit seller
                 $this->credit(
                     $seller,
-                    $escrow->seller_amount,
+                    (float) $escrow->seller_amount,
                     'escrow_release',
                     "Payment released for order #{$order->order_number}",
                     'order',
@@ -186,36 +243,112 @@ class WalletService
     }
 
     /**
-     * Refund escrow to buyer if order is cancelled
+     * Refund a single order item's escrow to the buyer.
+     * Looks up escrow by order_item_id — guaranteed unique, no ambiguity.
+     */
+    public function cancelItemEscrow(OrderItem $item): void
+    {
+        DB::transaction(function () use ($item) {
+            $order = $item->order;
+            $buyer = $order->user;
+
+            if (!$buyer) {
+                throw new \Exception("Buyer not found for order #{$order->order_number}");
+            }
+
+            // Guard — item already done
+            if (in_array($item->status, ['cancelled', 'delivered', 'completed'])) {
+                throw new \Exception("Item #{$item->id} already {$item->status}, cannot cancel.");
+            }
+
+            // Find THIS item's specific escrow row — no ambiguity
+            $escrow = \App\Models\EscrowHold::where('order_item_id', $item->id)
+                ->where('status', 'held')
+                ->first();
+
+            if (!$escrow) {
+                throw new \Exception("No held escrow found for item '{$item->item_name}'. Cannot refund.");
+            }
+            
+            $refundAmount = (float) $escrow->amount;
+
+            \Log::info("cancelItemEscrow — refunding ₦{$refundAmount} to buyer #{$buyer->id} for item '{$item->item_name}' on order #{$order->order_number}");
+
+            $this->credit(
+                $buyer,
+                $refundAmount,
+                'escrow_refund',
+                "Refund for cancelled item '{$item->item_name}' in order #{$order->order_number}",
+                'order_item',
+                $item->id
+            );
+
+            $escrow->update([
+                'status'      => 'refunded',
+                'released_at' => now(),
+            ]);
+
+            $item->update([
+                'status'       => 'cancelled',
+                'delivered_at' => null,
+            ]);
+
+            // Check if entire order is now done
+            $order->load('items');
+            $allDone      = $order->items->every(fn($i) => in_array($i->status, ['cancelled', 'delivered', 'completed']));
+            $allDelivered = $order->items->every(fn($i) => in_array($i->status, ['delivered', 'completed']));
+
+            if ($allDelivered) {
+                $order->update(['status' => 'completed', 'completed_at' => now()]);
+            } elseif ($allDone) {
+                $order->update(['status' => 'cancelled']);
+            }
+        });
+    }
+    /**
+     * Full order refund fallback — refunds buyer order->total (subtotal + shipping).
+     * Used only when forceRefund needs a single-shot full refund.
      */
     public function refundEscrow(Order $order): void
     {
         DB::transaction(function () use ($order) {
-            $escrows = EscrowHold::where('order_id', $order->id)
+            if (in_array($order->status, ['cancelled', 'refunded'])) {
+                \Log::warning("refundEscrow — order #{$order->order_number} already {$order->status}, skipping.");
+                return;
+            }
+
+            $heldEscrows = EscrowHold::where('order_id', $order->id)
                 ->where('status', 'held')
-                ->with('seller')
                 ->get();
 
-            foreach ($escrows as $escrow) {
-                $buyer = $escrow->buyer;
+            if ($heldEscrows->isEmpty()) {
+                \Log::warning("refundEscrow — no held escrows for order #{$order->order_number}");
+                return;
+            }
 
-                $this->credit(
-                    $buyer,
-                    $escrow->amount,
-                    'escrow_refund',
-                    "Refund for cancelled order #{$order->order_number}",
-                    'order',
-                    $order->id
-                );
+            $buyer = $order->user;
+            if (!$buyer) {
+                \Log::error("refundEscrow — buyer not found for order #{$order->order_number}");
+                return;
+            }
 
-                $escrow->update(['status' => 'refunded']);
+            $refundAmount = (float) $order->total;
+
+            $this->credit(
+                $buyer,
+                $refundAmount,
+                'escrow_refund',
+                "Refund for cancelled order #{$order->order_number} (subtotal ₦{$order->subtotal} + shipping ₦{$order->shipping_fee})",
+                'order',
+                $order->id
+            );
+
+            foreach ($heldEscrows as $escrow) {
+                $escrow->update(['status' => 'refunded', 'released_at' => now()]);
             }
         });
     }
 
-    /**
-     * Debit seller ads balance
-     */
     public function debitAdsBalance(Seller $seller, float $amount, string $adId): void
     {
         DB::transaction(function () use ($seller, $amount, $adId) {
@@ -242,9 +375,6 @@ class WalletService
         });
     }
 
-    /**
-     * Top up ads balance
-     */
     public function topupAdsBalance(Seller $seller, float $amount): void
     {
         DB::transaction(function () use ($seller, $amount) {

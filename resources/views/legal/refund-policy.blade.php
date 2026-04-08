@@ -34,8 +34,9 @@
 </head>
 <body>
 
-@auth('web')@include('layouts.storefront.header-auth')
-@else@include('layouts.storefront.header-guest')@endauth
+@auth('web')@include('layouts.storefront.header-auth')@else @include('layouts.storefront.header-guest')@endauth
+@include('layouts.storefront.cart-sidebar')
+@include('layouts.partials.alerts')
 
 <div class="breadcumb_area bg-img" style="background-image:url({{ asset('img/bg-img/breadcumb.jpeg') }});">
     <div class="container h-100"><div class="row h-100 align-items-center"><div class="col-12">

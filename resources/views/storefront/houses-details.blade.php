@@ -110,6 +110,7 @@
         display: inline-block;
         width: 100%;
         transition: all 0.3s;
+        text-decoration: none;
     }
     .whatsapp-btn:hover {
         background: #128C7E;
@@ -122,6 +123,72 @@
     .similar-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .rating-stars {
+        color: #FFA500;
+        font-size: 14px;
+    }
+    .seller-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .seller-avatar-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #2ECC71;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+    }
+    .seller-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .main-image {
+            height: 350px;
+        }
+        .thumbnail {
+            width: 70px;
+            height: 60px;
+        }
+        .info-value.fs-3 {
+            font-size: 1.5rem !important;
+        }
+        .contact-card, .seller-card {
+            margin-top: 15px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .main-image {
+            height: 250px;
+        }
+        .thumbnail {
+            width: 60px;
+            height: 50px;
+        }
+        .info-section {
+            padding: 15px;
+        }
+        .info-value {
+            font-size: 14px;
+        }
+        .share-btn {
+            font-size: 12px;
+        }
+        .share-btn i {
+            margin-right: 4px;
+        }
     }
 </style>
 
@@ -151,10 +218,10 @@
 
                 {{-- Property Details --}}
                 <div class="info-section">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
                         <div>
                             <h3 class="mb-2">{{ $house->title }}</h3>
-                            <div class="d-flex align-items-center gap-3 text-muted">
+                            <div class="d-flex align-items-center gap-3 text-muted flex-wrap">
                                 <span><i class="fa fa-map-marker mr-1" style="color:#2ECC71;"></i> {{ $house->address }}, {{ $house->city }}, {{ $house->state }}</span>
                                 <span><i class="fa fa-calendar mr-1"></i> Listed {{ $house->created_at->format('M d, Y') }}</span>
                             </div>
@@ -252,18 +319,18 @@
             </div>
 
             <div class="col-lg-4">
-                {{-- Share & Contact Section --}}
+                {{-- Share Section --}}
                 <div class="info-section">
                     <h5 class="mb-3">Share This Property</h5>
-                    <div class="d-flex gap-2 justify-content-between">
-                        <button class="btn btn-outline-primary flex-fill share-btn" onclick="shareProperty('facebook')">
-                            <i class="fa fa-facebook"></i> Facebook
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-outline-primary flex-fill share-btn" onclick="shareProperty('facebook')" style="min-width: 80px;">
+                            <i class="fa fa-facebook"></i> <span class="d-none d-sm-inline">Facebook</span>
                         </button>
-                        <button class="btn btn-outline-info flex-fill share-btn" onclick="shareProperty('twitter')">
-                            <i class="fa fa-twitter"></i> Twitter
+                        <button class="btn btn-outline-info flex-fill share-btn" onclick="shareProperty('twitter')" style="min-width: 80px;">
+                            <i class="fa fa-twitter"></i> <span class="d-none d-sm-inline">Twitter</span>
                         </button>
-                        <button class="btn btn-outline-success flex-fill share-btn" onclick="shareProperty('whatsapp')">
-                            <i class="fa fa-whatsapp"></i> WhatsApp
+                        <button class="btn btn-outline-success flex-fill share-btn" onclick="shareProperty('whatsapp')" style="min-width: 80px;">
+                            <i class="fa fa-whatsapp"></i> <span class="d-none d-sm-inline">WhatsApp</span>
                         </button>
                     </div>
                     <div class="mt-3">
@@ -273,30 +340,103 @@
                     </div>
                 </div>
 
-                {{-- Contact Agent --}}
-                <div class="contact-card">
-                    <i class="fa fa-user-circle" style="font-size: 48px; color: #2ECC71; margin-bottom: 15px;"></i>
-                    <h5 class="mb-2">{{ $house->seller->business_name ?? $house->seller->name ?? 'Property Agent' }}</h5>
-                    <p class="text-muted small mb-3">Member since {{ $house->seller->created_at->format('M Y') }}</p>
-                    
-                    <div class="mb-3">
-                        <i class="fa fa-envelope mr-2"></i> {{ $house->seller->email ?? 'Not provided' }}
+                {{-- SELLER INFO CARD (Like product page - shows brand and brand reviews) --}}
+                <div class="seller-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        @if($house->seller->avatar)
+                            <img src="{{ $house->seller->avatar }}" class="seller-avatar" alt="">
+                        @else
+                            <div class="seller-avatar-placeholder">
+                                {{ strtoupper(substr($house->seller->business_name ?? $house->seller->name ?? 'A', 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-bold">{{ $house->seller->business_name ?? $house->seller->name ?? 'Property Agent' }}</p>
+                            @if($house->seller->is_verified_business)
+                                <small style="color:#2ECC71;">
+                                    <i class="fa fa-check-circle"></i> Verified Seller
+                                </small>
+                            @else
+                                <small class="text-muted">Individual Seller</small>
+                            @endif
+                        </div>
                     </div>
+
+                    {{-- SHOW SELLER'S BRAND (if they have one) - Like product page --}}
+                    @if($house->seller->brand)
+                        @php
+                            $brand = $house->seller->brand;
+                            $brandAvgRating = $brand->average_rating ?? 0;
+                            $brandTotalReviews = $brand->total_reviews ?? 0;
+                        @endphp
+                        <div class="mb-3 pb-2 border-bottom">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <small class="text-muted d-block mb-1">Brand</small>
+                                    <strong style="color:#2ECC71;">
+                                        <i class="fa fa-building-o mr-1"></i> {{ $brand->name }}
+                                    </strong>
+                                </div>
+                                <a href="{{ route('brands.show', $brand->slug) }}" 
+                                   class="btn btn-sm" 
+                                   style="border:1px solid #2ECC71; color:#2ECC71; border-radius: 20px; padding: 4px 12px; font-size: 11px; text-decoration: none;">
+                                    Visit Brand <i class="fa fa-external-link ml-1"></i>
+                                </a>
+                            </div>
+                            
+                            {{-- Brand Rating & Reviews --}}
+                            <div class="mt-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <div class="rating-stars">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <= floor($brandAvgRating))
+                                                <i class="fa fa-star"></i>
+                                            @elseif($i - 0.5 <= $brandAvgRating)
+                                                <i class="fa fa-star-half-o"></i>
+                                            @else
+                                                <i class="fa fa-star-o"></i>
+                                            @endif
+                                        @endfor
+                                    </div>
+                                    <small class="text-muted">({{ $brandTotalReviews }} reviews)</small>
+                                </div>
+                                @if($brandTotalReviews > 0)
+                                    <a href="{{ route('brands.show', $brand->slug) }}#reviews" 
+                                       class="small d-block mt-1" 
+                                       style="color: #2ECC71; text-decoration: none;">
+                                        <i class="fa fa-comments-o mr-1"></i> See all brand reviews →
+                                    </a>
+                                @else
+                                    <small class="text-muted d-block mt-1">No brand reviews yet</small>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        {{-- No brand - just show seller info without brand rating --}}
+                        <div class="mb-3 pb-2 border-bottom">
+                            <small class="text-muted d-block mb-1">Member since</small>
+                            <small>{{ $house->seller->created_at->format('M Y') }}</small>
+                        </div>
+                    @endif
+
+                    <hr class="my-3">
+                    
+                    @if($house->seller->email)
+                        <div class="mb-2 small">
+                            <i class="fa fa-envelope mr-2" style="color:#2ECC71;"></i> {{ $house->seller->email }}
+                        </div>
+                    @endif
                     @if($house->seller->phone)
-                        <div class="mb-3">
-                            <i class="fa fa-phone mr-2"></i> {{ $house->seller->phone }}
+                        <div class="mb-3 small">
+                            <i class="fa fa-phone mr-2" style="color:#2ECC71;"></i> {{ $house->seller->phone }}
                         </div>
                     @endif
                     
-                    <a href="https://wa.me/{{ $house->seller->phone ?? '234800000000' }}?text=Hi,%20I'm%20interested%20in%20{{ urlencode($house->title) }}"
+                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $house->seller->phone ?? '234800000000') }}?text=Hi,%20I'm%20interested%20in%20{{ urlencode($house->title) }}"
                        target="_blank"
-                       class="whatsapp-btn mb-2">
+                       class="whatsapp-btn mb-2 d-block">
                         <i class="fa fa-whatsapp mr-2"></i> Contact on WhatsApp
                     </a>
-                    
-                 <!--    <button class="btn essence-btn w-100" onclick="showContactForm()">
-                        <i class="fa fa-envelope mr-2"></i> Send Message
-                    </button> -->
                 </div>
 
                 {{-- Property Stats --}}
@@ -419,17 +559,13 @@ function copyToClipboard() {
     });
 }
 
-function showContactForm() {
-    const modal = new bootstrap.Modal(document.getElementById('contactModal'));
-    modal.show();
-}
-
 // Keyboard navigation for gallery
 let currentIndex = 0;
 const images = @json($house->images->pluck('image_url'));
 
 document.addEventListener('keydown', function(e) {
-    if (document.getElementById('imageModal').classList.contains('show')) {
+    const modal = document.getElementById('imageModal');
+    if (modal && modal.classList.contains('show')) {
         if (e.key === 'ArrowLeft') {
             currentIndex = (currentIndex - 1 + images.length) % images.length;
             document.getElementById('modalImage').src = images[currentIndex];

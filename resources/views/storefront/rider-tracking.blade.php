@@ -22,7 +22,7 @@
                     $badgeBg    = $isDelivered ? '#D5F5E3' : ($isCancelled ? '#FADBD8' : '#FEF9E7');
                     $badgeColor = $isDelivered ? '#1E8449' : ($isCancelled ? '#C0392B' : '#B7950B');
                 @endphp
-
+ 
                 {{-- Booking summary card --}}
                 <div style="border:1px solid {{ $isCancelled ? '#FADBD8' : '#eee' }};border-radius:12px;padding:24px;margin-bottom:24px;
                             {{ $isCancelled ? 'background:#FFF9F9;' : '' }}">

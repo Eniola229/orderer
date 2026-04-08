@@ -13,7 +13,7 @@
         @else
             <div style="width:80px;height:80px;border-radius:50%;background:#2ECC71;color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto 16px;">
                 {{ strtoupper(substr($brand->name,0,1)) }}
-            </div>
+            </div> 
         @endif
         <h1 style="color:#fff;font-size:32px;font-weight:800;margin-bottom:8px;">{{ $brand->name }}</h1>
 
@@ -118,49 +118,225 @@
 <section class="section-padding-80">
     <div class="container">
         <div class="row">
-            <div class="col-lg-9">
-                <h4 style="font-weight:800;margin-bottom:24px;">Products from {{ $brand->name }}</h4>
-                <div class="row">
-                    @forelse($products as $product)
-                    @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
-                    <div class="col-12 col-sm-6 col-md-4 mb-4">
-                        <div class="single-product-wrapper">
-                            <div class="product-img">
-                                <a href="{{ route('product.show', $product->slug) }}">
-                                    <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
-                                </a>
-                                {{-- ADDED: verified badge on product cards --}}
-                                @if($product->seller->is_verified_business)
-                                <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
-                                    <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
-                                </div>
-                                @endif
-                                <div class="product-favourite">
-                                    <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
-                                </div>
+   <div class="col-lg-9">
+
+    {{-- Tabs --}}
+    <ul class="nav nav-tabs mb-4" id="brandTabs" role="tablist" style="border-bottom:2px solid #eee;">
+        <li class="nav-item">
+            <a class="nav-link active" id="products-tab" data-toggle="tab" href="#products" role="tab"
+               style="font-weight:700;color:#333;">
+                Products
+                <span style="background:#2ECC71;color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;margin-left:4px;">
+                    {{ $products->total() }}
+                </span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="services-tab" data-toggle="tab" href="#services" role="tab"
+               style="font-weight:700;color:#333;">
+                Services
+                <span style="background:#3498DB;color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;margin-left:4px;">
+                    {{ $services->total() }}
+                </span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="housing-tab" data-toggle="tab" href="#housing" role="tab"
+               style="font-weight:700;color:#333;">
+                Housing
+                <span style="background:#E67E22;color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;margin-left:4px;">
+                    {{ $houses->total() }}
+                </span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="brandTabsContent">
+
+        {{-- PRODUCTS TAB --}}
+        <div class="tab-pane fade show active" id="products" role="tabpanel">
+            <div class="row">
+                @forelse($products as $product)
+                @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
+                    <div class="single-product-wrapper">
+                        <div class="product-img">
+                            <a href="{{ route('product.show', $product->slug) }}">
+                                <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
+                            </a>
+                            @if($product->seller->is_verified_business)
+                            <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
                             </div>
-                            <div class="product-description">
-                                <a href="{{ route('product.show', $product->slug) }}">
-                                    <h6>{{ Str::limit($product->name, 35) }}</h6>
-                                </a>
-                                <p class="product-price">₦{{ number_format($product->price, 2) }}</p>
-                                <div class="hover-content">
-                                    <div class="add-to-cart-btn">
-                                        <a href="#" class="btn essence-btn add-to-cart"
-                                           data-product="{{ $product->id }}">Add to Cart</a>
-                                    </div>
+                            @endif
+                            <div class="product-favourite">
+                                <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
+                            </div>
+                        </div>
+                        <div class="product-description">
+                            <a href="{{ route('product.show', $product->slug) }}">
+                                <h6>{{ Str::limit($product->name, 35) }}</h6>
+                            </a>
+                            <p class="product-price">₦{{ number_format($product->price, 2) }}</p>
+                            <div class="hover-content">
+                                <div class="add-to-cart-btn">
+                                    <a href="#" class="btn essence-btn add-to-cart" data-product="{{ $product->id }}">Add to Cart</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    @empty
-                    <div class="col-12 text-center py-5 text-muted">
-                        <p>No products from this brand yet.</p>
-                    </div>
-                    @endforelse
                 </div>
-                <div>{{ $products->links() }}</div>
+                @empty
+                <div class="col-12 text-center py-5">
+                    <i class="fa fa-box-open" style="font-size:48px;color:#ddd;margin-bottom:16px;display:block;"></i>
+                    <p class="text-muted">No products found for this brand.</p>
+                </div>
+                @endforelse
             </div>
+            <div>{{ $products->appends(request()->except('products_page'))->links() }}</div>
+        </div>
+
+        {{-- SERVICES TAB --}}
+        <div class="tab-pane fade" id="services" role="tabpanel">
+            <div class="row">
+                @forelse($services as $service)
+                @php
+                    $portfolioImages = $service->portfolio_images;
+                    if (is_string($portfolioImages)) {
+                        $portfolioImages = json_decode($portfolioImages, true) ?? [];
+                    }
+                    $serviceImg = (is_array($portfolioImages) && count($portfolioImages))
+                        ? (is_array($portfolioImages[0]) ? ($portfolioImages[0]['url'] ?? asset('img/product-img/product-1.jpg')) : $portfolioImages[0])
+                        : asset('img/product-img/product-1.jpg');
+                @endphp
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
+                    <div style="border:1px solid #eee;border-radius:12px;overflow:hidden;transition:box-shadow .2s;"
+                         onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.1)'"
+                         onmouseout="this.style.boxShadow='none'">
+                        <div style="position:relative;">
+                            <a href="{{ route('services.show', $service->slug) }}">
+                                <img src="{{ $serviceImg }}" alt="{{ $service->title }}"
+                                     style="width:100%;height:180px;object-fit:cover;">
+                            </a>
+                            @if($service->seller->is_verified_business)
+                            <div style="position:absolute;top:50px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                                <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                            </div>
+                            @endif
+                        </div>
+                        <div style="padding:14px;">
+                            {{-- Pricing type badge --}}
+                            <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;
+                                background:{{ $service->pricing_type === 'fixed' ? '#EBF5FB' : '#FEF9E7' }};
+                                color:{{ $service->pricing_type === 'fixed' ? '#2E86C1' : '#B7950B' }};
+                                text-transform:uppercase;letter-spacing:.5px;">
+                                {{ $service->pricing_type }}
+                            </span>
+                            <a href="{{ route('services.show', $service->slug) }}" style="text-decoration:none;">
+                                <h6 style="font-weight:700;margin:8px 0 4px;color:#333;font-size:14px;">
+                                    {{ Str::limit($service->title, 40) }}
+                                </h6>
+                            </a>
+                            <p style="color:#888;font-size:12px;margin-bottom:8px;">
+                                <i class="fa fa-clock-o"></i> {{ $service->delivery_time }}
+                            </p>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                @if($service->pricing_type === 'negotiable')
+                                    <strong style="color:#E67E22;font-size:15px;">Negotiable</strong>
+                                @else
+                                    <strong style="color:#2ECC71;font-size:15px;">
+                                        ₦{{ number_format($service->price, 2) }}
+                                    </strong>
+                                @endif
+                                <a href="{{ route('services.show', $service->slug) }}"
+                                   class="btn essence-btn btn-sm" style="font-size:11px;padding:5px 12px;">
+                                    View Service
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="col-12 text-center py-5">
+                    <i class="fa fa-briefcase" style="font-size:48px;color:#ddd;margin-bottom:16px;display:block;"></i>
+                    <p class="text-muted">No services found for this brand.</p>
+                </div>
+                @endforelse
+            </div>
+            <div>{{ $services->appends(request()->except('services_page'))->links() }}</div>
+        </div>
+
+        {{-- HOUSING TAB --}}
+        <div class="tab-pane fade" id="housing" role="tabpanel">
+            <div class="row">
+                @forelse($houses as $house)
+                @php $houseImg = $house->images->where('is_primary',true)->first() ?? $house->images->first(); @endphp
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
+                    <div style="border:1px solid #eee;border-radius:12px;overflow:hidden;transition:box-shadow .2s;"
+                         onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.1)'"
+                         onmouseout="this.style.boxShadow='none'">
+                        <div style="position:relative;">
+                            <a href="{{ route('houses.show', $house->slug) }}">
+                                <img src="{{ $houseImg->image_url ?? asset('img/product-img/product-1.jpg') }}"
+                                     alt="{{ $house->title }}" style="width:100%;height:180px;object-fit:cover;">
+                            </a>
+                            @if($house->seller->is_verified_business)
+                            <div style="position:absolute;top:50px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                                <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                            </div>
+                            @endif
+                        </div>
+                        {{-- Listing type ribbon --}}
+                        <div style="position:relative;">
+                            <span style="position:absolute;top:-28px;right:10px;background:{{ $house->listing_type === 'sale' ? '#E74C3C' : '#8E44AD' }};
+                                color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:0 0 8px 8px;text-transform:uppercase;letter-spacing:.5px;">
+                                For {{ ucfirst($house->listing_type) }}
+                            </span>
+                        </div>
+                        <div style="padding:14px;">
+                            <a href="{{ route('houses.show', $house->slug) }}" style="text-decoration:none;">
+                                <h6 style="font-weight:700;margin:0 0 6px;color:#333;font-size:14px;">
+                                    {{ Str::limit($house->title, 40) }}
+                                </h6>
+                            </a>
+                            <p style="color:#888;font-size:12px;margin-bottom:6px;">
+                                <i class="fa fa-map-marker"></i> {{ $house->city }}, {{ $house->state }}
+                            </p>
+                            <div style="display:flex;gap:12px;font-size:12px;color:#666;margin-bottom:10px;">
+                                @if($house->bedrooms)
+                                <span><i class="fa fa-bed"></i> {{ $house->bedrooms }} Bed</span>
+                                @endif
+                                @if($house->bathrooms)
+                                <span><i class="fa fa-bath"></i> {{ $house->bathrooms }} Bath</span>
+                                @endif
+                                @if($house->size_sqm)
+                                <span><i class="fa fa-expand"></i> {{ $house->size_sqm }} m²</span>
+                                @endif
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <strong style="color:#E67E22;font-size:15px;">
+                                    ₦{{ number_format($house->price, 2) }}
+                                </strong>
+                                <a href="{{ route('houses.show', $house->slug) }}"
+                                   class="btn essence-btn btn-sm" style="font-size:11px;padding:5px 12px;">
+                                    View Listing
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @empty
+                <div class="col-12 text-center py-5">
+                    <i class="fa fa-home" style="font-size:48px;color:#ddd;margin-bottom:16px;display:block;"></i>
+                    <p class="text-muted">No housing listings found for this brand.</p>
+                </div>
+                @endforelse
+            </div>
+            <div>{{ $houses->appends(request()->except('houses_page'))->links() }}</div>
+        </div>
+
+    </div>
+</div>
 
             {{-- Reviews sidebar --}}
             <div class="col-lg-3">

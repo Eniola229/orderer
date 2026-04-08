@@ -4,7 +4,7 @@
     @include('layouts.storefront.header-guest')
 @endauth
 
-@include('layouts.storefront.cart-sidebar')
+@include('layouts.storefront.cart-sidebar') 
 @include('layouts.partials.alerts')
 
 <div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }}); background-size: cover; background-position: center;">
@@ -88,6 +88,18 @@
         .trust-badges div {
             font-size: 10px;
         }
+    }
+    .rating-star i {
+        transition: color 0.2s ease;
+    }
+    .rating-star:hover i {
+        color: #F39C12 !important;
+    }
+    .review-img {
+        transition: transform 0.2s ease;
+    }
+    .review-img:hover {
+        transform: scale(1.05);
     }
 </style>
 
@@ -195,7 +207,6 @@
                     {{-- Price --}}
                     <div class="mb-3">
                         @if(isset($flashSale) && $flashSale?->isActive())
-                        {{-- Flash sale price takes priority --}}
                         <span style="font-size:32px;font-weight:800;color:#E74C3C;" class="price-large">
                             ₦{{ number_format($flashSale->sale_price, 2) }}
                         </span>
@@ -257,11 +268,10 @@
                             </div>
                         </div>
                         <div class="d-flex gap-3 flex-wrap">
-                        {{-- Add to cart form — update the button to pass flash price --}}
-                        <button type="button" class="btn essence-btn flex-grow-1"
-                                onclick="addToCart('{{ $product->id }}', {{ isset($flashSale) && $flashSale?->isActive() ? 'true' : 'false' }})">
-                            <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
-                        </button>
+                            <button type="button" class="btn essence-btn flex-grow-1"
+                                    onclick="addToCart('{{ $product->id }}', {{ isset($flashSale) && $flashSale?->isActive() ? 'true' : 'false' }})">
+                                <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
+                            </button>
                             <button type="button" class="btn"
                                     style="border:2px solid #2ECC71;color:#2ECC71;padding:0 16px;border-radius:4px;"
                                     onclick="toggleWishlist('{{ $product->id }}', this)">
@@ -326,14 +336,12 @@
             </div>
         </div>
 
-
         {{-- Sidebar Ads - full width banner --}}
         @if(isset($sidebarAds) && $sidebarAds->count())
         <div class="row mt-4">
             @foreach($sidebarAds as $ad)
             <div class="col-12 col-md-6 mb-3">
                 <div style="position:relative;border-radius:12px;overflow:hidden;background:#1a1a2e;height:140px;">
-
                     @if($ad->media_type === 'video' && $ad->media_url)
                         <video autoplay muted loop playsinline
                                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
@@ -342,9 +350,7 @@
                     @elseif($ad->media_url)
                         <div style="position:absolute;inset:0;background-image:url('{{ $ad->media_url }}');background-size:cover;background-position:center;z-index:0;"></div>
                     @endif
-
                     <div style="position:absolute;inset:0;background:rgba(0,0,0,0.50);z-index:1;"></div>
-
                     <div style="position:relative;z-index:2;padding:16px 20px;height:100%;display:flex;flex-direction:column;justify-content:center;">
                         <span style="display:inline-block;background:#2ECC71;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;width:fit-content;">
                             Sponsored
@@ -357,7 +363,6 @@
                             Shop Now
                         </a>
                     </div>
-
                 </div>
             </div>
             @endforeach
@@ -398,35 +403,144 @@
                         @endif
                     </div>
 
+                    {{-- Reviews Tab --}}
                     <div class="tab-pane fade" id="reviews">
                         @if($product->reviews->count())
-                        @foreach($product->reviews->where('is_visible',true)->take(10) as $review)
-                        <div class="d-flex gap-3 mb-4 pb-4 border-bottom flex-wrap">
-                            <div style="width:44px;height:44px;border-radius:50%;background:#2ECC71;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
-                                {{ strtoupper(substr($review->user->first_name ?? 'U', 0, 1)) }}
-                            </div>
-                            <div style="flex:1;">
-                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                    <strong>{{ $review->user->first_name ?? 'Buyer' }}</strong>
-                                    <span style="color:#F39C12;">
-                                        @for($i=1;$i<=5;$i++) {{ $i<=$review->rating?'★':'☆' }} @endfor
-                                    </span>
-                                    @if($review->is_verified_purchase)
-                                    <span style="background:#D5F5E3;color:#1E8449;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">
-                                        Verified Purchase
-                                    </span>
-                                    @endif
+                            @foreach($product->reviews->where('is_visible',true)->take(10) as $review)
+                            <div class="d-flex gap-3 mb-4 pb-4 border-bottom flex-wrap">
+                                <div style="width:44px;height:44px;border-radius:50%;background:#2ECC71;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
+                                    {{ strtoupper(substr($review->user->first_name ?? 'U', 0, 1)) }}
                                 </div>
-                                <p style="color:#555;font-size:14px;margin:0;word-break:break-word;">{{ $review->review ?? 'No comment.' }}</p>
-                                <small style="color:#aaa;">{{ $review->created_at->format('M d, Y') }}</small>
+                                <div style="flex:1;">
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <strong>{{ $review->user->first_name ?? 'Buyer' }}</strong>
+                                        <span style="color:#F39C12;">
+                                            @for($i=1;$i<=5;$i++) {{ $i<=$review->rating?'★':'☆' }} @endfor
+                                        </span>
+                                        @if($review->is_verified_purchase)
+                                        <span style="background:#D5F5E3;color:#1E8449;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">
+                                            Verified Purchase
+                                        </span>
+                                        @endif
+                                    </div>
+                                    <p style="color:#555;font-size:14px;margin:0 0 8px 0;word-break:break-word;">
+                                        {{ $review->review ?? 'No comment.' }}
+                                    </p>
+                                    
+                                    {{-- Display review images if any --}}
+                                    @if($review->images && is_array($review->images) && count($review->images) > 0)
+                                    <div class="d-flex gap-2 mt-2 flex-wrap">
+                                        @foreach($review->images as $img)
+                                        <img src="{{ $img }}" 
+                                             style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;"
+                                             onclick="openReviewImageModal('{{ $img }}')"
+                                             class="review-img"
+                                             alt="Review image">
+                                        @endforeach
+                                    </div>
+                                    @endif
+                                    
+                                    <small style="color:#aaa;">{{ $review->created_at->format('M d, Y') }}</small>
+                                </div>
                             </div>
-                        </div>
-                        @endforeach
+                            @endforeach
+                        @endif
+
+                        {{-- Review Form Logic --}}
+                        @php
+                            $canReview = false;
+                            $hasPurchased = false;
+                            $hasReviewed = false;
+                            
+                            if(auth('web')->check()) {
+                                $userId = auth('web')->id();
+                                
+                                // Check if user has purchased this product before
+                                $hasPurchased = \App\Models\OrderItem::whereHas('order', function($q) use ($userId) {
+                                    $q->where('user_id', $userId)
+                                      ->whereIn('payment_status', ['paid', 'completed'])
+                                      ->where('status', '!=', 'cancelled');
+                                })->where('orderable_id', $product->id)
+                                  ->where('orderable_type', 'App\Models\Product')
+                                  ->exists();
+                                
+                                // Check if user has already reviewed this product
+                                $hasReviewed = \App\Models\ProductReview::where('product_id', $product->id)
+                                    ->where('user_id', $userId)
+                                    ->exists();
+                                
+                                $canReview = $hasPurchased && !$hasReviewed;
+                            }
+                        @endphp
+                        
+                        @if(!auth('web')->check())
+                            <div class="text-center py-4">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-lock me-2"></i>
+                                    Please <a href="{{ route('login') }}" class="alert-link">login</a> to write a review.
+                                </div>
+                            </div>
+                        @elseif($hasReviewed)
+                            <div class="text-center py-4">
+                                <div class="alert alert-success">
+                                    <i class="fa fa-check-circle me-2"></i>
+                                    Thank you for your review! You have already reviewed this product.
+                                </div>
+                            </div>
+                        @elseif(!$hasPurchased)
+                            <div class="text-center py-4">
+                                <div class="alert alert-warning">
+                                    <i class="fa fa-shopping-cart me-2"></i>
+                                    You can only review products you have purchased. 
+                                    <a href="{{ route('product.show', $product->slug) }}" class="alert-link">Buy this product</a> to leave a review.
+                                </div>
+                            </div>
                         @else
-                        <div class="text-center py-4 text-muted">
-                            <i class="fa fa-star-o" style="font-size:36px;color:#ddd;"></i>
-                            <p class="mt-2">No reviews yet. Be the first to review this product.</p>
-                        </div>
+                            <div class="review-form mt-4">
+                                <h5 class="mb-3">Write a Review</h5>
+                                <form action="{{ route('product.review', $product->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    
+                                    {{-- Rating --}}
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Your Rating *</label>
+                                        <div class="rating-input">
+                                            <div class="d-flex gap-2">
+                                                @for($i = 5; $i >= 1; $i--)
+                                                <label class="rating-star" style="cursor:pointer; font-size: 30px; color: #ddd;">
+                                                    <input type="radio" name="rating" value="{{ $i }}" style="display: none;" required>
+                                                    <i class="fa fa-star" data-value="{{ $i }}"></i>
+                                                </label>
+                                                @endfor
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {{-- Review Text --}}
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Your Review *</label>
+                                        <textarea name="review" rows="5" class="form-control" placeholder="Share your experience with this product..." required></textarea>
+                                    </div>
+                                    
+                                    {{-- Images --}}
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Add Photos (Optional)</label>
+                                        <input type="file" name="images[]" class="form-control" multiple accept="image/*">
+                                        <small class="text-muted">You can upload up to 5 images (JPG, PNG, WEBP, max 2MB each)</small>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn essence-btn">
+                                        <i class="fa fa-paper-plane me-2"></i> Submit Review
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                        
+                        @if(!$product->reviews->count() && !$canReview && !$hasReviewed && auth('web')->check())
+                            <div class="text-center py-4 text-muted">
+                                <i class="fa fa-star-o" style="font-size:36px;color:#ddd;"></i>
+                                <p class="mt-2">No reviews yet. Be the first to review this product.</p>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -473,6 +587,14 @@
     </div>
 </section>
 
+{{-- Review Image Modal --}}
+<div id="reviewImageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999999; align-items: center; justify-content: center; cursor: pointer;">
+    <img id="modalReviewImage" src="" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+    <button onclick="closeReviewImageModal()" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;">
+        <i class="fa fa-times"></i>
+    </button>
+</div>
+
 @include('layouts.storefront.footer')
 
 <script src="{{ asset('js/jquery/jquery-2.2.4.min.js') }}"></script>
@@ -494,7 +616,6 @@
         const diff = endsAt - Date.now();
         if (diff <= 0) {
             el.textContent = 'Expired';
-            // Reload to reflect actual pricing
             setTimeout(() => location.reload(), 1500);
             return;
         }
@@ -509,8 +630,7 @@
     tick();
     setInterval(tick, 1000);
 })();
-</script>
-<script>
+
 function changeQty(delta) {
     const input = document.getElementById('qty');
     const max   = parseInt(input.max);
@@ -592,19 +712,22 @@ function toggleWishlist(productId, btn) {
     @endauth
 }
 
-document.querySelectorAll('.add-to-cart').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        addToCart(this.dataset.product);
-    });
-});
+function openReviewImageModal(imgUrl) {
+    document.getElementById('modalReviewImage').src = imgUrl;
+    document.getElementById('reviewImageModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReviewImageModal() {
+    document.getElementById('reviewImageModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
 
 function shareProduct() {
     const url = window.location.href;
     const title = "{{ $product->name }}";
     const text = `Check out this product: {{ $product->name }}`;
     
-    // Check if Web Share API is supported (mobile devices)
     if (navigator.share) {
         navigator.share({
             title: title,
@@ -617,13 +740,11 @@ function shareProduct() {
             }
         });
     } else {
-        // Fallback for desktop browsers
         fallbackShare(url, title);
     }
 }
 
 function fallbackShare(url, title) {
-    // Create a modal with social sharing options
     const modal = document.createElement('div');
     modal.style.position = 'fixed';
     modal.style.top = '0';
@@ -654,18 +775,51 @@ function fallbackShare(url, title) {
     
     document.body.appendChild(modal);
     
-    // Add animation style
     const style = document.createElement('style');
     style.textContent = `@keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }`;
     document.head.appendChild(style);
     
-    // Close modal when clicking outside
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             modal.remove();
         }
     });
 }
+
+// Rating star functionality
+document.querySelectorAll('.rating-star').forEach(star => {
+    const icon = star.querySelector('i');
+    const radio = star.querySelector('input');
+    
+    star.addEventListener('click', function() {
+        const value = parseInt(radio.value);
+        
+        document.querySelectorAll('.rating-star i').forEach(s => {
+            const starValue = parseInt(s.dataset.value);
+            if (starValue <= value) {
+                s.style.color = '#F39C12';
+            } else {
+                s.style.color = '#ddd';
+            }
+        });
+        
+        radio.checked = true;
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('reviewImageModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeReviewImageModal();
+    }
+});
+
+document.querySelectorAll('.add-to-cart').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        addToCart(this.dataset.product);
+    });
+});
 </script>
 </body>
 </html>

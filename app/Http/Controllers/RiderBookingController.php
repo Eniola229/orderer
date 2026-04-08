@@ -22,108 +22,108 @@ class RiderBookingController extends Controller
     /**
      * Get shipping rates for rider booking form — called via AJAX.
      */
-public function getRates(Request $request)
-    {
-        $request->validate([
-            'pickup_city'     => ['required', 'string'],
-            'pickup_country'  => ['required', 'string'],
-            'delivery_city'   => ['required', 'string'],
-            'delivery_country'=> ['required', 'string'],
-            'weight_kg'       => ['nullable', 'numeric', 'min:0.1'],
-            'sender_name'     => ['nullable', 'string'],
-            'sender_phone'    => ['nullable', 'string'],
-            'recipient_name'  => ['nullable', 'string'],
-            'recipient_phone' => ['nullable', 'string'],
-        ]);
-
-        try {
-            // Step 1 — validate sender address to get address_code
-            $senderValidation = $this->shipbubble->validateAddress([
-                'name'    => $request->sender_name ?? auth('web')->user()->full_name,
-                'email'   => auth('web')->user()->email,
-                'phone'   => $request->sender_phone ?? auth('web')->user()->phone ?? '',
-                'address' => $request->pickup_address ?? '',
-                'city'    => $request->pickup_city,
-                'state'   => $request->pickup_state ?? $request->pickup_city,
-                'country' => $request->pickup_country,
+    public function getRates(Request $request)
+        {
+            $request->validate([
+                'pickup_city'     => ['required', 'string'],
+                'pickup_country'  => ['required', 'string'],
+                'delivery_city'   => ['required', 'string'],
+                'delivery_country'=> ['required', 'string'],
+                'weight_kg'       => ['nullable', 'numeric', 'min:0.1'],
+                'sender_name'     => ['nullable', 'string'],
+                'sender_phone'    => ['nullable', 'string'],
+                'recipient_name'  => ['nullable', 'string'],
+                'recipient_phone' => ['nullable', 'string'],
             ]);
 
-            // Step 2 — validate recipient address to get address_code
-            $recipientValidation = $this->shipbubble->validateAddress([
-                'name'    => $request->recipient_name ?? 'Recipient',
-                'email'   => $request->recipient_email ?? auth('web')->user()->email,
-                'phone'   => $request->recipient_phone ?? '',
-                'address' => $request->delivery_address ?? '',
-                'city'    => $request->delivery_city,
-                'state'   => $request->delivery_state ?? $request->delivery_city,
-                'country' => $request->delivery_country,
-            ]);
+            try {
+                // Step 1 — validate sender address to get address_code
+                $senderValidation = $this->shipbubble->validateAddress([
+                    'name'    => $request->sender_name ?? auth('web')->user()->full_name,
+                    'email'   => auth('web')->user()->email,
+                    'phone'   => $request->sender_phone ?? auth('web')->user()->phone ?? '',
+                    'address' => $request->pickup_address ?? '',
+                    'city'    => $request->pickup_city,
+                    'state'   => $request->pickup_state ?? $request->pickup_city,
+                    'country' => $request->pickup_country,
+                ]);
 
-            $senderAddressCode    = $senderValidation['data']['address_code']    ?? null;
-            $recipientAddressCode = $recipientValidation['data']['address_code'] ?? null;
+                // Step 2 — validate recipient address to get address_code
+                $recipientValidation = $this->shipbubble->validateAddress([
+                    'name'    => $request->recipient_name ?? 'Recipient',
+                    'email'   => $request->recipient_email ?? auth('web')->user()->email,
+                    'phone'   => $request->recipient_phone ?? '',
+                    'address' => $request->delivery_address ?? '',
+                    'city'    => $request->delivery_city,
+                    'state'   => $request->delivery_state ?? $request->delivery_city,
+                    'country' => $request->delivery_country,
+                ]);
 
-            if (!$senderAddressCode || !$recipientAddressCode) {
+                $senderAddressCode    = $senderValidation['data']['address_code']    ?? null;
+                $recipientAddressCode = $recipientValidation['data']['address_code'] ?? null;
+
+                if (!$senderAddressCode || !$recipientAddressCode) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Could not validate one or both addresses. Please provide a more detailed address.',
+                    ], 422);
+                }
+
+                // Step 3 — fetch rates
+                $response = $this->shipbubble->getRates([
+                    'sender_address_code'   => $senderAddressCode,
+                    'reciever_address_code' => $recipientAddressCode,
+
+                    'weight'      => max((float)($request->weight_kg ?? 0.5), 0.1),
+                    'value'       => (float)($request->declared_value ?? 10),
+                    'length'      => 20,
+                    'width'       => 20,
+                    'height'      => 20,
+                    'category_id' => 2178251,
+
+                    'item_name'   => $request->item_description ?? 'Package',
+                ]);
+
+                // Log full Shipbubble response for debugging
+                //\Log::info('Shipbubble full rates response', $response);
+
+               $rateData = $response['data'] ?? $response;
+
+                if (!empty($rateData['request_token'])) {
+                    session(['rider_request_token' => $rateData['request_token']]);
+                }
+
+                $couriers = $rateData['couriers'] ?? [];
+
+                return response()->json([
+                    'success' => true,
+                    'rates'   => $couriers,
+                ]);
+
+            } catch (\Exception $e) {
+                $rawMessage = $e->getMessage();
+
+                // Try to extract the real API message from JSON in the exception
+                $apiMessage = null;
+                if (preg_match('/\{.*\}/s', $rawMessage, $match)) {
+                    $decoded    = json_decode($match[0], true);
+                    $apiMessage = $decoded['message'] ?? null;
+                }
+
+                \Log::error('RiderBooking: failed to fetch courier rates', [
+                    'error'            => $rawMessage,
+                    'pickup_city'      => $request->pickup_city,
+                    'pickup_country'   => $request->pickup_country,
+                    'delivery_city'    => $request->delivery_city,
+                    'delivery_country' => $request->delivery_country,
+                ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Could not validate one or both addresses. Please provide a more detailed address.',
+                    'message' => $apiMessage ?? 'Could not find a courier for this address. Please check the details and try again.',
                 ], 422);
             }
-
-            // Step 3 — fetch rates
-            $response = $this->shipbubble->getRates([
-                'sender_address_code'   => $senderAddressCode,
-                'reciever_address_code' => $recipientAddressCode,
-
-                'weight'      => max((float)($request->weight_kg ?? 0.5), 0.1),
-                'value'       => (float)($request->declared_value ?? 10),
-                'length'      => 20,
-                'width'       => 20,
-                'height'      => 20,
-                'category_id' => 2178251,
-
-                'item_name'   => $request->item_description ?? 'Package',
-            ]);
-
-            // Log full Shipbubble response for debugging
-            //\Log::info('Shipbubble full rates response', $response);
-
-           $rateData = $response['data'] ?? $response;
-
-            if (!empty($rateData['request_token'])) {
-                session(['rider_request_token' => $rateData['request_token']]);
-            }
-
-            $couriers = $rateData['couriers'] ?? [];
-
-            return response()->json([
-                'success' => true,
-                'rates'   => $couriers,
-            ]);
-
-        } catch (\Exception $e) {
-            $rawMessage = $e->getMessage();
-
-            // Try to extract the real API message from JSON in the exception
-            $apiMessage = null;
-            if (preg_match('/\{.*\}/s', $rawMessage, $match)) {
-                $decoded    = json_decode($match[0], true);
-                $apiMessage = $decoded['message'] ?? null;
-            }
-
-            \Log::error('RiderBooking: failed to fetch courier rates', [
-                'error'            => $rawMessage,
-                'pickup_city'      => $request->pickup_city,
-                'pickup_country'   => $request->pickup_country,
-                'delivery_city'    => $request->delivery_city,
-                'delivery_country' => $request->delivery_country,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => $apiMessage ?? 'Could not find a courier for this address. Please check the details and try again.',
-            ], 422);
-        }
-    }
+        } 
 
     /**
      * Store a booking and redirect to payment.
@@ -155,12 +155,13 @@ public function getRates(Request $request)
             'payment_method'   => ['required', 'in:wallet,korapay'],
         ]);
 
-        $fee  = (float) $request->fee;
-        $user = auth('web')->user();
+        $fee         = (float) $request->fee;
+        $user        = auth('web')->user();
+        $totalCharge = $fee + \App\Models\DeliveryBooking::SERVICE_FEE; // ← moved up, available for both wallet & Korapay
 
         if ($request->payment_method === 'wallet') {
-            if ($user->wallet_balance < $fee) {
-                return back()->with('error', "Insufficient wallet balance. You have \${$user->wallet_balance}, need \${$fee}.");
+            if ($user->wallet_balance < $totalCharge) {
+                return back()->with('error', "Insufficient wallet balance. You have ₦{$user->wallet_balance}, need ₦{$totalCharge} (shipping + ₦200 service fee).");
             }
         }
 
@@ -184,6 +185,7 @@ public function getRates(Request $request)
                 'service_code'     => $request->service_code,
                 'service_name'     => $request->service_name,
                 'fee'              => $fee,
+                'service_fee' => \App\Models\DeliveryBooking::SERVICE_FEE,
                 'payment_status'   => 'pending',
                 'status'           => 'pending',
                 'rate_data'        => json_decode($request->rate_data ?? '{}', true),
@@ -193,9 +195,9 @@ public function getRates(Request $request)
                 // Debit wallet
                 $this->wallet->debit(
                     $user,
-                    $fee,
+                    $totalCharge,
                     'debit',
-                    "Rider booking #{$booking->booking_number} — {$request->service_name}"
+                    "Delivery booking #{$booking->booking_number} — {$request->service_name} + service fee"
                 );
 
                 // Book with Shipbubble
@@ -211,14 +213,14 @@ public function getRates(Request $request)
                 $reference = $this->korapay->generateReference('BKG');
                 $booking->update(['payment_reference' => $reference]);
 
-                $this->korapay->createTransaction($user, $fee, 'order_payment', $reference);
+                $this->korapay->createTransaction($user, $totalCharge, 'order_payment', $reference);
 
                 DB::commit();
 
                 $checkoutData = $this->korapay->initializeCheckout(
                     $user->email,
                     $user->full_name,
-                    (float) $fee,
+                    (float) $totalCharge,
                     $reference,
                     route('rider.callback'),
                     '',                          // ← notificationUrl, leave empty for now

@@ -7,7 +7,7 @@
     <meta name="description" content="Orderer — Buy, sell and deliver anything, anywhere in the world." />
     <meta name="keywords" content="ecommerce Nigeria, buy online, sell online, orderer, marketplace, delivery" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-        <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/css/bootstrap.min.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/vendors/css/vendors.min.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/vendors/css/daterangepicker.min.css') }}" />
     <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/css/theme.min.css') }}" />
@@ -31,12 +31,13 @@
     .mega-col li a {
         display: block !important;
     }
-    
-</style>
+    </style>
 
-    {{-- Dynamic Title & Favicon Variables --}}
+    {{-- Dynamic Title, Favicon & OG Variables --}}
     @php
         $routeName = Route::currentRouteName();
+
+        // Page title
         if ($routeName === 'home' || request()->is('/')) {
             $pageTitle = 'Home';
         } elseif ($routeName === 'shop' || request()->is('shop*')) {
@@ -47,28 +48,33 @@
             $pageTitle = $brand->name;
         } elseif (isset($service)) {
             $pageTitle = $service->title;
-        } elseif (isset($property)) {
-            $pageTitle = $property->title;
+        } elseif (isset($house)) {
+            $pageTitle = $house->title;
         } elseif (request()->is('brands*')) {
             $pageTitle = 'Brands';
         } else {
             $pageTitle = 'Orderer -- Global E-commerce Marketplace';
-        } 
+        }
 
+        // OG image — composited for entity pages, plain fallback otherwise
+        $ogImage = match(true) {
+            isset($product) => route('og.image', ['type' => 'product', 'slug' => $product->slug]),
+            isset($brand)   => route('og.image', ['type' => 'brand',   'slug' => $brand->slug]),
+            isset($service) => route('og.image', ['type' => 'service', 'slug' => $service->slug]),
+            isset($house)   => route('og.image', ['type' => 'house',   'slug' => $house->slug]),
+            default         => asset('dashboard/assets/images/og-default.png'),
+        };
+
+        // Favicon — raw image, no overlay needed for browser tab
         $primaryProductImage = isset($product) ? $product->images->where('is_primary', true)->first() : null;
-        $faviconUrl = $primaryProductImage
-            ? asset($primaryProductImage->image_url)
-            : (isset($brand) && $brand->logo ? asset($brand->logo) 
-            : (isset($service) && isset($service->portfolio_images[0]['url']) ? $service->portfolio_images[0]['url']
-            : (isset($property) && $property->images->first() ? $property->images->first()->image_url 
-            : asset('dashboard/assets/images/favicon.png'))));
-
-        $ogImage = $primaryProductImage
-            ? asset($primaryProductImage->image_url)
-            : (isset($brand) && $brand->logo ? asset($brand->logo) 
-            : (isset($service) && isset($service->portfolio_images[0]['url']) ? $service->portfolio_images[0]['url']
-            : (isset($property) && $property->images->first() ? $property->images->first()->image_url 
-            : asset('dashboard/assets/images/favicon.png'))));
+        $faviconUrl = $primaryProductImage?->image_url
+            ?? (isset($brand) && $brand->logo
+                ? $brand->logo
+                : (isset($service) && is_array($service->portfolio_images) && count($service->portfolio_images)
+                    ? (is_array($service->portfolio_images[0]) ? ($service->portfolio_images[0]['url'] ?? null) : $service->portfolio_images[0])
+                    : (isset($house) && $house->images->first()
+                        ? $house->images->first()->image_url
+                        : asset('dashboard/assets/images/favicon.png'))));
     @endphp
 
     <title>{{ $pageTitle }} — Orderer</title>
@@ -83,7 +89,15 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:image" content="{{ $ogImage }}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="Orderer" />
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ $pageTitle }} — Orderer" />
+    <meta name="twitter:description" content="Buy, sell and deliver anything anywhere in the world." />
+    <meta name="twitter:image" content="{{ $ogImage }}" />
 
     <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -167,12 +181,12 @@
         </div>
     </div>
 </header>
+
 <script>
 // ── Global cart alert with checkout + continue shopping buttons ──
 window.cartToast = function(message = 'Added to cart!', icon = 'success') {
 
     if (icon !== 'success') {
-        // Simple toast for errors/warnings — no buttons needed
         Swal.fire({
             toast: true,
             position: 'top-end',
@@ -185,7 +199,6 @@ window.cartToast = function(message = 'Added to cart!', icon = 'success') {
         return;
     }
 
-    // Success — show popup with action buttons
     Swal.fire({
         icon: 'success',
         title: 'Added to Cart!',
@@ -214,13 +227,15 @@ window.cartToast = function(message = 'Added to cart!', icon = 'success') {
     });
 };
 </script>
+
 <script>
 // Mobile hamburger toggle
 const ordHamburger = document.getElementById('ordHamburger');
 const ordNav       = document.getElementById('ordNav');
 
 if (ordHamburger && ordNav) {
-    ordHamburger.addEventListener('click', () => {
+    ordHamburger.addEventListener('click', (e) => {
+        e.stopPropagation();
         ordHamburger.classList.toggle('open');
         ordNav.classList.toggle('open');
     });

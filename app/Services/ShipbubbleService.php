@@ -152,16 +152,24 @@ class ShipbubbleService
         ];
     }
     /**
-     * Cancel a shipment.
+     * Cancel a scheduled shipment by Shipbubble order_id (e.g. "SB-BB7EDE9F").
+     * Only works if the shipment hasn't been picked up yet.
      */
-    public function cancelShipment(string $shipmentId): bool
+    public function cancelShipment(string $shipbubbleOrderId): array
     {
         $response = Http::withHeaders($this->headers())
-            ->post($this->baseUrl . '/shipping/cancel', [
-                'shipment_id' => $shipmentId,
-            ]);
+            ->post($this->baseUrl . '/shipping/labels/cancel/' . $shipbubbleOrderId);
 
-        return $response->successful();
+        $body = $response->json();
+
+        // Don't throw on HTTP error — return the body so the caller can decide
+        // Only throw on network/unexpected failures
+        if (!$response->successful() && empty($body)) {
+            throw new \Exception('Shipbubble cancel failed: ' . $response->body());
+        }
+
+        // Always return the parsed body — caller checks $result['status']
+        return $body ?? ['status' => 'failed', 'message' => 'Empty response'];
     }
 
     /**
@@ -180,6 +188,20 @@ class ShipbubbleService
         ];
     }
 
+    private function buildSenderPayload(\App\Models\Seller $seller): array
+    {
+        return [
+            'name'    => $seller->business_name ?? config('app.name'),
+            'email'   => $seller->email         ?? config('mail.from.address'),
+            'phone'   => $seller->phone         ?? '08000000000',
+            'address' => $seller->address       ?? 'Orderer Fulfillment Center, Lagos',
+            'city'    => $seller->city          ?? 'Lagos',
+            'state'   => $seller->state         ?? 'Lagos',
+            'country' => 'NG',
+        ];
+    }
+
+
     /**
      * Build a standardised recipient array from an Order.
      */
@@ -193,6 +215,21 @@ class ShipbubbleService
             'city'    => $order->shipping_city,
             'state'   => $order->shipping_state,
             'country' => $order->shipping_country ?? 'NG',
+        ];
+    }
+
+    private function buildParcelPayload($items, float $weight, float $value, string $orderNumber): array
+    {
+        return [
+            'weight' => $weight,
+            'length' => 20,
+            'width'  => 20,
+            'height' => 20,
+            'items'  => $items->map(fn($i) => [
+                'name'     => $i->item_name,
+                'quantity' => $i->quantity,
+                'value'    => max((float) $i->unit_price, 10),
+            ])->toArray(),
         ];
     }
 }

@@ -60,4 +60,12 @@ class Product extends Model
     {
         return $this->sale_price ?? $this->price;
     }
+
+    public function updateAverageRating()
+    {
+        $avg = $this->reviews()->where('is_visible', true)->avg('rating');
+        $this->average_rating = round($avg, 1);
+        $this->total_reviews = $this->reviews()->where('is_visible', true)->count();
+        $this->save();
+    }
 }

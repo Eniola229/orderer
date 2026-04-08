@@ -451,72 +451,124 @@ function fetchShippingRates() {
     .then(response => response.json())
     .then(data => {
         document.getElementById('ratesLoading').style.display = 'none';
-        
-        if (!data.success || !data.rates || data.rates.length === 0) {
-            document.getElementById('ratesList').innerHTML = '<div class="alert alert-warning">No shipping rates available. Please check your address.</div>';
+
+        if (!data.success || !data.seller_rates || data.seller_rates.length === 0) {
+            document.getElementById('ratesList').innerHTML =
+                '<div class="alert alert-warning">No shipping rates available. Please check your address.</div>';
             return;
         }
-        
-        let html = '';
-        data.rates.forEach((rate, index) => {
-            const price = parseFloat(rate.total || 0).toFixed(2);
-            html += `
-                <label class="d-block rate-card rounded p-3 mb-2" style="cursor:pointer;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center">
-                            
-                            ${rate.courier_image ? `
-                                <img src="${rate.courier_image}" 
-                                     alt="${rate.courier_name}" 
-                                     style="height:30px;width:auto;margin-right:10px;object-fit:contain;">
-                            ` : ''}
 
-                            <input type="radio" name="shipping_rate" class="form-check-input mr-3" 
-                                value="${rate.service_code || ''}" 
-                                data-price="${price}"
-                                data-carrier="${rate.courier_name || ''}"
-                                data-service="${rate.service_type || ''}"
-                                data-ratedata='${JSON.stringify(rate)}'
-                                ${index === 0 ? 'checked' : ''}>
-                            <div>
-                                <p class="mb-0 font-weight-bold">${rate.courier_name || 'Courier'}</p>
-                                <p class="mb-0 text-muted small">${rate.service_type || 'Standard'}</p>
-                                ${rate.delivery_eta ? `<small class="text-muted"><i class="fa fa-clock-o mr-1"></i>${rate.delivery_eta}</small>` : ''}
-                            </div>
-                        </div>
-                        <span class="h5 mb-0 text-success">₦${price}</span>
-                    </div>
-                </label>
-            `;
-        });
-        
-        document.getElementById('ratesList').innerHTML = html;
-        
-        // Add click handlers
-        document.querySelectorAll('.rate-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const radio = this.querySelector('input[type="radio"]');
-                radio.checked = true;
-                
-                const price = radio.dataset.price;
-                const subtotal = parseFloat(document.getElementById('displaySubtotal').dataset.value || 0);
-                
-                document.getElementById('selectedServiceCode').value = radio.value;
-                document.getElementById('selectedCarrier').value = radio.dataset.carrier;
-                document.getElementById('selectedServiceName').value = radio.dataset.service;
-                document.getElementById('selectedShippingFee').value = price;
-                document.getElementById('shippingRateData').value = radio.dataset.ratedata;
-                document.getElementById('displayShippingFee').textContent = '$' + parseFloat(price).toFixed(2);
-                document.getElementById('displayTotal').textContent = '$' + (subtotal + parseFloat(price)).toFixed(2);
-                
-                document.querySelectorAll('.rate-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-            });
-            
-            const radio = card.querySelector('input[type="radio"]');
-            if (radio.checked) {
-                card.click();
+        let html = '';
+
+        data.seller_rates.forEach(group => {
+            // Show seller header only when there are multiple sellers
+            if (data.multi_seller) {
+                html += `
+                    <p class="font-weight-bold mb-2 mt-3" style="color:#2ECC71;font-size:13px;">
+                        <i class="fa fa-store mr-1"></i>
+                        Ships from: <strong>${group.seller_name}</strong>
+                        <span class="text-muted">(₦${parseFloat(group.subtotal).toFixed(2)})</span>
+                    </p>`;
             }
+
+            group.couriers.forEach((rate, index) => {
+                const price     = parseFloat(rate.total || 0).toFixed(2);
+                const radioName = `shipping_rate_${group.seller_id}`;
+
+                html += `
+                    <label class="d-block rate-card rounded p-3 mb-2"
+                           data-seller-id="${group.seller_id}" style="cursor:pointer;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                ${rate.courier_image
+                                    ? `<img src="${rate.courier_image}" style="height:28px;width:auto;margin-right:10px;object-fit:contain;">`
+                                    : ''}
+                                <input type="radio" name="${radioName}"
+                                       class="seller-rate-radio mr-3"
+                                       data-seller-id="${group.seller_id}"
+                                       data-price="${price}"
+                                       data-carrier="${rate.courier_name || ''}"
+                                       data-service="${rate.service_type || ''}"
+                                       data-ratedata='${JSON.stringify(rate)}'
+                                       ${index === 0 ? 'checked' : ''}>
+                                <div>
+                                    <p class="mb-0 font-weight-bold">${rate.courier_name || 'Courier'}</p>
+                                    <p class="mb-0 text-muted small">${rate.service_type || 'Standard'}</p>
+                                    ${rate.delivery_eta
+                                        ? `<small class="text-muted"><i class="fa fa-clock-o mr-1"></i>${rate.delivery_eta}</small>`
+                                        : ''}
+                                </div>
+                            </div>
+                            <span class="h5 mb-0 text-success">₦${price}</span>
+                        </div>
+                    </label>`;
+            });
+
+            if (data.multi_seller) html += '<hr class="my-2">';
+        });
+
+        document.getElementById('ratesList').innerHTML = html;
+
+        // ── Recalc total shipping across all seller selections ───────────
+        function recalcShipping() {
+            let totalShipping  = 0;
+            const allRateData  = {};
+            let   firstCarrier = '';
+            let   firstService = '';
+            let   firstCode    = '';
+
+            data.seller_rates.forEach(group => {
+                const checked = document.querySelector(
+                    `input[name="shipping_rate_${group.seller_id}"]:checked`
+                );
+                if (!checked) return;
+
+                totalShipping += parseFloat(checked.dataset.price);
+                allRateData[group.seller_id] = JSON.parse(checked.dataset.ratedata);
+
+                if (!firstCarrier) {
+                    firstCarrier = checked.dataset.carrier;
+                    firstService = checked.dataset.service;
+                    firstCode    = checked.value;
+                }
+            });
+
+            const subtotal = parseFloat(
+                document.getElementById('displaySubtotal').dataset.value || 0
+            );
+
+            document.getElementById('selectedShippingFee').value  = totalShipping.toFixed(2);
+            document.getElementById('selectedCarrier').value      = firstCarrier;
+            document.getElementById('selectedServiceName').value  = firstService;
+            document.getElementById('selectedServiceCode').value  = firstCode;
+
+            // For multi-seller this is the full map { seller_id: rate_object }
+            // For single-seller this is { seller_id: rate_object } too — backend handles both
+            document.getElementById('shippingRateData').value = JSON.stringify(allRateData);
+
+            document.getElementById('displayShippingFee').textContent =
+                '₦' + totalShipping.toFixed(2);
+            document.getElementById('displayTotal').textContent =
+                '₦' + (subtotal + totalShipping).toFixed(2);
+        }
+
+        // Attach change listeners
+        document.querySelectorAll('.seller-rate-radio').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const sellerId = radio.dataset.sellerId;
+                document.querySelectorAll(`.rate-card[data-seller-id="${sellerId}"]`)
+                    .forEach(c => c.classList.remove('selected'));
+                radio.closest('.rate-card').classList.add('selected');
+                recalcShipping();
+            });
+        });
+
+        // Trigger initial calc with defaults
+        recalcShipping();
+
+        // Highlight default selected cards
+        document.querySelectorAll('.seller-rate-radio:checked').forEach(radio => {
+            radio.closest('.rate-card')?.classList.add('selected');
         });
     })
     .catch(error => {

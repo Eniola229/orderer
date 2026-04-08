@@ -15,11 +15,15 @@ use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\OgImageController;
 
 
 // -------------------------------------------------------
 // STOREFRONT (public)
 // -------------------------------------------------------
+
+Route::get('/og-image/{type}/{slug}', [OgImageController::class, 'generate'])->name('og.image');
+
 Route::get('/',                     [StorefrontController::class, 'home'])->name('home');
 Route::get('/shop',                 [StorefrontController::class, 'shop'])->name('shop.index');
 Route::get('/shop/{category}',      [StorefrontController::class, 'shopCategory'])->name('shop.category');
@@ -43,6 +47,10 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::get('/acceptable-use-policy',   [LegalController::class, 'acceptableUse'])->name('acceptable-use');
     Route::get('/disclaimer',              [LegalController::class, 'disclaimer'])->name('disclaimer');
 });
+
+//Review a product
+Route::post('/product/{product}/review', [StorefrontController::class, 'submitReview'])->name('product.review')->middleware('auth');
+
 
 
 // Ad click tracking & redirect
@@ -224,6 +232,8 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::get('/bookings',           [App\Http\Controllers\RiderBookingController::class, 'myBookings'])->name('bookings');
     Route::get('/bookings/{booking}', [App\Http\Controllers\RiderBookingController::class, 'showBooking'])->name('bookings.show');
     Route::get('/bookings/{booking}/track', [App\Http\Controllers\RiderBookingController::class, 'track'])->name('bookings.track');
+
+
 });
 
 // -------------------------------------------------------

@@ -8,12 +8,13 @@ use App\Models\Brand;
 use App\Models\FlashSale;
 use App\Models\Wishlist;
 use App\Models\HouseListing;
+use App\Models\ServiceListing;
 use App\Models\ProductReview;
 use App\Helpers\AdHelper;
 use Illuminate\Http\Request;
 
 class StorefrontController extends Controller
-{
+{ 
     public function home()
     {
         $categories = Category::where('is_active', true)
@@ -232,9 +233,17 @@ class StorefrontController extends Controller
         $brand    = Brand::where('slug', $slug)->where('is_active', true)->with(['seller', 'reviews.user'])->firstOrFail();
         $products = Product::where('seller_id', $brand->seller_id)
             ->where('status', 'approved')
-            ->with('images')
-            ->paginate(12);
-        return view('storefront.brand-show', compact('brand', 'products'));
+            ->with('images', 'seller')
+            ->paginate(12, ['*'], 'products_page');
+        $services = ServiceListing::where('seller_id', $brand->seller_id)
+            ->where('status', 'approved')
+            ->with('seller')
+            ->paginate(12, ['*'], 'services_page');
+        $houses = HouseListing::where('seller_id', $brand->seller_id)
+            ->where('status', 'approved')
+            ->with('images', 'seller')
+            ->paginate(12, ['*'], 'houses_page');
+        return view('storefront.brand-show', compact('brand', 'products', 'services', 'houses'));
     }
 
     public function services(Request $request)
@@ -398,5 +407,73 @@ class StorefrontController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
         return back()->with('success', 'Thank you for subscribing!');
+    }
+
+    public function submitReview(Request $request, Product $product)
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'review' => 'required|string|min:10',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048'
+        ]);
+        
+        // Check if user has purchased this product
+        $hasPurchased = \App\Models\OrderItem::whereHas('order', function($q) {
+            $q->where('user_id', auth()->id())
+              ->whereIn('payment_status', ['paid', 'completed'])
+              ->where('status', '!=', 'cancelled');
+        })->where('orderable_id', $product->id)
+          ->where('orderable_type', 'App\Models\Product')
+          ->exists();
+        
+        if (!$hasPurchased) {
+            return back()->with('error', 'You can only review products you have purchased.');
+        }
+        
+        // Check if already reviewed
+        $hasReviewed = \App\Models\ProductReview::where('product_id', $product->id)
+            ->where('user_id', auth()->id())
+            ->exists();
+        
+        if ($hasReviewed) {
+            return back()->with('error', 'You have already reviewed this product.');
+        }
+        
+        // Handle image uploads to Cloudinary
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            $cloudinary = app(\App\Services\CloudinaryService::class);
+            foreach ($request->file('images') as $index => $image) {
+                $uploaded = $cloudinary->uploadImage(
+                    $image,
+                    'orderer/reviews/' . $product->id . '/' . auth()->id()
+                );
+                $imagePaths[] = $uploaded['url']; // Store only the URL
+            }
+        }
+        
+        // Create review
+        \App\Models\ProductReview::create([
+            'product_id' => $product->id,
+            'user_id' => auth()->id(),
+            'rating' => $request->rating,
+            'review' => $request->review,
+            'images' => $imagePaths, // This will be automatically JSON encoded
+            'is_verified_purchase' => true,
+            'is_visible' => true,
+        ]);
+        
+        // Update product average rating
+        $avg = \App\Models\ProductReview::where('product_id', $product->id)
+            ->where('is_visible', true)
+            ->avg('rating');
+        $product->average_rating = round($avg, 1);
+        $product->total_reviews = \App\Models\ProductReview::where('product_id', $product->id)
+            ->where('is_visible', true)
+            ->count();
+        $product->save();
+        
+        return back()->with('success', 'Thank you for your review!');
     }
 }

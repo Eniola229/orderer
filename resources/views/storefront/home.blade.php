@@ -16,12 +16,14 @@
      Otherwise → show original static hero banner
      ──────────────────────────────────────────────────────────── --}}
 <style>
+    /* Your existing CSS remains... */
+    
     #heroAdCarousel .carousel-item {
         min-height: 520px !important;
         position: relative !important;
         overflow: hidden !important;
     }
-    /* Force the background div to fill the slide */
+    
     #heroAdCarousel .ad-bg {
         position: absolute !important;
         top: 0 !important; left: 0 !important;
@@ -34,13 +36,52 @@
         opacity: 1 !important;
         visibility: visible !important;
     }
-    /* Content sits above background */
+    
     #heroAdCarousel .ad-content-wrap {
         position: relative !important;
         z-index: 2 !important;
         min-height: 520px !important;
         display: flex !important;
         align-items: center !important;
+    }
+    
+    /* MOBILE FIXES */
+    @media (max-width: 768px) {
+        /* Remove fixed height on mobile */
+        #heroAdCarousel .carousel-item {
+            min-height: auto !important;
+            height: auto !important;
+        }
+        
+        #heroAdCarousel .ad-content-wrap {
+            min-height: auto !important;
+            padding: 60px 0 !important;
+        }
+        
+        /* Fix text touching sides - add padding to the content wrapper */
+        #heroAdCarousel .ad-content-wrap .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        
+        /* Give the text box proper margins on mobile */
+        #heroAdCarousel .ad-content-wrap .col-12,
+        #heroAdCarousel .ad-content-wrap .col-md-7 {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+        }
+        
+        /* Reduce the gap after hero section */
+        .welcome_area {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* Remove gap between hero and categories */
+        .top_catagory_area {
+            margin-top: -20px !important;
+            padding-top: 20px !important;
+        }
     }
 </style>
 
@@ -244,7 +285,7 @@
                         </div>
                     </div>
                     <div class="product-description">
-                        <span>{{ $flash->product->seller->business_name ?? '' }}</span>
+                        <span>{{ Str::limit($flash->product->seller->business_name ?? '', 10) }}</span>
                         <a href="{{ route('product.show', $flash->product->slug) }}">
                             <h6>{{ Str::limit($flash->product->name, 40) }}</h6>
                         </a>
@@ -303,13 +344,13 @@
                             </div>
                         </div>
                         <div class="product-description">
-                            <span>{{ $product->seller->business_name ?? '' }}</span>
+                            <span>{{ Str::limit($product->seller->business_name ?? '', 10) }}</span>
                             <a href="{{ route('product.show', $product->slug) }}">
                                 <h6>{{ Str::limit($product->name, 35) }}</h6>
                             </a>
                             <p class="product-price">
                                 @if($product->sale_price)
-                                    <span class="old-price">${{ number_format($product->price, 2) }}</span>
+                                    <span class="old-price">₦{{ number_format($product->price, 2) }}</span>
                                     ₦{{ number_format($product->sale_price, 2) }}
                                 @else
                                     ₦{{ number_format($product->price, 2) }}
@@ -373,13 +414,13 @@
                         </div>
                     </div>
                     <div class="product-description">
-                        <span>{{ $sponsoredProduct->seller->business_name ?? '' }}</span>
+                        <span>{{ Str::limit($sponsoredProduct->seller->business_name ?? '', 10) }}</span>
                         <a href="{{ $ad->clickTrackingUrl() }}">
                             <h6>{{ Str::limit($sponsoredProduct->name, 35) }}</h6>
                         </a>
                         <p class="product-price">
                             @if($sponsoredProduct->sale_price)
-                                <span class="old-price">${{ number_format($sponsoredProduct->price, 2) }}</span>
+                                <span class="old-price">₦{{ number_format($sponsoredProduct->price, 2) }}</span>
                                 ₦{{ number_format($sponsoredProduct->sale_price, 2) }}
                             @else
                                 ₦{{ number_format($sponsoredProduct->price, 2) }}
@@ -486,13 +527,13 @@
                         </div>
                     </div>
                     <div class="product-description">
-                        <span>{{ $product->seller->business_name ?? '' }}</span>
+                        <span>{{ Str::limit($product->seller->business_name ?? '', 10) }}</span>
                         <a href="{{ route('product.show', $product->slug) }}">
                             <h6>{{ Str::limit($product->name, 35) }}</h6>
                         </a>
                         <p class="product-price">₦{{ number_format($product->price, 2) }}</p>
                         <div class="hover-content">
-                            <div class="add-to-cart-btn">
+                           <div class="add-to-cart-btn">
                                 <a href="#" class="btn essence-btn add-to-cart"
                                    data-product="{{ $product->id }}">Add to Cart</a>
                             </div>
@@ -603,23 +644,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Force backgrounds back after theme JS runs
     function fixAdBackgrounds() {
+        // Check if we're on mobile (screen width 768px or less)
+        const isMobile = window.innerWidth <= 768;
+        
+        // Adjust carousel item height on mobile
+        const carouselItems = document.querySelectorAll('#heroAdCarousel .carousel-item');
+        if (isMobile) {
+            carouselItems.forEach(function(item) {
+                item.style.minHeight = 'auto';
+                item.style.height = 'auto';
+            });
+        } else {
+            carouselItems.forEach(function(item) {
+                item.style.minHeight = '520px';
+                item.style.height = '';
+            });
+        }
+        
         document.querySelectorAll('#heroAdCarousel .ad-bg').forEach(function(el) {
             var bg = el.getAttribute('style');
             if (bg) {
+                // Use 'contain' on mobile to show full image, 'cover' on desktop
+                const bgSize = isMobile ? 'contain' : 'cover';
+                
                 el.style.cssText = bg + 
                     'position:absolute!important;' +
                     'top:0!important;left:0!important;' +
                     'width:100%!important;height:100%!important;' +
-                    'background-size:cover!important;' +
+                    'background-size:' + bgSize + '!important;' +
                     'background-position:center!important;' +
+                    'background-repeat:no-repeat!important;' +
                     'display:block!important;' +
                     'opacity:1!important;' +
                     'visibility:visible!important;' +
                     'z-index:0!important;';
             }
         });
+        
+        // Remove gap after hero on mobile
+        if (isMobile) {
+            const welcomeSection = document.querySelector('.welcome_area');
+            if (welcomeSection) {
+                welcomeSection.style.marginBottom = '0';
+                welcomeSection.style.paddingBottom = '0';
+            }
+        }
     }
-
     // Run immediately and also after carousel slides
     fixAdBackgrounds();
     $('#heroAdCarousel').on('slide.bs.carousel slid.bs.carousel', fixAdBackgrounds);

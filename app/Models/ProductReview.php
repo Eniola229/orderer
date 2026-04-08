@@ -22,7 +22,7 @@ class ProductReview extends Model
 
     protected $casts = [
         'rating' => 'integer',
-        'images' => 'array',
+        'images' => 'json',
         'is_verified_purchase' => 'boolean',
         'is_visible' => 'boolean',
     ];

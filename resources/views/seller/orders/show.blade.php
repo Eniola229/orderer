@@ -11,7 +11,7 @@
 @php
 function sellerOrderStatusBadge(string $status): string {
     return match($status) {
-        'pending'    => 'bg-warning text-dark',
+        'pending'    => 'bg-warning text-dark', 
         'confirmed'  => 'bg-info text-white',
         'processing' => 'bg-primary text-white',
         'shipped'    => 'bg-primary text-white',
@@ -215,13 +215,16 @@ function sellerOrderStatusBadge(string $status): string {
         </div>
 
         {{-- Shipping info --}}
+        {{-- Seller only sees their own items' shipment --}}
+        @php
+            $myShipmentId = $myItems->first()?->shipbubble_shipment_id;
+            $myFirstItem  = $myItems->first();
+        @endphp
+
         <div class="card mb-3">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Shipping Info</h5>
-            </div>
+            <div class="card-header"><h5 class="card-title mb-0">Your Shipment Info</h5></div>
             <div class="card-body">
 
-                {{-- Carrier --}}
                 @if($order->shipping_carrier)
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Carrier</small>
@@ -235,36 +238,32 @@ function sellerOrderStatusBadge(string $status): string {
                 </div>
                 @endif
 
-                {{-- Shipbubble shipment ID --}}
-                @if($order->shipbubble_shipment_id)
+                @if($myFirstItem?->shipbubble_shipment_id)
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Shipment ID</small>
-                    <code class="fs-12">{{ $order->shipbubble_shipment_id }}</code>
+                    <code class="fs-12">{{ $myFirstItem->shipbubble_shipment_id }}</code>
                 </div>
                 @endif
 
-                {{-- Tracking number --}}
-                @if($order->tracking_number)
+                @if($myFirstItem?->tracking_number)
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Tracking Number</small>
-                    <code class="fs-12 text-primary">{{ $order->tracking_number }}</code>
+                    <code class="fs-12 text-primary">{{ $myFirstItem->tracking_number }}</code>
                 </div>
                 @endif
 
-                {{-- Estimated delivery --}}
-                @if($order->estimated_delivery_date)
+                @if($myFirstItem?->estimated_delivery_date)
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Estimated Delivery</small>
                     <span class="fw-semibold text-success">
                         <i class="feather-calendar me-1"></i>
-                        {{ $order->estimated_delivery_date }}
+                        {{ $myFirstItem->estimated_delivery_date }}
                     </span>
                 </div>
                 @endif
 
-                {{-- Track button --}}
-                @if($order->tracking_url)
-                <a href="{{ $order->tracking_url }}" target="_blank"
+                @if($myFirstItem?->tracking_url)
+                <a href="{{ $myFirstItem->tracking_url }}" target="_blank"
                    class="btn btn-outline-primary btn-sm w-100">
                     <i class="feather-map-pin me-2"></i> Track Shipment
                 </a>
@@ -277,7 +276,6 @@ function sellerOrderStatusBadge(string $status): string {
 
             </div>
         </div>
-
         {{-- Delivery address --}}
         <div class="card">
             <div class="card-header">

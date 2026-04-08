@@ -13,8 +13,8 @@ use App\Services\BrevoMailService;
 use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-  
+use Illuminate\Support\Str; 
+
 class CheckoutController extends Controller
 {
     public function __construct(
@@ -38,16 +38,15 @@ class CheckoutController extends Controller
             $img = $product?->images->where('is_primary', true)->first()
                    ?? $product?->images->first();
 
-            // Check if this item was added at flash sale price
             $regularPrice = $product?->sale_price ?? $product?->price;
             $isFlashSale  = $product && (float) $item->price < (float) $regularPrice;
 
             return [
-                'id'           => $item->product_id,
-                'name'         => $product?->name,
-                'price'        => (float) $item->price,  
-                'quantity'     => $item->quantity,
-                'image'        => $img?->image_url ?? null,
+                'id'            => $item->product_id,
+                'name'          => $product?->name,
+                'price'         => (float) $item->price,
+                'quantity'      => $item->quantity,
+                'image'         => $img?->image_url ?? null,
                 'is_flash_sale' => $isFlashSale,
             ];
         })->toArray();
@@ -75,6 +74,7 @@ class CheckoutController extends Controller
 
         $cartModel = $this->getCart();
         $cartItems = $cartModel->items()->with(['product.images', 'product.category'])->get();
+
         if ($cartItems->isEmpty()) {
             return redirect()->route('shop.index')->with('error', 'Cart is empty.');
         }
@@ -99,8 +99,9 @@ class CheckoutController extends Controller
         }
         if ($totalWeight <= 0) $totalWeight = 0.5;
 
-        $shippingFee = (float) $request->shipping_fee;
-        $total       = $subtotal + $shippingFee;
+        $shippingFee   = (float) $request->shipping_fee;
+        $total         = $subtotal + $shippingFee;
+        $isMultiSeller = collect($items)->pluck('product.seller_id')->unique()->count() > 1;
 
         if ($request->payment_method === 'wallet' && $user->wallet_balance < $total) {
             return back()->with('error', 'Insufficient wallet balance.');
@@ -110,7 +111,6 @@ class CheckoutController extends Controller
 
         try {
             $order = Order::create([
-                'order_number'          => 'ORD-' . strtoupper(Str::random(10)),
                 'user_id'               => $user->id,
                 'subtotal'              => $subtotal,
                 'total'                 => $total,
@@ -131,6 +131,7 @@ class CheckoutController extends Controller
                 'shipping_service_name' => $request->shipping_service_name,
                 'package_weight'        => $totalWeight,
                 'declared_value'        => $subtotal,
+                'is_multi_seller'       => $isMultiSeller,
                 'shipping_rate_data'    => json_decode($request->shipping_rate_data ?? '{}', true),
             ]);
 
@@ -140,7 +141,8 @@ class CheckoutController extends Controller
                 $commissionRate = $product->category->commission_rate ?? 10;
                 $commissionAmt  = round($item['total'] * ($commissionRate / 100), 2);
                 $sellerEarnings = $item['total'] - $commissionAmt;
-                $primaryImg     = $product->images->where('is_primary', true)->first() ?? $product->images->first();
+                $primaryImg     = $product->images->where('is_primary', true)->first()
+                                  ?? $product->images->first();
 
                 OrderItem::create([
                     'order_id'          => $order->id,
@@ -182,23 +184,18 @@ class CheckoutController extends Controller
                 );
 
                 $this->walletService->holdEscrow($order);
-
-                // Book shipment with Shipbubble immediately after wallet payment
                 $this->bookShipmentForOrder($order, $user, $totalWeight, $subtotal);
 
                 DB::commit();
                 $this->getCart()->items()->delete();
-
                 $this->sendOrderEmails($user, $order);
 
                 return redirect()->route('buyer.orders.show', $order->id)
                     ->with('success', "Order #{$order->order_number} placed successfully!");
 
             } else {
-                // Korapay — book shipment after payment callback
                 $reference = $this->korapay->generateReference('ORD');
                 $order->update(['payment_reference' => $reference]);
-
                 $this->korapay->createTransaction($user, $total, 'order_payment', $reference);
 
                 DB::commit();
@@ -225,102 +222,95 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Book the shipment with Shipbubble after payment is confirmed.
-     * Uses request_token from session + service_code + courier_id from order.
+     * Book one Shipbubble shipment per seller group,
+     * then save tracking info directly on each OrderItem.
      */
     protected function bookShipmentForOrder(Order $order, $user, float $weight, float $declaredValue): void
     {
-        $requestToken = session('shipbubble_request_token');
+        $requestTokensMap = session('shipbubble_request_tokens', []);
+        $legacyToken      = session('shipbubble_request_token');
 
         \Log::info('bookShipmentForOrder called', [
-            'order_id'      => $order->id,
-            'request_token' => $requestToken,
-            'service_code'  => $order->shipping_service_code,
-            'carrier'       => $order->shipping_carrier,
+            'order_id'        => $order->id,
+            'is_multi_seller' => $order->is_multi_seller,
+            'tokens'          => $requestTokensMap,
         ]);
 
-        if (!$requestToken) {
-            \Log::warning('bookShipmentForOrder — no request_token in session, skipping', [
-                'order_id' => $order->id,
-            ]);
-            return;
-        }
+        $order->load('items.product');
 
-        try {
-            // Extract courier_id from saved rate data
-            $rateData  = $order->shipping_rate_data ?? [];
-            $courierId = $rateData['courier_id'] ?? $rateData['id'] ?? null;
+        // ── Group items by seller ────────────────────────────────────────
+        $sellerGroups = $order->items->groupBy('seller_id');
+        $rateDataMap  = $order->shipping_rate_data ?? [];
 
-            // \Log::info('bookShipmentForOrder — rate data', [
-            //     'order_id'  => $order->id,
-            //     'rate_data' => $rateData,
-            //     'courier_id'=> $courierId,
-            // ]);
+        foreach ($sellerGroups as $sellerId => $sellerItems) {
 
-            if (!$courierId) {
-                // \Log::warning('bookShipmentForOrder — no courier_id found in rate_data', [
-                //     'order_id'  => $order->id,
-                //     'rate_data' => $rateData,
-                // ]);
-                return;
+            // Resolve request token — multi-seller uses map, single falls back to legacy
+            $token = $requestTokensMap[(string) $sellerId]
+                  ?? ($order->is_multi_seller ? null : ($legacyToken ?? array_values($requestTokensMap)[0] ?? null));
+
+            // For single seller the rate data IS the rate object,
+            // for multi it's keyed by seller_id
+            $rateData  = $order->is_multi_seller
+                ? ($rateDataMap[(string) $sellerId] ?? [])
+                : (isset($rateDataMap[(string) $sellerId])
+                    ? $rateDataMap[(string) $sellerId]
+                    : (array_values($rateDataMap)[0] ?? $rateDataMap));
+
+            $courierId   = $rateData['courier_id'] ?? $rateData['id'] ?? null;
+            $serviceCode = $rateData['service_code'] ?? $order->shipping_service_code;
+
+            if (!$token || !$courierId) {
+                \Log::warning("bookShipmentForOrder — skipping seller {$sellerId}: missing token or courier_id", [
+                    'has_token'     => !empty($token),
+                    'has_courierId' => !empty($courierId),
+                ]);
+                continue;
             }
 
-            $shipment = $this->shipbubble->createShipment(
-                $order->shipping_service_code,
-                (string) $courierId,
-                [
-                    'name'    => config('app.name'),
-                    'email'   => config('mail.from.address'),
-                    'phone'   => '08000000000',
-                    'address' => 'Orderer Fulfillment Center, Lagos',
-                    'city'    => 'Lagos',
-                    'state'   => 'Lagos',
-                    'country' => 'NG',
-                ],
-                [
-                    'name'    => $order->shipping_name,
-                    'email'   => $user->email,
-                    'phone'   => $order->shipping_phone,
-                    'address' => $order->shipping_address,
-                    'city'    => $order->shipping_city,
-                    'state'   => $order->shipping_state,
-                    'country' => $order->shipping_country,
-                ],
-                [
-                    'weight' => $weight,
-                    'length' => 20,
-                    'width'  => 20,
-                    'height' => 20,
-                    'items'  => [[
-                        'name'     => "Order #{$order->order_number}",
-                        'quantity' => 1,
-                        'value'    => max($declaredValue, 10),
-                    ]],
-                ],
-                $requestToken
-            );
+            $sellerWeight = $sellerItems->sum(fn($i) => ($i->product->weight_kg ?? 0.5) * $i->quantity);
+            $sellerValue  = $sellerItems->sum('total_price');
 
-            // \Log::info('Shipbubble createShipment response', [
-            //     'order_id' => $order->id,
-            //     'shipment' => $shipment,
-            // ]);
+            try {
+                $seller   = \App\Models\Seller::find($sellerId);
+                $shipment = $this->shipbubble->createShipment(
+                    $serviceCode,
+                    (string) $courierId,
+                    $this->buildSenderPayload($seller),
+                    $this->buildRecipientPayload($order, $user),
+                    $this->buildParcelPayload($sellerItems, max($sellerWeight, 0.5), $sellerValue, $order->order_number),
+                    $token
+                );
 
-            // Save using correct field names from API response
-            $order->update([
-                'shipbubble_shipment_id'  => $shipment['order_id'] ?? null,
-                'tracking_number'         => $shipment['courier']['tracking_code'] ?? null,
-                'tracking_url'            => $shipment['tracking_url'] ?? null,
-                'estimated_delivery_date' => $shipment['estimated_delivery_date'] ?? null,
-                'courier_id'              => $courierId,
-                'shipping_status'         => $shipment['status'] ?? 'pending',
-            ]);
+                $trackingNumber = $shipment['courier']['tracking_code'] ?? null;
+                $trackingUrl    = $shipment['tracking_url'] ?? null;
+                $shipmentId     = $shipment['order_id'] ?? null;
+                $estDelivery    = $shipment['estimated_delivery_date'] ?? null;
+                $shipStatus     = $shipment['status'] ?? 'pending';
 
-            session()->forget('shipbubble_request_token');
+                \Log::info("bookShipmentForOrder — shipment created for seller {$sellerId}", [
+                    'shipment_id'    => $shipmentId,
+                    'tracking'       => $trackingNumber,
+                ]);
 
-        } catch (\Exception $e) {
-            \Log::error('bookShipmentForOrder failed for order #' . $order->order_number . ': ' . $e->getMessage());
-            // Don't fail the order — shipment can be manually processed
+                // ── Save tracking on EVERY item belonging to this seller ──
+                foreach ($sellerItems as $orderItem) {
+                    $orderItem->update([
+                        'shipbubble_shipment_id'  => $shipmentId,
+                        'courier_id'              => $courierId,
+                        'tracking_number'         => $trackingNumber,
+                        'tracking_url'            => $trackingUrl,
+                        'shipping_status'         => $shipStatus,
+                        'estimated_delivery_date' => $estDelivery,
+                    ]);
+                }
+
+            } catch (\Exception $e) {
+                \Log::error("bookShipmentForOrder — failed for seller {$sellerId} on order #{$order->order_number}: " . $e->getMessage());
+                // Don't stop — other sellers' shipments should still be booked
+            }
         }
+
+        session()->forget(['shipbubble_request_tokens', 'shipbubble_request_token']);
     }
 
     public function getRates(Request $request)
@@ -341,64 +331,9 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Cart is empty'], 400);
         }
 
-        $totalWeight = 0;
-        $subtotal    = 0;
-        $itemName    = 'Package';
-        $sellerIds   = [];
-
-        foreach ($cartItems as $item) {
-            $product = $item->product;
-            if (!$product) continue;
-            $totalWeight += ($product->weight_kg ?? 0.5) * $item->quantity;
-            $subtotal    += $item->price * $item->quantity;
-            $itemName     = $product->name;
-            if ($product->seller_id) {
-                $sellerIds[] = $product->seller_id;
-            }
-        }
-
-        if ($totalWeight <= 0) $totalWeight = 0.5;
-
-        $uniqueSellerIds = array_unique($sellerIds);
-
+        // ── Validate recipient once ──────────────────────────────────────
         try {
-            // ── Sender address code ─────────────────────────────────────────
-            // If all items belong to one seller, use their pre-validated address_code.
-            // Otherwise fall back to our default fulfillment address.
-            if (count($uniqueSellerIds) === 1) {
-                $seller = \App\Models\Seller::find($uniqueSellerIds[0]);
-
-                if ($seller && $seller->address_code) {
-                    $senderAddressCode = $seller->address_code;
-                } else {
-                    // Seller exists but has no address_code — validate default
-                    $senderValidation  = $this->shipbubble->validateAddress([
-                        'name'    => 'Orderer Fulfillment',
-                        'email'   => config('mail.from.address'),
-                        'phone'   => '08000000000',
-                        'address' => 'Orderer Fulfillment Center Lagos',
-                        'city'    => 'Lagos',
-                        'state'   => 'Lagos',
-                        'country' => 'NG',
-                    ]);
-                    $senderAddressCode = $senderValidation['data']['address_code'] ?? null;
-                }
-            } else {
-                // Multiple sellers — use our default fulfillment address
-                $senderValidation  = $this->shipbubble->validateAddress([
-                    'name'    => 'Orderer Fulfillment',
-                    'email'   => config('mail.from.address'),
-                    'phone'   => '08000000000',
-                    'address' => 'Orderer Fulfillment Center Lagos',
-                    'city'    => 'Lagos',
-                    'state'   => 'Lagos',
-                    'country' => 'NG',
-                ]);
-                $senderAddressCode = $senderValidation['data']['address_code'] ?? null;
-            }
-
-            // ── Recipient validation ────────────────────────────────────────
-            $recipientValidation = $this->shipbubble->validateAddress([
+            $recipientValidation  = $this->shipbubble->validateAddress([
                 'name'    => $request->shipping_name,
                 'email'   => auth('web')->user()->email,
                 'phone'   => $request->shipping_phone,
@@ -407,55 +342,109 @@ class CheckoutController extends Controller
                 'state'   => $request->shipping_state,
                 'country' => $request->shipping_country,
             ]);
-
             $recipientAddressCode = $recipientValidation['data']['address_code'] ?? null;
 
-            if (!$senderAddressCode || !$recipientAddressCode) {
+            if (!$recipientAddressCode) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Could not validate one or both addresses. Please provide a more detailed address.',
+                    'message' => 'Could not validate delivery address. Please provide a more detailed address.',
                 ], 422);
             }
-
-            $rates    = $this->shipbubble->getRates([
-                'sender_address_code'   => $senderAddressCode,
-                'reciever_address_code' => $recipientAddressCode,
-                'weight'                => $totalWeight,
-                'value'                 => max($subtotal, 10),
-                'length'                => 20,
-                'width'                 => 20,
-                'height'                => 20,
-                'category_id'           => 2178251,
-                'item_name'             => $itemName,
-            ]);
-
-            $rateData = is_array($rates) && isset($rates['data']) ? $rates['data'] : $rates;
-
-            if (!empty($rateData['request_token'])) {
-                session(['shipbubble_request_token' => $rateData['request_token']]);
-                //\Log::info('Stored shipbubble_request_token', ['token' => $rateData['request_token']]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'rates'   => $rateData['couriers'] ?? [],
-            ]);
-
         } catch (\Exception $e) {
-            $rawMessage = $e->getMessage();
-            $apiMessage = null;
-            if (preg_match('/\{.*\}/s', $rawMessage, $match)) {
-                $decoded    = json_decode($match[0], true);
-                $apiMessage = $decoded['message'] ?? null;
+            return response()->json(['success' => false, 'message' => 'Address validation failed.'], 422);
+        }
+
+        // ── Group cart items by seller ───────────────────────────────────
+        $sellerGroups = [];
+        foreach ($cartItems as $item) {
+            $product  = $item->product;
+            if (!$product) continue;
+            $sellerId = $product->seller_id ?? 'default';
+
+            if (!isset($sellerGroups[$sellerId])) {
+                $sellerGroups[$sellerId] = [
+                    'seller'      => $product->seller,
+                    'totalWeight' => 0,
+                    'subtotal'    => 0,
+                    'itemName'    => $product->name,
+                ];
             }
+            $sellerGroups[$sellerId]['totalWeight'] += ($product->weight_kg ?? 0.5) * $item->quantity;
+            $sellerGroups[$sellerId]['subtotal']    += $item->price * $item->quantity;
+        }
 
-            \Log::error('Checkout: failed to fetch courier rates', ['error' => $rawMessage]);
+        // ── Fetch rates per seller ───────────────────────────────────────
+        $allSellerRates   = [];
+        $requestTokensMap = [];
 
+        foreach ($sellerGroups as $sellerId => $group) {
+            $weight   = max($group['totalWeight'], 0.5);
+            $subtotal = $group['subtotal'];
+            $seller   = $group['seller'];
+
+            try {
+                if ($seller && $seller->address_code) {
+                    $senderAddressCode = $seller->address_code;
+                } else {
+                    $fallback          = $this->shipbubble->validateAddress([
+                        'name'    => $seller->business_name ?? 'Orderer Fulfillment',
+                        'email'   => config('mail.from.address'),
+                        'phone'   => '08000000000',
+                        'address' => 'Orderer Fulfillment Center, Lagos',
+                        'city'    => 'Lagos',
+                        'state'   => 'Lagos',
+                        'country' => 'NG',
+                    ]);
+                    $senderAddressCode = $fallback['data']['address_code'] ?? null;
+                }
+
+                if (!$senderAddressCode) continue;
+
+                $rates    = $this->shipbubble->getRates([
+                    'sender_address_code'   => $senderAddressCode,
+                    'reciever_address_code' => $recipientAddressCode,
+                    'weight'                => $weight,
+                    'value'                 => max($subtotal, 10),
+                    'length'                => 20,
+                    'width'                 => 20,
+                    'height'                => 20,
+                    'category_id'           => 2178251,
+                    'item_name'             => $group['itemName'],
+                ]);
+
+                $rateData = is_array($rates) && isset($rates['data']) ? $rates['data'] : $rates;
+
+                if (!empty($rateData['request_token'])) {
+                    $requestTokensMap[(string) $sellerId] = $rateData['request_token'];
+                }
+
+                $allSellerRates[] = [
+                    'seller_id'   => (string) $sellerId,
+                    'seller_name' => $seller->business_name ?? 'Seller',
+                    'subtotal'    => $subtotal,
+                    'weight'      => $weight,
+                    'couriers'    => $rateData['couriers'] ?? [],
+                ];
+
+            } catch (\Exception $e) {
+                \Log::error("getRates failed for seller {$sellerId}: " . $e->getMessage());
+            }
+        }
+
+        if (empty($allSellerRates)) {
             return response()->json([
                 'success' => false,
-                'message' => $apiMessage ?? 'Could not find a courier for this address. Please check the details and try again.',
+                'message' => 'Could not find courier rates. Please check your address and try again.',
             ], 422);
         }
+
+        session(['shipbubble_request_tokens' => $requestTokensMap]);
+
+        return response()->json([
+            'success'      => true,
+            'multi_seller' => count($sellerGroups) > 1,
+            'seller_rates' => $allSellerRates,
+        ]);
     }
 
     public function callback(Request $request)
@@ -488,10 +477,7 @@ class CheckoutController extends Controller
                     $this->walletService->holdEscrow($order);
 
                     $user = auth('web')->user() ?? $order->user;
-
-                    // Book shipment after Korapay payment confirmed
                     $this->bookShipmentForOrder($order, $user, $order->package_weight ?? 0.5, $order->declared_value ?? $order->subtotal);
-
                     $this->sendOrderEmails($user, $order);
 
                     return redirect()->route('buyer.orders.show', $order->id)
@@ -511,7 +497,6 @@ class CheckoutController extends Controller
     {
         try {
             $this->brevo->sendOrderPlacedBuyer($user, $order);
-
             $order->load('items.seller');
             $sellerIds = $order->items->pluck('seller_id')->unique();
 
@@ -547,16 +532,44 @@ class CheckoutController extends Controller
         );
     }
 
-    // protected function fallbackRates(string $country): array
-    // {
-    //     $isNigeria = strtoupper($country) === 'NG';
+    protected function buildSenderPayload(?\App\Models\Seller $seller): array
+    {
+        return [
+            'name'    => $seller->business_name ?? config('app.name'),
+            'email'   => $seller->email         ?? config('mail.from.address'),
+            'phone'   => $seller->phone         ?? '08000000000',
+            'address' => $seller->address       ?? 'Orderer Fulfillment Center, Lagos',
+            'city'    => $seller->city          ?? 'Lagos',
+            'state'   => $seller->state         ?? 'Lagos',
+            'country' => 'NG',
+        ];
+    }
 
-    //     return $isNigeria ? [
-    //         ['service_code' => 'standard_ng', 'courier' => ['name' => 'Standard Delivery'], 'service' => ['name' => 'Standard (3-5 days)'], 'total' => 3.50, 'delivery_eta' => '3-5 business days'],
-    //         ['service_code' => 'express_ng',  'courier' => ['name' => 'Express Delivery'],  'service' => ['name' => 'Express (1-2 days)'],   'total' => 8.00, 'delivery_eta' => '1-2 business days'],
-    //     ] : [
-    //         ['service_code' => 'intl_standard', 'courier' => ['name' => 'DHL'], 'service' => ['name' => 'International Standard (7-14 days)'], 'total' => 25.00, 'delivery_eta' => '7-14 business days'],
-    //         ['service_code' => 'intl_express',  'courier' => ['name' => 'DHL'], 'service' => ['name' => 'International Express (3-5 days)'],   'total' => 55.00, 'delivery_eta' => '3-5 business days'],
-    //     ];
-    // }
+    protected function buildRecipientPayload(Order $order, $user): array
+    {
+        return [
+            'name'    => $order->shipping_name,
+            'email'   => $user->email ?? '',
+            'phone'   => $order->shipping_phone,
+            'address' => $order->shipping_address,
+            'city'    => $order->shipping_city,
+            'state'   => $order->shipping_state,
+            'country' => $order->shipping_country ?? 'NG',
+        ];
+    }
+
+    protected function buildParcelPayload($items, float $weight, float $value, string $orderNumber): array
+    {
+        return [
+            'weight' => $weight,
+            'length' => 20,
+            'width'  => 20,
+            'height' => 20,
+            'items'  => $items->map(fn($i) => [
+                'name'     => $i->item_name,
+                'quantity' => $i->quantity,
+                'value'    => max((float) $i->unit_price, 10),
+            ])->toArray(),
+        ];
+    }
 }
