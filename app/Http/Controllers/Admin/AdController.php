@@ -22,13 +22,33 @@ class AdController extends Controller
     {
         $query = Ad::with(['seller', 'adCategory', 'bannerSlot']);
 
-        if ($request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        $ads = $query->latest()->paginate(20);
+        // Add the missing search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhereHas('seller', fn($s) => 
+                      $s->where('business_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                  );
+            });
+        }
 
-        return view('admin.ads.index', compact('ads'));
+        // Get ALL for stats BEFORE paginating
+        $stats = [
+            'total'   => (clone $query)->count(),
+            'active'  => (clone $query)->where('status', 'active')->count(),
+            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'spent'   => (clone $query)->sum('amount_spent'),
+        ];
+
+        $pro = $query->latest()->paginate(20);
+
+        return view('admin.ads.index', compact('pro', 'stats'));
     }
     
     public function show(Ad $ad)

@@ -5,17 +5,21 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\Brand;
 use App\Models\Wallet;
 use App\Services\WalletService;
 
 class DashboardController extends Controller
-{
+{ 
     public function __construct(protected WalletService $walletService) {}
 
     public function index()
     {
         $seller = auth('seller')->user();
         $wallet = $this->walletService->getOrCreate($seller);
+
+        // Check if seller has created a brand
+        $hasBrand = Brand::where('seller_id', $seller->id)->exists();
 
         $stats = [
             'wallet_balance'   => $wallet->balance,
@@ -40,7 +44,7 @@ class DashboardController extends Controller
             ->get();
 
         return view('seller.dashboard.index', compact(
-            'seller', 'stats', 'recentOrders', 'recentProducts', 'wallet'
+            'seller', 'stats', 'recentOrders', 'recentProducts', 'wallet', 'hasBrand'
         ));
     }
 }

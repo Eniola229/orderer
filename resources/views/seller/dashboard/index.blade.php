@@ -25,6 +25,31 @@
 </div>
 @endif
 
+{{-- Brand Creation Alert --}}
+@if(!$hasBrand)
+<div class="alert alert-info border-start border-4 border-primary mb-4" role="alert">
+    <div class="d-flex align-items-start">
+        <i class="feather-award me-3 mt-1" style="font-size: 24px;"></i>
+        <div class="flex-grow-1">
+            <h6 class="alert-heading fw-bold mb-2">Create Your Brand to Grow Your Business! 🚀</h6>
+            <p class="mb-2">Having a brand on our platform helps you:</p>
+            <ul class="mb-3 ps-3">
+                <li>Build trust and credibility with customers</li>
+                <li>Increase product visibility and sales</li>
+                <li>Get featured in brand-specific promotions</li>
+                <li>Establish a professional business identity</li>
+            </ul>
+            <a href="{{ route('seller.brand.index') }}" class="btn btn-primary btn-sm">
+                <i class="feather-plus-circle me-1"></i> Create Your Brand Now
+            </a>
+            <button type="button" class="btn btn-link btn-sm text-muted ms-2" onclick="this.closest('.alert').remove()">
+                <i class="feather-x"></i> Dismiss
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Stat cards --}}
 <div class="row">
     <div class="col-xxl-3 col-md-6">

@@ -186,7 +186,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Cost Per Day</label>
-                        <p class="fw-semibold mb-0">${{ number_format($ad->cost_per_day, 2) }}/day</p>
+                        <p class="fw-semibold mb-0">₦{{ number_format($ad->cost_per_day, 2) }}/day</p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="text-muted d-block fs-12 mb-1">Duration</label>
@@ -265,7 +265,7 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="text-muted">Ads Balance</span>
-                    <span class="fw-bold text-success">${{ number_format($ad->seller->ads_balance ?? 0, 2) }}</span>
+                    <span class="fw-bold text-success">₦{{ number_format($ad->seller->ads_balance ?? 0, 2) }}</span>
                 </div>
             </div>
         </div>

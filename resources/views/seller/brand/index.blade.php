@@ -19,7 +19,7 @@
             <div class="card-body">
                 <div class="alert alert-info mb-4">
                     <i class="feather-info me-2"></i>
-                    A brand page lets buyers browse all your products in one place and leave reviews.
+                    A brand page lets buyers browse all your products, services, properties in one place and leave reviews.
                 </div>
                 <form action="{{ route('seller.brand.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
