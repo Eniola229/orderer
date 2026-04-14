@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendNewsletterJob;
 use App\Models\Newsletter;
+use App\Models\NewsletterSubscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,6 +21,52 @@ class NewsletterController extends Controller
             ->paginate(20);
 
         return view('admin.newsletter.index', compact('newsletters'));
+    }
+
+    public function subscribers(Request $request)
+    {
+        try {
+            $query = NewsletterSubscriber::query();
+            
+            // Apply date filters if provided
+            if ($request->filled('date_from')) {
+                $query->whereDate('subscribed_at', '>=', $request->date_from);
+            }
+            
+            if ($request->filled('date_to')) {
+                $query->whereDate('subscribed_at', '<=', $request->date_to);
+            }
+            
+            // Paginate with 100 items per page
+            $perPage = $request->get('per_page', 100);
+            $subscribers = $query->orderBy('subscribed_at', 'desc')->paginate($perPage);
+            
+            // Format the data
+            $formattedSubscribers = $subscribers->getCollection()->map(function ($subscriber) {
+                return [
+                    'email' => $subscriber->email,
+                    'subscribed_at' => $subscriber->subscribed_at ? $subscriber->subscribed_at->format('M d, Y') : 'N/A'
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'subscribers' => $formattedSubscribers,
+                'total' => $subscribers->total(),
+                'current_page' => $subscribers->currentPage(),
+                'last_page' => $subscribers->lastPage(),
+                'per_page' => $subscribers->perPage(),
+                'has_more_pages' => $subscribers->hasMorePages()
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching subscribers: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch subscribers'
+            ], 500);
+        }
     }
 
     // ── Create form ───────────────────────────────────────────

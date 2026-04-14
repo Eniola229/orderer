@@ -110,7 +110,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/support/{ticket}/reply', [SupportController::class, 'reply'])->name('support.reply');
         Route::put('/support/{ticket}/resolve', [SupportController::class, 'resolve'])->name('support.resolve');
         Route::put('/support/{ticket}/close', [SupportController::class, 'close'])->name('support.close');
-        Route::get('/support/{ticket}/messages', [AdminSupportController::class, 'messages'])->name('support.messages');
+        Route::get('/support/{ticket}/messages', [SupportController::class, 'messages'])->name('support.messages');
 
         // ==================== Admin Management ====================
         Route::get('/admins', [AdminController::class, 'index'])->name('admins.index');
@@ -158,6 +158,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/',                        [NewsletterController::class, 'index'])  ->name('index');
             Route::get('/create',                  [NewsletterController::class, 'create']) ->name('create');
             Route::post('/',                       [NewsletterController::class, 'store'])  ->name('store');
+            Route::get('/subscribers', [NewsletterController::class, 'subscribers'])
+            ->name('subscribers');
             Route::get('/{newsletter}',            [NewsletterController::class, 'show'])   ->name('show');
             Route::get('/{newsletter}/edit',       [NewsletterController::class, 'edit'])   ->name('edit');
             Route::put('/{newsletter}',            [NewsletterController::class, 'update']) ->name('update');
