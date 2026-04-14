@@ -20,9 +20,9 @@ use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\HouseController;
 use App\Http\Controllers\Admin\FlashSaleController;
 use App\Http\Controllers\Admin\DeliveryBookingController;
-
+use App\Http\Controllers\Admin\NewsletterController;
  
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->group(function () { 
 
     // Guest only
     Route::middleware('guest.admin')->group(function () {
@@ -153,5 +153,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/delivery-bookings',                      [DeliveryBookingController::class, 'index'])->name('delivery-bookings.index');
         Route::get('/delivery-bookings/{deliveryBooking}',    [DeliveryBookingController::class, 'show'])->name('delivery-bookings.show');
         Route::put('/delivery-bookings/{deliveryBooking}/status', [DeliveryBookingController::class, 'updateStatus'])->name('delivery-bookings.update-status');
+
+        Route::prefix('newsletter')->name('newsletter.')->group(function () {
+            Route::get('/',                        [NewsletterController::class, 'index'])  ->name('index');
+            Route::get('/create',                  [NewsletterController::class, 'create']) ->name('create');
+            Route::post('/',                       [NewsletterController::class, 'store'])  ->name('store');
+            Route::get('/{newsletter}',            [NewsletterController::class, 'show'])   ->name('show');
+            Route::get('/{newsletter}/edit',       [NewsletterController::class, 'edit'])   ->name('edit');
+            Route::put('/{newsletter}',            [NewsletterController::class, 'update']) ->name('update');
+            Route::post('/{newsletter}/send',      [NewsletterController::class, 'send'])   ->name('send');
+            Route::delete('/{newsletter}',         [NewsletterController::class, 'destroy'])->name('destroy');
+        });
     });
 });

@@ -19,13 +19,13 @@ class SecurityHeaders
         $response->headers->set(
             'Content-Security-Policy',
             "default-src 'self'; " .
-            "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com js.pusher.com; " .
-            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com; " .
-            "font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com; " .
-            "img-src 'self' data: https://res.cloudinary.com https://*.cloudinary.com; " .
-            "connect-src 'self' wss://*.pusher.com https://*.pusher.com"
+            "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com js.pusher.com cdn.tiny.cloud; " .
+            "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com cdn.tiny.cloud; " .
+            "font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com cdn.tiny.cloud; " .
+            "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com cdn.tiny.cloud sp.tinymce.com; " .
+            "connect-src 'self' wss://*.pusher.com https://*.pusher.com https://cdn.tiny.cloud sp.tinymce.com; " .
+            "worker-src 'self' blob:;"
         );
-
         return $response;
     }
 }

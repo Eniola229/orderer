@@ -33,6 +33,8 @@ Route::get('/search',               [StorefrontController::class, 'search'])->na
 Route::get('/brands',               [StorefrontController::class, 'brands'])->name('brands.index');
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+//Waitlist
+Route::get('/waitlist', fn() => view('waitlist'))->name('waitlist');
 
 // ── Legal Pages ───────────────────────────────────────────────────────────────
 Route::prefix('legal')->name('legal.')->group(function () {

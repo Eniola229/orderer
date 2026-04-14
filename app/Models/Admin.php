@@ -148,4 +148,13 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(ActivityLog::class);
     }
+
+    /** Send newsletters to buyers and/or sellers */
+    public function canManageNewsletter(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_SUPPORT_ADMIN, 
+        ]);
+    }
 }

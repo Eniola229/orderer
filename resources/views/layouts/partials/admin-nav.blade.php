@@ -23,7 +23,7 @@
                         <span class="nxl-micon"><i class="feather-airplay"></i></span>
                         <span class="nxl-mtext">Dashboard</span>
                     </a>
-                </li>
+                </li> 
 
                 <li class="nxl-item nxl-caption">
                     <label>Management</label>
@@ -202,6 +202,16 @@
                             <a class="nxl-link" href="{{ route('admin.support.open') }}">Open Tickets</a>
                         </li>
                     </ul>
+                </li>
+                @endif
+
+                {{-- Newsletter --}}
+                @if(auth('admin')->user()->canManageNewsletter())
+                <li class="nxl-item {{ request()->routeIs('admin.newsletter.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.newsletter.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-mail"></i></span>
+                        <span class="nxl-mtext">Newsletter</span>
+                    </a>
                 </li>
                 @endif
 

@@ -10,6 +10,7 @@ use App\Models\Wishlist;
 use App\Models\HouseListing;
 use App\Models\ServiceListing;
 use App\Models\ProductReview;
+use App\Models\NewsletterSubscriber;
 use App\Helpers\AdHelper;
 use Illuminate\Http\Request;
 
@@ -406,7 +407,23 @@ class StorefrontController extends Controller
     public function newsletterSubscribe(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
-        return back()->with('success', 'Thank you for subscribing!');
+
+        try {
+            NewsletterSubscriber::firstOrCreate(
+                ['email' => $request->email],
+                ['subscribed_at' => now()]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Thank you for subscribing!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again.'
+            ], 500);
+        }
     }
 
     public function submitReview(Request $request, Product $product)

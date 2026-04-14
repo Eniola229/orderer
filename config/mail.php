@@ -53,6 +53,12 @@ return [
             'transport' => 'ses',
         ],
 
+        'brevo' => [
+            'transport' => 'brevo',
+            'api_key' => env('BREVO_API_KEY'),
+        ],
+
+
         'postmark' => [
             'transport' => 'postmark',
             // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),

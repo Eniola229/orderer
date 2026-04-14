@@ -111,3 +111,97 @@
         </div>
     </div>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle all newsletter forms in footer with AJAX
+    const newsletterForms = document.querySelectorAll('.ord-footer-newsletter');
+    
+    newsletterForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            const emailInput = this.querySelector('input[name="email"]');
+            const originalEmail = emailInput.value;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+            
+            // Remove any existing message
+            let msgDiv = this.parentNode.querySelector('.newsletter-message');
+            if (msgDiv) msgDiv.remove();
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value,
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+                
+                if (response.redirected) {
+                    // Success - redirect means success
+                    emailInput.value = '';
+                    showFooterToast('Thank you for subscribing!', 'success');
+                } else {
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        emailInput.value = '';
+                        showFooterToast(data.message || 'You\'re on the list!', 'success');
+                    } else {
+                        const errorMsg = data.errors?.email?.[0] || data.message || 'Something went wrong';
+                        showFooterToast(errorMsg, 'error');
+                    }
+                }
+            } catch (err) {
+                showFooterToast('Network error. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+        });
+    });
+    
+    function showFooterToast(message, type = 'success') {
+        // Create toast element if doesn't exist
+        let toast = document.getElementById('footer-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'footer-toast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#2ECC71' : '#E74C3C'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 9999;
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(toast);
+        }
+        
+        toast.style.background = type === 'success' ? '#2ECC71' : '#E74C3C';
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+        }, 4000);
+    }
+});
+</script>

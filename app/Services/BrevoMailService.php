@@ -29,6 +29,17 @@ class BrevoMailService
             'htmlContent' => $htmlContent,
         ]);
 
+            if (!$response->successful()) {
+                \Log::error('Brevo API Error Details:', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'to' => $toEmail,
+                    'subject' => $subject,
+                    'api_key_prefix' => substr($this->apiKey, 0, 10) . '...', // Don't log full key
+                ]);
+            }
+
+
         return $response->successful();
     }
 
