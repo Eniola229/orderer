@@ -217,7 +217,7 @@ class CheckoutController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Checkout place error: ' . $e->getMessage());
-            return back()->with('error', 'Order failed: ' . $e->getMessage());
+            return back()->with('error', 'Order failed');
         }
     }
 

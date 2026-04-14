@@ -68,7 +68,7 @@ class CartController extends Controller
         $product = \App\Models\Product::findOrFail($request->product_id);
 
         // ── Flash sale price check ───────────────────────────────────────────
-        $price = $product->sale_price ?? $product->price;
+        $price = $product->current_price;
 
         if ($request->boolean('flash_sale')) {
             $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
@@ -105,7 +105,7 @@ class CartController extends Controller
                 'product_id' => $product->id,
                 'quantity'   => $request->quantity,
                 'price'      => $price,
-            ]);
+            ]);  
         }
 
         return response()->json(['success' => true, 'message' => 'Added to cart.']);

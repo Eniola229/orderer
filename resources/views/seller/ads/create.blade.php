@@ -328,7 +328,7 @@
                             <span>
                                 <i class="feather-info me-2"></i>
                                 Your ads balance:
-                                <strong>${{ number_format($seller->ads_balance, 2) }}</strong>
+                                <strong>₦{{ number_format($seller->ads_balance, 2) }}</strong>
                             </span>
                             <a href="{{ route('seller.wallet.index') }}"
                                class="btn btn-sm btn-outline-primary">
@@ -591,7 +591,7 @@ function removeMedia() {
     videoPreview.src = '';
 }
 
-function removeMedia() {                                               // ✅ fixed name
+function removeMedia() {                                              
     mediaInput.value = '';
     mediaNameSpan.style.display = 'none';
     previewContainer.style.display = 'none';
@@ -618,7 +618,7 @@ function updateBudgetEstimate() {
         div.style.display = 'block';
         div.innerHTML = `
             <strong>${days} day(s)</strong> × ₦${pricePerDay.toFixed(2)}/day = 
-            <strong>$${minCost} minimum budget</strong>
+            <strong>₦${minCost} minimum budget</strong>
         `;
     }
 }
