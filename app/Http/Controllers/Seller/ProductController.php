@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVideo;
+use App\Models\ProductOption;
+use App\Models\ProductOptionValue;
 use App\Models\Category;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
@@ -56,8 +58,15 @@ class ProductController extends Controller
                                    Rule::unique('products', 'sku')
                                        ->ignore(auth('seller')->id(), 'seller_id')],
             'images'          => ['required', 'array', 'min:1', 'max:8'],
-            'images.*'        => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'images.*'        => ['image', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
             'video'           => ['nullable', 'file', 'mimes:mp4,mov,avi', 'max:51200'],
+
+            // Options (optional)
+            'options'                        => ['nullable', 'array', 'max:5'],
+            'options.*.name'                 => ['required_with:options', 'string', 'max:100'],
+            'options.*.values'               => ['required_with:options', 'array', 'min:1'],
+            'options.*.values.*.value'       => ['required', 'string', 'max:100'],
+            'options.*.values.*.image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,avif', 'max:2048'],
         ]);
 
         $product = Product::create([
@@ -106,6 +115,9 @@ class ProductController extends Controller
             ]);
         }
 
+        // Save options
+        $this->saveOptions($request, $product);
+
         return redirect()->route('seller.products.index')
             ->with('success', 'Product submitted for review. We will notify you once it is approved.');
     }
@@ -114,7 +126,7 @@ class ProductController extends Controller
     {
         $this->authorizeProduct($product);
 
-        $product->load(['images', 'videos', 'category', 'subcategory']);
+        $product->load(['images', 'videos', 'category', 'subcategory', 'options.values']);
 
         return view('seller.products.show', compact('product'));
     }
@@ -132,7 +144,7 @@ class ProductController extends Controller
                                ->with('subcategories')
                                ->get();
 
-        $product->load(['images', 'videos', 'category', 'subcategory']);
+        $product->load(['images', 'videos', 'category', 'subcategory', 'options.values']);
 
         return view('seller.products.edit', compact('product', 'categories'));
     }
@@ -151,6 +163,12 @@ class ProductController extends Controller
             'stock'          => ['required', 'integer', 'min:0'],
             'condition'      => ['required', 'in:new,used,refurbished'],
             'new_images.*'   => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+
+            'options'                        => ['nullable', 'array', 'max:5'],
+            'options.*.name'                 => ['required_with:options', 'string', 'max:100'],
+            'options.*.values'               => ['required_with:options', 'array', 'min:1'],
+            'options.*.values.*.value'       => ['required', 'string', 'max:100'],
+            'options.*.values.*.image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $product->update([
@@ -165,7 +183,7 @@ class ProductController extends Controller
             'weight_kg'      => $request->weight_kg,
             'location'       => $request->location,
             'sku'            => $request->sku,
-            'status'         => 'pending', // re-submit for review
+            'status'         => 'pending',
         ]);
 
         // Upload new images if any
@@ -188,6 +206,10 @@ class ProductController extends Controller
             }
         }
 
+        // Replace options entirely on update
+        $this->deleteOptions($product);
+        $this->saveOptions($request, $product);
+
         return redirect()->route('seller.products.index')
             ->with('success', 'Product updated and re-submitted for review.');
     }
@@ -196,13 +218,21 @@ class ProductController extends Controller
     {
         $this->authorizeProduct($product);
 
-        // Delete images from Cloudinary
         foreach ($product->images as $image) {
             $this->cloudinary->delete($image->cloudinary_public_id);
         }
 
         foreach ($product->videos as $video) {
             $this->cloudinary->delete($video->cloudinary_public_id, 'video');
+        }
+
+        // Delete option value images from Cloudinary
+        foreach ($product->options as $option) {
+            foreach ($option->values as $val) {
+                if ($val->cloudinary_public_id) {
+                    $this->cloudinary->delete($val->cloudinary_public_id);
+                }
+            }
         }
 
         $product->delete();
@@ -223,12 +253,83 @@ class ProductController extends Controller
         $this->cloudinary->delete($image->cloudinary_public_id);
         $image->delete();
 
-        // If deleted image was primary, set first remaining as primary
         if ($image->is_primary) {
             $product->images()->oldest()->first()?->update(['is_primary' => true]);
         }
 
         return back()->with('success', 'Image removed.');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+
+    /**
+     * Persist the options[] payload (new product or full replacement on update).
+     */
+    protected function saveOptions(Request $request, Product $product): void
+    {
+        $optionsInput = $request->input('options', []);
+
+        if (empty($optionsInput)) {
+            return;
+        }
+
+        foreach ($optionsInput as $optionIndex => $optionData) {
+            $optionName = trim($optionData['name'] ?? '');
+            if (!$optionName) continue;
+
+            $option = ProductOption::create([
+                'product_id' => $product->id,
+                'name'       => $optionName,
+                'sort_order' => $optionIndex,
+            ]);
+
+            $valuesInput = $optionData['values'] ?? [];
+
+            foreach ($valuesInput as $valueIndex => $valueData) {
+                $valueName = trim($valueData['value'] ?? '');
+                if (!$valueName) continue;
+
+                $imageUrl        = null;
+                $cloudinaryPubId = null;
+
+                // Check if there is an uploaded image file for this value
+                $imageFile = $request->file("options.{$optionIndex}.values.{$valueIndex}.image");
+                if ($imageFile) {
+                    $uploaded        = $this->cloudinary->uploadImage(
+                        $imageFile,
+                        'orderer/product-options/' . $product->id
+                    );
+                    $imageUrl        = $uploaded['url'];
+                    $cloudinaryPubId = $uploaded['public_id'];
+                }
+
+                ProductOptionValue::create([
+                    'product_option_id'    => $option->id,
+                    'value'                => $valueName,
+                    'image_url'            => $imageUrl,
+                    'cloudinary_public_id' => $cloudinaryPubId,
+                    'sort_order'           => $valueIndex,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Delete all options (and their Cloudinary images) for a product.
+     */
+    protected function deleteOptions(Product $product): void
+    {
+        $product->load('options.values');
+
+        foreach ($product->options as $option) {
+            foreach ($option->values as $val) {
+                if ($val->cloudinary_public_id) {
+                    $this->cloudinary->delete($val->cloudinary_public_id);
+                }
+            }
+        }
+
+        $product->options()->delete(); // cascades to values via DB
     }
 
     protected function authorizeProduct(Product $product): void

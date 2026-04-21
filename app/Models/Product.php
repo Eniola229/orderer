@@ -49,6 +49,8 @@ class Product extends Model
     public function images()      { return $this->hasMany(ProductImage::class)->orderBy('sort_order'); }
     public function videos()      { return $this->hasMany(ProductVideo::class); }
     public function reviews()     { return $this->hasMany(ProductReview::class); }
+    public function options(): \Illuminate\Database\Eloquent\Relations\HasMany { return $this->hasMany(ProductOption::class, 'product_id')->orderBy('sort_order'); }
+     
 
     public function getPrimaryImageAttribute()
     {

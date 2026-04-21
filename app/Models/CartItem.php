@@ -15,11 +15,13 @@ class CartItem extends Model
         'product_id',
         'quantity',
         'price',
+        'selected_options',
     ];
 
     protected $casts = [
         'price'    => 'decimal:2',
         'quantity' => 'integer',
+        'selected_options' => 'array',
     ];
 
     // ── Relationships ──────────────────────────────────────────
@@ -40,4 +42,5 @@ class CartItem extends Model
     {
         return $this->price * $this->quantity;
     }
+
 }

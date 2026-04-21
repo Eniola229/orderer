@@ -67,7 +67,7 @@ class ProductController extends Controller
     {
         if (!auth('admin')->user()->canView()) abort(403);
         
-        $product->load(['seller', 'category', 'images', 'videos']);
+        $product->load(['seller', 'category', 'images', 'videos', 'options.values']);
         
         return view('admin.products.show', compact('product'));
     }

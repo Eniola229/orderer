@@ -17,7 +17,7 @@ class OrderItem extends Model
         'seller_earnings', 'status',
         // Tracking fields
         'shipbubble_shipment_id', 'courier_id', 'tracking_number',
-        'tracking_url', 'shipping_status', 'estimated_delivery_date', 'delivered_at',
+        'tracking_url', 'shipping_status', 'estimated_delivery_date', 'delivered_at', 'selected_options',
     ];
 
     protected $casts = [
@@ -27,6 +27,7 @@ class OrderItem extends Model
         'commission_amount'  => 'decimal:2',
         'seller_earnings'    => 'decimal:2',
         'delivered_at'       => 'datetime',
+        'selected_options' => 'array',
     ];
 
     public function order()     { return $this->belongsTo(Order::class); }

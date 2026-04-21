@@ -23,7 +23,7 @@ function sellerOrderStatusBadge(string $status): string {
         'failed'     => 'bg-danger text-white',
         'refunded'   => 'bg-secondary text-white',
         default      => 'bg-secondary text-white',
-    };
+    }; 
 }
 @endphp
 
@@ -55,13 +55,16 @@ function sellerOrderStatusBadge(string $status): string {
                             @foreach($myItems as $item)
                             <tr>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if($item->item_image)
-                                        <img src="{{ $item->item_image }}"
-                                             style="width:44px;height:44px;object-fit:cover;border-radius:8px;" alt="">
-                                        @endif
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($item->item_image)
+                                    <img src="{{ $item->item_image }}"
+                                         style="width:44px;height:44px;object-fit:cover;border-radius:8px;" alt="">
+                                    @endif
+                                    <div>
                                         <span class="fw-semibold fs-13">{{ $item->item_name }}</span>
+                                        @include('partials._selected_options', ['options' => $item->selected_options])
                                     </div>
+                                </div>
                                 </td>
                                 <td class="fw-semibold">{{ $item->quantity }}</td>
                                 <td>₦{{ number_format($item->unit_price, 2) }}</td>

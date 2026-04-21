@@ -28,7 +28,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.9);
+        background: rgba(0,0,0,0.9); 
         z-index: 999999;
         display: none;
         align-items: center;
@@ -134,6 +134,9 @@
             </div>
         </div>
         @endif
+
+        {{-- Options Card --}}
+        @include('partials._product_options_display')
 
         {{-- Videos Card --}}
         @if($product->videos->count())

@@ -14,7 +14,13 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'session_id',
+        'selected_options',
     ];
+
+    protected $casts = [
+        'selected_options' => 'array',
+    ];
+
 
     // ── Relationships ──────────────────────────────────────────
 

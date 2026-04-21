@@ -26,7 +26,7 @@ function orderStatusBadge(string $status): string {
     };
 }
 @endphp
-
+ 
 <div class="row">
     <div class="col-lg-8">
 
@@ -53,15 +53,19 @@ function orderStatusBadge(string $status): string {
                         <tbody>
                             @foreach($order->items as $item)
                              <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if($item->item_image)
-                                        <img src="{{ $item->item_image }}"
-                                             style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="">
-                                        @endif
+                              <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($item->item_image)
+                                    <img src="{{ $item->item_image }}"
+                                         style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="">
+                                    @endif
+                                    <div>
                                         <span class="fw-semibold fs-13">{{ $item->item_name }}</span>
+                                        @include('partials._selected_options', ['options' => $item->selected_options])
                                     </div>
-                                </td>
+                                </div>
+                            </td>
+
                                 <td class="text-muted fs-13">{{ $item->seller->business_name ?? '—' }}</td>
                                 <td>{{ $item->quantity }}</td>
                                 <td class="fw-bold">₦{{ number_format($item->total_price, 2) }}</td>

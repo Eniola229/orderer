@@ -15,7 +15,7 @@
     @csrf
 
     <div class="row">
-
+ 
         {{-- Left --}}
         <div class="col-lg-8">
 
@@ -165,6 +165,8 @@
 
                 </div>
             </div>
+
+             @include('seller.products._options', ['existingOptions' => []])
 
             {{-- Images --}}
             <div class="card mb-3">

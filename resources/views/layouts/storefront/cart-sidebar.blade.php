@@ -14,7 +14,7 @@
         <div id="cartItemsList"
              style="flex:1;overflow-y:auto;padding:20px 15px 10px;">
             <p class="p-3 text-muted">Your cart is empty.</p>
-        </div>
+        </div> 
 
         {{-- Summary - fixed at bottom --}}
         <div style="border-top:1px solid #ebebeb;padding:20px 25px;background:#fff;flex-shrink:0;">

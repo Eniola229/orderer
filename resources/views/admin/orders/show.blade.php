@@ -27,7 +27,7 @@ function adminOrderStatusBadge(string $status): string {
         default      => 'bg-secondary text-white',
     };
 }
-@endphp
+@endphp 
 
 <div class="row">
     <div class="col-lg-8">
@@ -58,13 +58,16 @@ function adminOrderStatusBadge(string $status): string {
                             @foreach($order->items as $item)
                              <tr>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if($item->item_image)
-                                        <img src="{{ $item->item_image }}"
-                                             style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="">
-                                        @endif
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($item->item_image)
+                                    <img src="{{ $item->item_image }}"
+                                         style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="">
+                                    @endif
+                                    <div>
                                         <span class="fw-semibold fs-13">{{ Str::limit($item->item_name, 30) }}</span>
+                                        @include('partials._selected_options', ['options' => $item->selected_options])
                                     </div>
+                                </div>
                                 </td>
                                 <td>
                                     <a href="{{ route('admin.sellers.show', $item->seller_id) }}"

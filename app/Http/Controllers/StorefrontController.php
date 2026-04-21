@@ -164,7 +164,7 @@ class StorefrontController extends Controller
     {
         $product = Product::where('slug', $slug)
             ->where('status', 'approved')
-            ->with(['images', 'videos', 'seller', 'category', 'subcategory', 'reviews.user'])
+            ->with(['images', 'videos', 'seller', 'category', 'subcategory', 'reviews.user', 'options.values'])
             ->firstOrFail();
 
         // Increment views

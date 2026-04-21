@@ -20,10 +20,10 @@
       enctype="multipart/form-data"
       id="productForm">
     @csrf
-    @method('PUT')
+    @method('PUT') 
 
     <div class="row">
-
+ 
         {{-- Left --}}
         <div class="col-lg-8">
 
@@ -181,6 +181,8 @@
 
                 </div>
             </div>
+
+            @include('seller.products._options', ['existingOptions' => $product->options])
 
             {{-- Images --}}
             <div class="card mb-3">

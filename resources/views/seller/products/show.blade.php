@@ -16,7 +16,7 @@
     }
     .product-images img {
         width: 100px;
-        height: 100px;
+        height: 100px; 
         object-fit: cover;
         border-radius: 8px;
         border: 1px solid #e5e7eb;
@@ -144,6 +144,9 @@
             </div>
         </div>
         @endif
+
+        {{-- Options Card --}}
+        @include('partials._product_options_display')
 
         {{-- Videos Card --}}
         @if($product->videos->count())

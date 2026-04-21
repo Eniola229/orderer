@@ -100,7 +100,7 @@
                             data-bs-target="#rejectProd{{ $product->id }}">
                         <i class="feather-x me-1"></i> Reject
                     </button>
-                    <a href="{{ route('product.show', $product->slug) }}" target="_blank"
+                    <a href="{{ route('admin.products.show', $product) }}" target="_blank"
                        class="btn btn-outline-secondary btn-sm">
                         <i class="feather-eye me-1"></i> Preview
                     </a>

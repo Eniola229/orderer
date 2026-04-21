@@ -22,7 +22,7 @@
     </div>
 </div> 
  
-<style> 
+<style>  
     @media (max-width: 768px) {
         .single_product_area {
             padding: 40px 0;
@@ -252,7 +252,51 @@
                     </div>
                     @endif
 
-                    {{-- Add to cart --}}
+                    {{-- Product Options (if any) --}}
+                    @if($product->options->count())
+                    <div class="product-options mb-3" id="productOptions">
+                        @foreach($product->options as $option)
+                        <div class="mb-3" data-option-id="{{ $option->id }}">
+                            <p class="mb-2" style="font-size:14px;font-weight:700;color:#1a1a1a;">
+                                {{ $option->name }}:
+                                <span class="selected-label text-muted fw-normal" id="selected-{{ $option->id }}">—</span>
+                            </p>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach($option->values as $val)
+                                <button type="button"
+                                        class="option-swatch"
+                                        data-option-id="{{ $option->id }}"
+                                        data-option-name="{{ $option->name }}"
+                                        data-value-id="{{ $val->id }}"
+                                        data-value="{{ $val->value }}"
+                                        data-image="{{ $val->image_url ?? '' }}"
+                                        title="{{ $val->value }}"
+                                        style="
+                                            border: 2px solid #ddd;
+                                            border-radius: 8px;
+                                            background: #fff;
+                                            cursor: pointer;
+                                            padding: 0;
+                                            overflow: hidden;
+                                            transition: border-color .15s, transform .15s;
+                                            {{ $val->image_url ? 'width:52px;height:52px;' : 'padding:6px 14px;height:36px;font-size:13px;font-weight:600;' }}
+                                        ">
+                                    @if($val->image_url)
+                                        <img src="{{ $val->image_url }}"
+                                             style="width:100%;height:100%;object-fit:cover;display:block;"
+                                             alt="{{ $val->value }}">
+                                    @else
+                                        {{ $val->value }}
+                                    @endif
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    {{-- Add to cart - MOVED OUTSIDE the options condition --}}
                     @if($product->stock > 0)
                     <form id="addToCartForm" class="mb-3">
                         @csrf
@@ -603,7 +647,95 @@
 <script src="{{ asset('js/plugins.js') }}"></script>
 <script src="{{ asset('js/classy-nav.min.js') }}"></script>
 <script src="{{ asset('js/active.js') }}"></script>
+
+<style>
+.option-swatch:hover {
+    border-color: #2ECC71 !important;
+    transform: translateY(-1px);
+}
+.option-swatch.active {
+    border-color: #2ECC71 !important;
+    box-shadow: 0 0 0 2px rgba(46,204,113,.35);
+    transform: translateY(-1px);
+}
+</style>
+
 <script>
+// Auto-select first option for each option group if none selected
+function autoSelectFirstOptions() {
+    var optionsContainer = document.getElementById('productOptions');
+    if (!optionsContainer) return; // No options, exit quietly
+    
+    document.querySelectorAll('#productOptions [data-option-id]').forEach(function (group) {
+        var optionId = group.dataset.optionId;
+        
+        // If no option is selected for this group
+        if (!window._selectedOptions[optionId]) {
+            var firstSwatch = group.querySelector('.option-swatch');
+            if (firstSwatch) {
+                // Trigger click on the first swatch
+                firstSwatch.click();
+            }
+        }
+    });
+}
+
+// Options swatch logic
+window._selectedOptions = {};
+ 
+document.querySelectorAll('.option-swatch').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var optionId   = this.dataset.optionId;
+        var optionName = this.dataset.optionName;
+        var valueId    = this.dataset.valueId;
+        var value      = this.dataset.value;
+        var imgUrl     = this.dataset.image;
+ 
+        // Deselect all swatches in this option group, then mark this one active
+        document.querySelectorAll('.option-swatch[data-option-id="' + optionId + '"]')
+                .forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+ 
+        // Update the "selected: X" label next to the option name
+        var label = document.getElementById('selected-' + optionId);
+        if (label) label.textContent = value;
+ 
+        // Store the full selection object
+        window._selectedOptions[optionId] = {
+            option_id:   optionId,
+            option_name: optionName,
+            value_id:    valueId,
+            value:       value,
+            image_url:   imgUrl || null,
+        };
+ 
+        // If the swatch has its own image, swap the main product photo
+        if (imgUrl) {
+            var mainImg = document.getElementById('mainProductImg');
+            if (mainImg) {
+                mainImg.src = imgUrl;
+                document.querySelectorAll('.thumb-img').forEach(function (t) {
+                    t.style.borderColor = (t.src === imgUrl) ? '#2ECC71' : '#eee';
+                });
+            }
+        }
+    });
+});
+ 
+// Validate options - auto-selects first option if none selected
+window.validateOptions = function () {
+    // Only run if product has options
+    if (document.getElementById('productOptions')) {
+        autoSelectFirstOptions();
+    }
+    return true; // Always return true
+};
+ 
+// Returns the selections as an array for the cart payload
+window.getSelectedOptions = function () {
+    return Object.values(window._selectedOptions);
+};
+
 // Flash sale countdown timer
 (function() {
     const el = document.getElementById('flashCountdown');
@@ -641,10 +773,23 @@ function changeQty(delta) {
 }
 
 function addToCart(productId, isFlashSale = false) {
+    // Auto-select any unselected options (if product has options)
+    if (typeof window.validateOptions === 'function') {
+        window.validateOptions();
+    }
+ 
     const qty = document.getElementById('qty').value;
-    const payload = { product_id: productId, quantity: parseInt(qty) };
+ 
+    const payload = {
+        product_id:       productId,
+        quantity:         parseInt(qty),
+        selected_options: (typeof window.getSelectedOptions === 'function')
+                            ? window.getSelectedOptions()
+                            : [],
+    };
+ 
     if (isFlashSale) payload.flash_sale = true;
-
+ 
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
         headers: {
@@ -652,18 +797,20 @@ function addToCart(productId, isFlashSale = false) {
             'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            window.loadCart();
-            window.cartToast('Item added to cart!');
+            if (window.loadCart) window.loadCart();
+            if (window.cartToast) window.cartToast('Item added to cart!');
         } else {
-            window.cartToast(data.message ?? 'Could not add item.', 'error');
+            if (window.cartToast) window.cartToast(data.message ?? 'Could not add item.', 'error');
         }
     })
-    .catch(() => window.cartToast('Something went wrong.', 'error'));
+    .catch(() => {
+        if (window.cartToast) window.cartToast('Something went wrong.', 'error');
+    });
 }
 
 function toggleWishlist(productId, btn) {
@@ -820,6 +967,14 @@ document.querySelectorAll('.add-to-cart').forEach(function(btn) {
         addToCart(this.dataset.product);
     });
 });
+
+// Initialize: Auto-select first options when page loads (only if product has options)
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('productOptions')) {
+        autoSelectFirstOptions();
+    }
+});
 </script>
+
 </body>
 </html>
