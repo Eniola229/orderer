@@ -14,7 +14,7 @@
             <div class="col-12">
                 <div class="page-title text-center">
                     <h2>{{ $currentCategory ? $currentCategory->name : 'All Products' }}</h2>
-                </div>
+                </div> 
             </div>
         </div>
     </div>

@@ -16,6 +16,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\OgImageController;
+use App\Http\Controllers\BuyNowController;
 
 
 // -------------------------------------------------------
@@ -138,12 +139,16 @@ Route::post('/cart/add',    [CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
 Route::post('/cart/clear',  [CartController::class, 'clear'])->name('cart.clear');
-
+ 
 // Checkout (auth required)
 Route::middleware('auth')->group(function () {
     Route::get('/checkout',          [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout/place',   [CheckoutController::class, 'place'])->name('checkout.place');
     Route::get('/checkout/callback', [CheckoutController::class, 'callback'])->name('checkout.callback');
+
+    //FOR BUY NOW
+    Route::get('/buy-now/callback', [BuyNowController::class, 'callback'])->name('buy-now.callback');
+
 });
 
 // Rider booking placeholder
@@ -235,6 +240,26 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::get('/bookings/{booking}', [App\Http\Controllers\RiderBookingController::class, 'showBooking'])->name('bookings.show');
     Route::get('/bookings/{booking}/track', [App\Http\Controllers\RiderBookingController::class, 'track'])->name('bookings.track');
 
+
+});
+
+Route::middleware(['auth:web'])->prefix('buy-now')->name('buy-now.')->group(function () {
+
+    // Step 1 – store item in session, redirect to buy-now checkout
+    Route::post('/', [App\Http\Controllers\BuyNowController::class, 'initiate'])
+        ->name('initiate');
+
+    // Step 2 – show the checkout page pre-filled with the single item
+    Route::get('/checkout', [App\Http\Controllers\BuyNowController::class, 'checkout'])
+        ->name('checkout');
+
+    // Step 3 – place the order
+    Route::post('/place', [App\Http\Controllers\BuyNowController::class, 'place'])
+        ->name('place');
+
+    // AJAX – fetch shipping rates for the buy-now item
+    Route::post('/rates', [App\Http\Controllers\BuyNowController::class, 'getRates'])
+        ->name('rates');
 
 });
 

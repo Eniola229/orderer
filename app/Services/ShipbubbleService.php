@@ -69,7 +69,7 @@ class ShipbubbleService
             ],
         ];
 
-        //\Log::info('Shipbubble PAYLOAD', $payload);
+        //Log::info('Shipbubble PAYLOAD', $payload);
 
         $response = Http::withHeaders($this->headers())
             ->post($this->baseUrl . '/shipping/fetch_rates', $payload);
@@ -77,6 +77,9 @@ class ShipbubbleService
         if (!$response->successful()) {
             throw new \Exception('Could not fetch shipping rates: ' . $response->body());
         }
+
+
+       
 
         return $response->json('data') ?? [];
     }

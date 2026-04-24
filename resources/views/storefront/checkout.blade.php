@@ -14,7 +14,7 @@
             </div>
         </div>
     </div>
-</div> 
+</div>  
 
 <style> 
     .rate-card {
@@ -82,7 +82,7 @@
             <a href="{{ route('shop.index') }}" class="btn essence-btn mt-3">Browse Shop</a>
         </div>
         @else
-        <form action="{{ route('checkout.place') }}" method="POST" id="checkoutForm">
+        <form action="{{ isset($isBuyNow) && $isBuyNow ? route('buy-now.place') : route('checkout.place') }}" method="POST" id="checkoutForm">
             @csrf
             <div class="row">
 
@@ -387,7 +387,8 @@
 <script src="{{ asset('js/active.js') }}"></script>
 
 <script>
-// Simple working script
+// Pass PHP variable to JavaScript
+const isBuyNow = {{ isset($isBuyNow) && $isBuyNow ? 'true' : 'false' }};
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
 // Payment method selection
@@ -440,7 +441,10 @@ function fetchShippingRates() {
         shipping_zip: document.querySelector('[name="shipping_zip"]').value || '',
     };
     
-    fetch('{{ route("checkout.rates") }}', {
+    // DYNAMIC RATES ENDPOINT - Use the isBuyNow variable
+    const ratesUrl = isBuyNow ? '{{ route("buy-now.rates") }}' : '{{ route("checkout.rates") }}';
+    
+    fetch(ratesUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -489,7 +493,7 @@ function fetchShippingRates() {
                                        data-price="${price}"
                                        data-carrier="${rate.courier_name || ''}"
                                        data-service="${rate.service_type || ''}"
-                                       data-ratedata='${JSON.stringify(rate)}'
+                                       data-ratedata='${JSON.stringify(rate).replace(/'/g, "\\'")}'
                                        ${index === 0 ? 'checked' : ''}>
                                 <div>
                                     <p class="mb-0 font-weight-bold">${rate.courier_name || 'Courier'}</p>
@@ -572,6 +576,7 @@ function fetchShippingRates() {
         });
     })
     .catch(error => {
+        console.error('Fetch error:', error);
         document.getElementById('ratesLoading').style.display = 'none';
         document.getElementById('ratesError').style.display = 'block';
         document.getElementById('errorMessageText').textContent = 'Network error. Please try again.';

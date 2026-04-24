@@ -311,18 +311,35 @@
                                         style="width:36px;height:36px;border:none;background:#f5f5f5;font-size:18px;cursor:pointer;">+</button>
                             </div>
                         </div>
-                        <div class="d-flex gap-3 flex-wrap">
-                            <button type="button" class="btn essence-btn flex-grow-1"
-                                    onclick="addToCart('{{ $product->id }}', {{ isset($flashSale) && $flashSale?->isActive() ? 'true' : 'false' }})">
-                                <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
-                            </button>
-                            <button type="button" class="btn"
-                                    style="border:2px solid #2ECC71;color:#2ECC71;padding:0 16px;border-radius:4px;"
-                                    onclick="toggleWishlist('{{ $product->id }}', this)">
-                                <i class="fa fa-heart{{ $inWishlist ? '' : '-o' }}"></i>
-                            </button>
-                        </div>
+                            <div class="d-flex gap-3 flex-wrap mb-2">
+                                <button type="button" class="btn essence-btn flex-grow-1"
+                                        onclick="addToCart('{{ $product->id }}', {{ isset($flashSale) && $flashSale?->isActive() ? 'true' : 'false' }})">
+                                    <i class="fa fa-shopping-bag mr-2"></i> Add to Cart
+                                </button>
+                                <button type="button" class="btn"
+                                        style="border:2px solid #2ECC71;color:#2ECC71;padding:0 16px;border-radius:4px;"
+                                        onclick="toggleWishlist('{{ $product->id }}', this)">
+                                    <i class="fa fa-heart{{ $inWishlist ? '' : '-o' }}"></i>
+                                </button>
+                            </div>
                     </form>
+
+                {{-- ── Buy Now ──────────────────────────────────────────────────── --}}
+                <form action="{{ route('buy-now.initiate') }}" method="POST" class="mt-2">
+                    @csrf
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                    <input type="hidden" name="quantity"   id="buy-now-qty" value="1">
+
+                    {{-- Pass selected options as JSON --}}
+                    <input type="hidden" name="selected_options_json" id="buy-now-options" value="[]">
+
+                    <button type="submit" class="btn w-100"
+                            style="background:#F39C12;color:#fff;font-weight:700;border:none;
+                                   border-radius:4px;padding:11px 0;font-size:15px;letter-spacing:.3px;"
+                            onclick="syncBuyNowFields()">
+                        <i class="fa fa-bolt mr-2"></i> Buy Now
+                    </button>
+                </form>
                     @else
                     <div class="alert alert-danger">
                         <i class="fa fa-times-circle mr-2"></i> Out of stock
@@ -974,6 +991,19 @@ document.addEventListener('DOMContentLoaded', function() {
         autoSelectFirstOptions();
     }
 });
+
+function syncBuyNowFields() {
+    // Sync quantity
+    var qty = document.getElementById('qty');
+    if (qty) document.getElementById('buy-now-qty').value = qty.value;
+
+    // Sync selected options
+    if (typeof window.getSelectedOptions === 'function') {
+        document.getElementById('buy-now-options').value =
+            JSON.stringify(window.getSelectedOptions());
+    }
+}
+
 </script>
 
 </body>
