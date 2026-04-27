@@ -432,10 +432,10 @@
                         </div>
                     @endif
                     
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $house->seller->phone ?? '234800000000') }}?text=Hi,%20I'm%20interested%20in%20{{ urlencode($house->title) }}"
+                    <a href="tel:{{ preg_replace('/[^0-9]/', '', $house->seller->phone ?? '234800000000') }}?text=Hi,%20I'm%20interested%20in%20{{ urlencode($house->title) }}"
                        target="_blank"
                        class="whatsapp-btn mb-2 d-block">
-                        <i class="fa fa-whatsapp mr-2"></i> Contact on WhatsApp
+                        <i class="fa fa-contact mr-2"></i> Contact
                     </a>
                 </div>
 
@@ -454,10 +454,10 @@
                         <span class="text-muted">Last Updated:</span>
                         <span>{{ $house->updated_at->format('M d, Y') }}</span>
                     </div>
-                    <div class="d-flex justify-content-between">
+<!--                     <div class="d-flex justify-content-between">
                         <span class="text-muted">Views:</span>
                         <span>{{ $house->views ?? 0 }} views</span>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

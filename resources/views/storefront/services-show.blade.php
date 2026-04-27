@@ -435,10 +435,10 @@
                         </div>
                     @endif
                     
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $service->seller->phone ?? '234800000000') }}?text=Hi,%20I'm%20interested%20in%20your%20service:%20{{ urlencode($service->title) }}"
+                    <a href="tel:{{ preg_replace('/[^0-9]/', '', $service->seller->phone ?? '234800000000') }}?text=Hi,%20I'm%20interested%20in%20your%20service:%20{{ urlencode($service->title) }}"
                        target="_blank"
                        class="whatsapp-btn mb-2 d-block">
-                        <i class="fa fa-whatsapp mr-2"></i> Contact on WhatsApp
+                        <i class="fa fa-contact mr-2"></i> Contact
                     </a>
                 </div>
 
