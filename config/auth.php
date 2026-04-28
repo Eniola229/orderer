@@ -26,6 +26,12 @@ return [
             'driver'   => 'session',
             'provider' => 'admins',
         ],
+
+        'marketer' => [
+            'driver'   => 'session',
+            'provider' => 'marketers',
+        ],
+         
     ],
 
     'providers' => [
@@ -43,6 +49,11 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model'  => App\Models\Admin::class,
+        ],
+
+        'marketers' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\Marketer::class,
         ],
     ],
 
@@ -68,6 +79,14 @@ return [
             'expire'   => 30,
             'throttle' => 60,
         ],
+
+        'marketers' => [
+            'provider' => 'marketers',
+            'table'    => 'password_reset_tokens',
+            'expire'   => 60,
+            'throttle' => 60,
+        ],
+         
     ],
 
     'password_timeout' => 10800,

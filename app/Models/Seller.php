@@ -43,7 +43,8 @@ class Seller extends Authenticatable
         'rejected_at',
         'rejected_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'marketer_id',
     ];
 
     protected $hidden = [

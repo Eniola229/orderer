@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.admin'    => \App\Http\Middleware\AuthenticateAdmin::class,
             'guest.seller'  => \App\Http\Middleware\RedirectIfSellerAuthenticated::class,
             'guest.admin'   => \App\Http\Middleware\RedirectIfAdminAuthenticated::class,
+            'auth.marketer'  => \App\Http\Middleware\AuthMarketer::class,
+            'guest.marketer' => \App\Http\Middleware\GuestMarketer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

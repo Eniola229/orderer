@@ -4,6 +4,46 @@
 @section('content')
 @push('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.css"/>
+<style>
+    /* Google Places Autocomplete Styling */
+.pac-container {
+    background: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
+    font-family: inherit !important;
+    margin-top: 4px !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+
+.pac-item {
+    padding: 10px 14px !important;
+    font-size: 14px !important; 
+    cursor: pointer !important;
+    border-top: 1px solid #e9ecef !important;
+    pointer-events: auto !important;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+    background: #f8f9fa !important;
+}
+
+.pac-item-query {
+    font-size: 14px !important;
+    color: #212529 !important;
+}
+
+.pac-matched {
+    color: #2ECC71 !important;
+    font-weight: 600 !important;
+}
+
+.pac-icon {
+    display: none !important;
+}
+</style>
 @endpush
 <div class="auth-main">
 
@@ -231,7 +271,7 @@
 
                     <div id="unverifiedNote" class="alert alert-warning d-none">
                         <i class="feather-info me-2"></i>
-                        No problem. You can still sell and upload documents later.
+                        Cool. You can sell on orderer.
                     </div>
 
                     <div class="d-flex gap-2 mt-3">
@@ -282,9 +322,21 @@
                         </div>
                     </div>
 
-                    @if(request('ref'))
-                    <input type="hidden" name="referral_code" value="{{ request('ref') }}">
-                    @endif
+                   {{-- Step 3 referral / marketer code --}}
+                    <div class="mb-3" id="referralBlock">
+                        <label class="form-label fw-bold">Referral Code <span class="text-muted fw-normal">(optional)</span></label>
+                        <input type="text"
+                               name="referral_code"
+                               id="referralCodeInput"
+                               class="form-control"
+                               value="{{ request('ref') }}"
+                               placeholder="e.g. OR-MRT-ABCD12"
+                               oninput="detectCodeType(this.value)">
+                        <div id="codeTypeHint" class="mt-1" style="display:none;"></div>
+                        <small class="text-muted fs-12">
+                            If someone invited you, enter their code here.
+                        </small>
+                    </div>
 
                     <div class="d-flex gap-2 mt-3">
                         <button type="button" class="btn btn-outline-secondary"
@@ -306,6 +358,8 @@
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUKH9vjgY18mb7sumK4RQByrUuV3jjJTg&libraries=places"></script>
+
 <script>
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -414,6 +468,162 @@ const iti = window.intlTelInput(input, {
 const form = input.closest("form");
 form.addEventListener("submit", function () {
     input.value = iti.getNumber();
+});
+
+
+// ── Google Places Autocomplete for Business Address ─────────────────
+function initAddressAutocomplete() {
+    const addressInput = document.getElementById('businessAddress');
+    const cityInput = document.getElementById('businessCity');
+    const stateInput = document.getElementById('businessState');
+    const countryInput = document.getElementById('businessCountry');
+
+    if (!addressInput) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ['address'],
+        fields: ['address_components', 'formatted_address'],
+    });
+
+    // Prevent Enter key from submitting form when dropdown is open
+    addressInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Close dropdown on Enter
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+            addressInput.blur();
+        }
+    });
+
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        
+        // Immediately close the dropdown
+        const pacContainers = document.querySelectorAll('.pac-container');
+        pacContainers.forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Remove focus to prevent dropdown from reopening
+        addressInput.blur();
+        
+        if (!place || !place.address_components) return;
+
+        let streetNumber = '';
+        let route = '';
+        let city = '';
+        let state = '';
+        let country = '';
+        let postalCode = '';
+
+        place.address_components.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number')) {
+                streetNumber = component.long_name;
+            }
+            if (types.includes('route')) {
+                route = component.long_name;
+            }
+            if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+                city = component.long_name;
+            }
+            if (types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+            }
+            if (types.includes('country')) {
+                country = component.long_name;
+            }
+            if (types.includes('postal_code')) {
+                postalCode = component.long_name;
+            }
+        });
+
+        // Build the full address with "Nigeria" at the end
+        let fullAddress = '';
+        if (streetNumber) fullAddress += streetNumber + ' ';
+        if (route) fullAddress += route;
+        
+        // If we have both street number and route, add comma
+        if (streetNumber && route) {
+            fullAddress += ', ';
+        } else if (fullAddress) {
+            fullAddress += ' ';
+        }
+        
+        // Add city and state to address line
+        if (city) fullAddress += city + ', ';
+        if (state) fullAddress += state;
+        
+        // Add Nigeria at the end (always)
+        fullAddress += ', Nigeria';
+        
+        // Set the address value with Nigeria appended
+        addressInput.value = fullAddress.trim();
+        
+        // Update city field
+        if (city && cityInput) {
+            cityInput.value = city;
+        }
+        
+        // Update state field
+        if (state && stateInput) {
+            stateInput.value = state;
+        }
+        
+        // Update country field to Nigeria
+        if (countryInput) {
+            countryInput.value = 'Nigeria';
+        }
+        
+        // Optional: Update postal code if you have a field for it
+        if (postalCode) {
+            const zipInput = document.querySelector('[name="business_zip"]');
+            if (zipInput) zipInput.value = postalCode;
+        }
+        
+        // Trigger input events for any listeners
+        addressInput.dispatchEvent(new Event('input', { bubbles: true }));
+        if (cityInput) cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        if (stateInput) stateInput.dispatchEvent(new Event('input', { bubbles: true }));
+        if (countryInput) countryInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!addressInput.contains(e.target)) {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+        }
+    });
+    
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+        }
+    });
+}
+
+// Initialize Google Places Autocomplete when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof google !== 'undefined') {
+        initAddressAutocomplete();
+    }
+});
+
+// Initialize Google Places Autocomplete when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof google !== 'undefined') {
+        initAddressAutocomplete();
+    }
 });
 </script>
 @endpush

@@ -8,9 +8,9 @@
                      style="width:140px;height:auto;display:block;margin:0 auto;" />
                 <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
                      alt="" class="logo logo-sm" />
-            </a>
+            </a> 
         </div>
-
+ 
         <div class="navbar-content">
             <ul class="nxl-navbar">
 
@@ -233,6 +233,25 @@
                         </li>
                         <li class="nxl-item">
                             <a class="nxl-link" href="{{ route('admin.admins.create') }}">Add Admin</a>
+                        </li>
+                    </ul>
+                </li>
+                @endif
+
+                {{-- Marketers (Super Admin or HR) --}}
+                @if(auth('admin')->user()->canManageAdmins())
+                <li class="nxl-item nxl-hasmenu {{ request()->routeIs('admin.marketers.*') ? 'active' : '' }}">
+                    <a href="javascript:void(0);" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-trending-up"></i></span>
+                        <span class="nxl-mtext">Marketers</span>
+                        <span class="nxl-arrow"><i class="feather-chevron-right"></i></span>
+                    </a>
+                    <ul class="nxl-submenu">
+                        <li class="nxl-item">
+                            <a class="nxl-link" href="{{ route('admin.marketers.index') }}">All Marketers</a>
+                        </li>
+                        <li class="nxl-item">
+                            <a class="nxl-link" href="{{ route('admin.marketers.create') }}">Add Marketer</a>
                         </li>
                     </ul>
                 </li>

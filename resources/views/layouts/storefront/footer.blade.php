@@ -111,6 +111,8 @@
         </div>
     </div>
 </footer>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUKH9vjgY18mb7sumK4RQByrUuV3jjJTg&libraries=places"></script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

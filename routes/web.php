@@ -273,6 +273,11 @@ require __DIR__ . '/seller.php';
 // -------------------------------------------------------
 require __DIR__ . '/admin.php';
 
+// -------------------------------------------------------
+// MARKTER routes — loaded from routes/marketer.php
+// -------------------------------------------------------
+require __DIR__ . '/marketer.php';
+
 // Korapay webhook (no CSRF)
 Route::post('/webhooks/korapay', [
     App\Http\Controllers\Seller\WalletController::class, 'webhook'

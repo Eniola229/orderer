@@ -17,6 +17,7 @@
 </div>  
 
 <style> 
+
     .rate-card {
         cursor: pointer;
         transition: all 0.2s ease;
@@ -71,6 +72,25 @@
         color: red;
         margin-left: 4px;
     }
+/* Replace your existing pac-container styles with this */
+.pac-container {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    font-family: inherit;
+    margin-top: 4px;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+.pac-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    pointer-events: auto !important;
+}
+.pac-item:hover { background: #f0faf5; }
+.pac-matched { color: #2ECC71; font-weight: 600; }
+.pac-icon { display: none; }
 </style>
 
 <div class="checkout_area section-padding-80">
@@ -387,11 +407,128 @@
 <script src="{{ asset('js/active.js') }}"></script>
 
 <script>
-// Pass PHP variable to JavaScript
 const isBuyNow = {{ isset($isBuyNow) && $isBuyNow ? 'true' : 'false' }};
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-// Payment method selection
+// ── Google Places Autocomplete ───────────────────────────────────
+function initAutocomplete() {
+    const addressInput  = document.getElementById('shipping_address');
+    const cityInput     = document.getElementById('shipping_city');
+    const stateInput    = document.getElementById('shipping_state');
+    const countrySelect = document.getElementById('countrySelect');
+
+    if (!addressInput) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ['address'],
+        fields: ['address_components', 'formatted_address'],
+    });
+
+    // ── Prevent Enter from submitting form when dropdown open ──
+    addressInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Close the dropdown manually on Enter
+            const pacContainer = document.querySelector('.pac-container');
+            if (pacContainer) {
+                pacContainer.style.display = 'none';
+            }
+        }
+    });
+
+    autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+        
+        // Close the dropdown immediately
+        const pacContainers = document.querySelectorAll('.pac-container');
+        pacContainers.forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Remove focus from address input to ensure dropdown stays closed
+        addressInput.blur();
+        
+        if (!place || !place.address_components) return;
+
+        let streetNumber = '', route = '', city = '', state = '', country = '', zip = '';
+
+        place.address_components.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number'))                       streetNumber = component.long_name;
+            if (types.includes('route'))                               route        = component.long_name;
+            if (types.includes('locality') ||
+                types.includes('administrative_area_level_2'))         city         = component.long_name;
+            if (types.includes('administrative_area_level_1'))         state        = component.long_name;
+            if (types.includes('country'))                             country      = component.long_name;
+            if (types.includes('postal_code'))                         zip          = component.long_name;
+        });
+
+        // Build full address
+        let fullAddress = '';
+        if (streetNumber) fullAddress += streetNumber + ' ';
+        if (route) fullAddress += route + ', ';
+        if (city) fullAddress += city + ', ';
+        if (state) fullAddress += state + ', ';
+        if (country) fullAddress += country;
+        if (zip) fullAddress += ', ' + zip;
+        
+        // Set the formatted address or constructed address
+        addressInput.value = place.formatted_address || fullAddress;
+
+        if (city && cityInput) cityInput.value = city;
+        if (state && stateInput) stateInput.value = state;
+        if (zip) {
+            const zipInput = document.querySelector('[name="shipping_zip"]');
+            if (zipInput) zipInput.value = zip;
+        }
+
+        // Auto-select country dropdown
+        if (country && countrySelect) {
+            const match = Array.from(countrySelect.options).find(o =>
+                o.value.toLowerCase()       === country.toLowerCase() ||
+                o.textContent.toLowerCase() === country.toLowerCase()
+            );
+            if (match) countrySelect.value = match.value;
+        }
+
+        // Trigger input events so the rate fetcher picks up the changes
+        [addressInput, cityInput, stateInput, countrySelect].forEach(el => {
+            if (el) el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // Fetch rates after selection
+        clearTimeout(fetchTimeout);
+        fetchTimeout = setTimeout(fetchShippingRates, 600);
+    });
+    
+    // Additional fix: Hide dropdown when clicking outside or pressing Escape
+    document.addEventListener('click', function(e) {
+        if (!addressInput.contains(e.target)) {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+        }
+    });
+    
+    // Close dropdown on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof google !== 'undefined') {
+        initAutocomplete();
+    }
+});
+
+// ── Payment method selection ─────────────────────────────────────
 document.getElementById('walletMethodCard').addEventListener('click', function() {
     document.getElementById('paymentWallet').checked = true;
     document.getElementById('walletMethodCard').classList.add('selected');
@@ -404,19 +541,18 @@ document.getElementById('korapayMethodCard').addEventListener('click', function(
     document.getElementById('walletMethodCard').classList.remove('selected');
 });
 
-// Function to check if all address fields are filled
+// ── Check all address fields filled ─────────────────────────────
 function allAddressFieldsFilled() {
-    const name = document.getElementById('shipping_name').value;
-    const phone = document.getElementById('shipping_phone').value;
+    const name    = document.getElementById('shipping_name').value;
+    const phone   = document.getElementById('shipping_phone').value;
     const address = document.getElementById('shipping_address').value;
-    const city = document.getElementById('shipping_city').value;
-    const state = document.getElementById('shipping_state').value;
+    const city    = document.getElementById('shipping_city').value;
+    const state   = document.getElementById('shipping_state').value;
     const country = document.getElementById('countrySelect').value;
-    
     return name && phone && address && city && state && country;
 }
 
-// Function to fetch shipping rates
+// ── Fetch shipping rates ─────────────────────────────────────────
 function fetchShippingRates() {
     if (!allAddressFieldsFilled()) {
         document.getElementById('shippingSection').style.display = 'block';
@@ -424,26 +560,25 @@ function fetchShippingRates() {
         document.getElementById('ratesLoading').style.display = 'none';
         return;
     }
-    
+
     document.getElementById('ratesMissingMessage').style.display = 'none';
     document.getElementById('shippingSection').style.display = 'block';
     document.getElementById('ratesLoading').style.display = 'block';
     document.getElementById('ratesList').innerHTML = '';
     document.getElementById('ratesError').style.display = 'none';
-    
+
     const formData = {
-        shipping_name: document.getElementById('shipping_name').value,
-        shipping_phone: document.getElementById('shipping_phone').value,
+        shipping_name:    document.getElementById('shipping_name').value,
+        shipping_phone:   document.getElementById('shipping_phone').value,
         shipping_address: document.getElementById('shipping_address').value,
-        shipping_city: document.getElementById('shipping_city').value,
-        shipping_state: document.getElementById('shipping_state').value,
+        shipping_city:    document.getElementById('shipping_city').value,
+        shipping_state:   document.getElementById('shipping_state').value,
         shipping_country: document.getElementById('countrySelect').value,
-        shipping_zip: document.querySelector('[name="shipping_zip"]').value || '',
+        shipping_zip:     document.querySelector('[name="shipping_zip"]').value || '',
     };
-    
-    // DYNAMIC RATES ENDPOINT - Use the isBuyNow variable
+
     const ratesUrl = isBuyNow ? '{{ route("buy-now.rates") }}' : '{{ route("checkout.rates") }}';
-    
+
     fetch(ratesUrl, {
         method: 'POST',
         headers: {
@@ -465,7 +600,6 @@ function fetchShippingRates() {
         let html = '';
 
         data.seller_rates.forEach(group => {
-            // Show seller header only when there are multiple sellers
             if (data.multi_seller) {
                 html += `
                     <p class="font-weight-bold mb-2 mt-3" style="color:#2ECC71;font-size:13px;">
@@ -513,7 +647,7 @@ function fetchShippingRates() {
 
         document.getElementById('ratesList').innerHTML = html;
 
-        // ── Recalc total shipping across all seller selections ───────────
+        // ── Recalc total shipping ────────────────────────────────
         function recalcShipping() {
             let totalShipping  = 0;
             const allRateData  = {};
@@ -545,10 +679,7 @@ function fetchShippingRates() {
             document.getElementById('selectedCarrier').value      = firstCarrier;
             document.getElementById('selectedServiceName').value  = firstService;
             document.getElementById('selectedServiceCode').value  = firstCode;
-
-            // For multi-seller this is the full map { seller_id: rate_object }
-            // For single-seller this is { seller_id: rate_object } too — backend handles both
-            document.getElementById('shippingRateData').value = JSON.stringify(allRateData);
+            document.getElementById('shippingRateData').value     = JSON.stringify(allRateData);
 
             document.getElementById('displayShippingFee').textContent =
                 '₦' + totalShipping.toFixed(2);
@@ -556,7 +687,7 @@ function fetchShippingRates() {
                 '₦' + (subtotal + totalShipping).toFixed(2);
         }
 
-        // Attach change listeners
+        // Attach change listeners to rate radios
         document.querySelectorAll('.seller-rate-radio').forEach(radio => {
             radio.addEventListener('change', () => {
                 const sellerId = radio.dataset.sellerId;
@@ -567,7 +698,7 @@ function fetchShippingRates() {
             });
         });
 
-        // Trigger initial calc with defaults
+        // Initial calc with defaults
         recalcShipping();
 
         // Highlight default selected cards
@@ -587,11 +718,11 @@ function retryFetchRates() {
     fetchShippingRates();
 }
 
-// Add event listeners to address fields
-const addressInputs = ['shipping_name', 'shipping_phone', 'shipping_address', 'shipping_city', 'shipping_state', 'countrySelect'];
+// ── Watch address fields for changes ────────────────────────────
+const addressInputIds = ['shipping_name', 'shipping_phone', 'shipping_address', 'shipping_city', 'shipping_state', 'countrySelect'];
 let fetchTimeout;
 
-addressInputs.forEach(id => {
+addressInputIds.forEach(id => {
     const element = document.getElementById(id);
     if (element) {
         element.addEventListener('input', () => {
@@ -605,29 +736,29 @@ addressInputs.forEach(id => {
     }
 });
 
-// Initial fetch if fields are pre-filled
+// Initial fetch if fields already pre-filled
 setTimeout(() => {
     if (allAddressFieldsFilled()) {
         fetchShippingRates();
     }
 }, 1000);
 
-// Form submission with loader
+// ── Form submission ──────────────────────────────────────────────
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const shippingSelected = document.getElementById('selectedServiceCode').value;
-    
+
     if (!shippingSelected) {
         e.preventDefault();
         alert('Please select a shipping method.');
         return;
     }
-    
+
     if (!document.getElementById('terms').checked) {
         e.preventDefault();
         alert('Please agree to the Terms & Conditions.');
         return;
     }
-    
+
     document.getElementById('orderLoader').style.display = 'flex';
     document.getElementById('placeOrderBtn').disabled = true;
 });

@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\HouseController;
 use App\Http\Controllers\Admin\FlashSaleController;
 use App\Http\Controllers\Admin\DeliveryBookingController;
 use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\MarketerController;
  
 Route::prefix('admin')->name('admin.')->group(function () { 
 
@@ -29,7 +30,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/login', [AdminLoginController::class, 'showForm'])->name('login');
         Route::post('/login', [AdminLoginController::class, 'login']);
     });
-
+ 
     // Authenticated admin
     Route::middleware('auth.admin')->group(function () {
         Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
@@ -166,5 +167,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{newsletter}/send',      [NewsletterController::class, 'send'])   ->name('send');
             Route::delete('/{newsletter}',         [NewsletterController::class, 'destroy'])->name('destroy');
         });
+
+        Route::get('/marketers',                    [MarketerController::class, 'index'])->name('marketers.index');
+        Route::get('/marketers/create',             [MarketerController::class, 'create'])->name('marketers.create');
+        Route::post('/marketers',                   [MarketerController::class, 'store'])->name('marketers.store');
+        Route::get('/marketers/{marketer}',         [MarketerController::class, 'show'])->name('marketers.show');
+        Route::get('/marketers/{marketer}/edit',    [MarketerController::class, 'edit'])->name('marketers.edit');
+        Route::put('/marketers/{marketer}',         [MarketerController::class, 'update'])->name('marketers.update');
+        Route::put('/marketers/{marketer}/suspend', [MarketerController::class, 'suspend'])->name('marketers.suspend');
+        Route::put('/marketers/{marketer}/activate',[MarketerController::class, 'activate'])->name('marketers.activate');
+        Route::post('/marketers/{marketer}/regen',  [MarketerController::class, 'regenerateCode'])->name('marketers.regen-code');
     });
 });

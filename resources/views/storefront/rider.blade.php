@@ -139,6 +139,44 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
 }
 .step-panel.active { display: block; }
 
+/* ── Google Places autocomplete dark theme ── */
+/* ADD THIS OUTSIDE the @media block, as a global style */
+.pac-container {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    font-family: 'DM Sans', sans-serif !important;
+    margin-top: 4px !important;
+    z-index: 99999 !important;  /* ← THIS is the key fix */
+}
+.pac-item {
+    padding: 10px 14px !important;
+    color: var(--text) !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    border-top: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+}
+.pac-item:hover, .pac-item-selected {
+    background: var(--surface2) !important;
+}
+.pac-item-query {
+    color: var(--text) !important;
+    font-size: 13px !important;
+}
+.pac-matched { color: var(--green) !important; font-weight: 600 !important; }
+.pac-icon { display: none !important; }
+
+/* Fix stacking context on address card */
+#step-panel-2 .card-block {
+    overflow: visible !important;
+}
+
+.addr-cols {
+    overflow: visible !important;
+}
+
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -379,7 +417,22 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
     padding: 3px 8px;
     border-radius: 20px;
 }
+/* Add this to your existing style block */
+.pac-container {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    font-family: 'DM Sans', sans-serif !important;
+    margin-top: 4px !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
 
+/* Ensure dropdown can be hidden */
+.pac-container.pac-hidden {
+    display: none !important;
+}
 /* ── Buttons ── */
 .btn-primary-full {
     width: 100%;
@@ -541,6 +594,26 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
 /* ── Breadcrumb area override ── */
 .breadcumb_area { display: none; }
 
+.pac-container {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    font-family: 'DM Sans', sans-serif !important;
+    margin-top: 4px !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;  /* ← ADD THIS */
+}
+.pac-item {
+    padding: 10px 14px !important;
+    color: var(--text) !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    border-top: 1px solid var(--border) !important;
+    background: var(--surface) !important;
+    pointer-events: auto !important;  /* ← ADD THIS */
+}
+
 /* ── Mobile responsiveness ─────────────────────────── */
 @media (max-width: 640px) {
 
@@ -639,6 +712,31 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
         margin-top: 6px;
         text-align: center;
     }
+        /* ── Google Places autocomplete dark theme ── */
+    .pac-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        font-family: 'DM Sans', sans-serif;
+        margin-top: 4px;
+    }
+    .pac-item {
+        padding: 10px 14px;
+        color: var(--text);
+        font-size: 13px;
+        cursor: pointer;
+        border-top: 1px solid var(--border);
+    }
+    .pac-item:hover, .pac-item-selected {
+        background: var(--surface2);
+    }
+    .pac-item-query {
+        color: var(--text);
+        font-size: 13px;
+    }
+    .pac-matched { color: var(--green); font-weight: 600; }
+    .pac-icon { display: none; } /* hide the Google pin icon */
 </style>
 
 <div class="booking-page">
@@ -986,20 +1084,152 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 let currentStep = 1;
 const TOTAL_STEPS = 4;
 
+// ── Google Places Autocomplete ───────────────────────────────────
+function initAutocomplete() {
+    // Wait for DOM to be fully ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupAutoCompletes);
+    } else {
+        setupAutoCompletes();
+    }
+}
+
+function setupAutoCompletes() {
+    setupAddressAutocomplete(
+        document.querySelector('[name="pickup_address"]'),
+        document.querySelector('[name="pickup_city"]'),
+        document.getElementById('pickupCountry'),
+        'NG'
+    );
+
+    setupAddressAutocomplete(
+        document.querySelector('[name="delivery_address"]'),
+        document.querySelector('[name="delivery_city"]'),
+        document.getElementById('deliveryCountry'),
+        null
+    );
+}
+
+function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restrictToCountry) {
+    if (!addressInput) return;
+
+    const options = {
+        types: ['address'],
+        fields: ['address_components', 'formatted_address'],
+    };
+
+    if (restrictToCountry) {
+        options.componentRestrictions = { country: restrictToCountry };
+    }
+
+    const autocomplete = new google.maps.places.Autocomplete(addressInput, options);
+
+    // ── Prevent Enter key from submitting the form when dropdown is open ──
+    addressInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Force close dropdown on Enter
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+            addressInput.blur();
+        }
+    });
+
+    autocomplete.addListener('place_changed', function () {
+        const place = autocomplete.getPlace();
+        
+        // ── IMMEDIATELY CLOSE THE DROPDOWN ──
+        const pacContainers = document.querySelectorAll('.pac-container');
+        pacContainers.forEach(container => {
+            container.style.display = 'none';
+        });
+        
+        // Remove focus from input to prevent dropdown from reopening
+        addressInput.blur();
+        
+        if (!place || !place.address_components) return;
+
+        let streetNumber = '', route = '', city = '', countryCode = '';
+
+        place.address_components.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number'))         streetNumber = component.long_name;
+            if (types.includes('route'))                 route        = component.long_name;
+            if (types.includes('locality') || types.includes('administrative_area_level_2'))
+                                                         city         = component.long_name;
+            if (types.includes('country'))               countryCode  = component.short_name;
+        });
+
+        // Street only — city/country appended later on button click
+        const street = [streetNumber, route].filter(Boolean).join(' ');
+        
+        // Clean up the formatted address - remove country and postal code for the street field
+        let cleanAddress = street || place.formatted_address;
+        if (cleanAddress) {
+            // Remove country and postal code from the end
+            cleanAddress = cleanAddress.replace(/,\s*[A-Z]{2}$/, '');
+            cleanAddress = cleanAddress.replace(/,\s*\d{5,6}$/, '');
+            cleanAddress = cleanAddress.replace(/,\s*Nigeria$/i, '');
+        }
+        
+        addressInput.value = cleanAddress || street || place.formatted_address.split(',')[0];
+
+        if (city && cityInput) cityInput.value = city;
+
+        if (countryCode && countrySelect) {
+            const trySelect = () => {
+                const opt = countrySelect.querySelector(`option[value="${countryCode}"]`);
+                if (opt) {
+                    countrySelect.value = countryCode;
+                } else {
+                    setTimeout(trySelect, 200);
+                }
+            };
+            trySelect();
+        }
+
+        // ── Trigger input event so any listeners know value changed ──
+        addressInput.dispatchEvent(new Event('input', { bubbles: true }));
+        if (cityInput) cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        if (countrySelect) countrySelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // ── Close dropdown when clicking outside ──
+    document.addEventListener('click', function(e) {
+        if (!addressInput.contains(e.target)) {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+        }
+    });
+    
+    // ── Stop clicks inside pac-container from being swallowed but ensure it doesn't interfere ──
+    document.addEventListener('mousedown', function(e) {
+        const pacContainer = e.target.closest('.pac-container');
+        if (pacContainer) {
+            // Allow the click to register but don't prevent default behavior
+            setTimeout(() => {
+                // Small delay to let the place_changed event fire
+            }, 10);
+        }
+    }, true);
+}
+
+
 // ── Step navigation ──────────────────────────────────────────────
 function goStep(n) {
-    // Hide current
     document.getElementById('step-panel-' + currentStep).classList.remove('active');
 
-    // Update progress dots
     for (let i = 1; i <= TOTAL_STEPS; i++) {
         const dot = document.getElementById('pstep-' + i);
         dot.classList.remove('active', 'done');
-        if (i < n)       dot.classList.add('done');
+        if (i < n)        dot.classList.add('done');
         else if (i === n) dot.classList.add('active');
     }
 
-    // Fill connectors
     for (let i = 1; i < TOTAL_STEPS; i++) {
         const fill = document.getElementById('conn-' + i);
         fill.style.width = i < n ? '100%' : '0%';
@@ -1018,7 +1248,6 @@ function selectDeliveryType(type) {
 }
 
 // ── Step 1 → 2 validation ────────────────────────────────────────
-// (override goStep for step 1 continue)
 document.querySelector('#step-panel-1 .btn-primary-full').addEventListener('click', function(e) {
     e.stopPropagation();
     const desc = document.getElementById('itemDescription').value.trim();
@@ -1034,8 +1263,8 @@ document.querySelector('#step-panel-1 .btn-primary-full').addEventListener('clic
 // ── Countries loader ─────────────────────────────────────────────
 (async function () {
     const selects = [
-        { el: document.getElementById('pickupCountry'),   def: 'NG'  },
-        { el: document.getElementById('deliveryCountry'), def: null  },
+        { el: document.getElementById('pickupCountry'),   def: 'NG' },
+        { el: document.getElementById('deliveryCountry'), def: null },
     ];
 
     try {
@@ -1069,6 +1298,29 @@ document.querySelector('#step-panel-1 .btn-primary-full').addEventListener('clic
 
 // ── Step 2 → 3: validate + fetch rates ──────────────────────────
 function validateAddressesAndFetchRates() {
+
+    // ── Auto-build full addresses before validation ──
+    const pickupStreet  = document.querySelector('[name="pickup_address"]').value.trim();
+    const pickupCity    = document.querySelector('[name="pickup_city"]').value.trim();
+    const pickupCountryEl = document.querySelector('[name="pickup_country"]');
+    const pickupCountryText = pickupCountryEl.options[pickupCountryEl.selectedIndex]?.text || '';
+
+    if (pickupStreet && pickupCity && pickupCountryText && pickupCountryText !== '— Select Country —') {
+        const full = [pickupStreet, pickupCity, pickupCountryText].join(', ');
+        document.querySelector('[name="pickup_address"]').value = full;
+    }
+
+    const deliveryStreet  = document.querySelector('[name="delivery_address"]').value.trim();
+    const deliveryCity    = document.querySelector('[name="delivery_city"]').value.trim();
+    const deliveryCountryEl = document.querySelector('[name="delivery_country"]');
+    const deliveryCountryText = deliveryCountryEl.options[deliveryCountryEl.selectedIndex]?.text || '';
+
+    if (deliveryStreet && deliveryCity && deliveryCountryText && deliveryCountryText !== '— Select Country —') {
+        const full = [deliveryStreet, deliveryCity, deliveryCountryText].join(', ');
+        document.querySelector('[name="delivery_address"]').value = full;
+    }
+
+    // ── Original validation below (unchanged) ──
     const required = [
         'sender_name','sender_phone','pickup_address','pickup_city','pickup_country',
         'recipient_name','recipient_phone','delivery_address','delivery_city','delivery_country'
@@ -1096,12 +1348,11 @@ function validateAddressesAndFetchRates() {
 }
 
 // ── Fetch rates ──────────────────────────────────────────────────
-// Update your fetchRiderRates function to properly capture courier_id
 function fetchRiderRates() {
     document.getElementById('riderRatesLoading').style.display = 'block';
     document.getElementById('riderRatesList').innerHTML = '';
     document.getElementById('riderFee').value = '0';
-    document.getElementById('riderCourierId').value = ''; // Clear courier_id
+    document.getElementById('riderCourierId').value = '';
 
     const body = {
         pickup_address:   document.querySelector('[name="pickup_address"]').value,
@@ -1144,26 +1395,24 @@ function fetchRiderRates() {
 
         let html = '';
         rates.forEach(function(rate, idx) {
-            // Log each rate to see what fields are available
             console.log('Rate data:', rate);
-            
+
             const courier     = rate.courier_name  || rate.carrier || 'Courier';
             const courierId   = rate.courier_id    || rate.carrier_id || '';
             const service     = rate.service_type  || rate.service_name || 'Standard';
             const price       = parseFloat(rate.total || rate.rate || 0).toFixed(2);
-            const eta         = rate.delivery_eta || rate.eta || '';
-            const serviceCode = rate.service_code || rate.code || '';
+            const eta         = rate.delivery_eta  || rate.eta || '';
+            const serviceCode = rate.service_code  || rate.code || '';
             const logoUrl     = rate.courier_image || rate.image || '';
 
             const logoHtml = logoUrl
                 ? `<div class="rate-card-logo"><img src="${logoUrl}" alt="${courier}"></div>`
                 : `<div class="rate-card-logo-fallback">🚚</div>`;
 
-            // Store the complete rate data
             const rateDataJson = JSON.stringify(rate).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
-            
+
             html += `
-            <div class="rate-card" id="rateCard_${idx}" 
+            <div class="rate-card" id="rateCard_${idx}"
                  onclick="selectRiderRate(this, '${serviceCode}', '${courierId}', '${price}', '${courier}', '${service}', '${rateDataJson}')">
                 <div class="rate-card-left">
                     ${logoHtml}
@@ -1179,7 +1428,6 @@ function fetchRiderRates() {
 
         document.getElementById('riderRatesList').innerHTML = html;
 
-        // Auto-select first rate card if available
         const firstCard = document.querySelector('.rate-card');
         if (firstCard) {
             firstCard.click();
@@ -1195,22 +1443,19 @@ function fetchRiderRates() {
     });
 }
 
-// Update selectRiderRate function to properly set all fields
+// ── Select a rate ────────────────────────────────────────────────
 function selectRiderRate(el, serviceCode, courierId, price, carrier, service, rateDataJson) {
     console.log('Selecting rate:', { serviceCode, courierId, price, carrier, service });
-    
-    // Remove selected class from all rate cards
+
     document.querySelectorAll('.rate-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
 
-    // Set the hidden form fields
     document.getElementById('riderServiceCode').value = serviceCode || '';
-    document.getElementById('riderCarrier').value = carrier || '';
-    document.getElementById('riderServiceName').value = service || '';
-    document.getElementById('riderFee').value = price || '0';
-    document.getElementById('riderCourierId').value = courierId || '';
-    
-    // Parse and store rate data
+    document.getElementById('riderCarrier').value     = carrier     || '';
+    document.getElementById('riderServiceName').value = service     || '';
+    document.getElementById('riderFee').value         = price       || '0';
+    document.getElementById('riderCourierId').value   = courierId   || '';
+
     try {
         if (rateDataJson) {
             const rateData = typeof rateDataJson === 'string' ? JSON.parse(rateDataJson) : rateDataJson;
@@ -1221,51 +1466,47 @@ function selectRiderRate(el, serviceCode, courierId, price, carrier, service, ra
         document.getElementById('riderRateData').value = rateDataJson || '{}';
     }
 
-    // Update payment summary preview
-    document.getElementById('displayRiderFee').textContent = '₦' + (parseFloat(price) || 0).toFixed(2);
+    document.getElementById('displayRiderFee').textContent     = '₦' + (parseFloat(price) || 0).toFixed(2);
     document.getElementById('displayRiderCarrier').textContent = carrier || '—';
     document.getElementById('displayRiderService').textContent = service || '—';
+
     const SERVICE_FEE = 200;
     const total = (parseFloat(price) || 0) + SERVICE_FEE;
     document.getElementById('displayRiderTotal').textContent = '₦' + total.toFixed(2);
- 
-    
-    // Debug: log all hidden field values
+
     console.log('Hidden fields after selection:', {
         service_code: document.getElementById('riderServiceCode').value,
-        courier_id: document.getElementById('riderCourierId').value,
-        carrier: document.getElementById('riderCarrier').value,
-        fee: document.getElementById('riderFee').value
+        courier_id:   document.getElementById('riderCourierId').value,
+        carrier:      document.getElementById('riderCarrier').value,
+        fee:          document.getElementById('riderFee').value
     });
 }
 
-// Update proceedToPayment function to validate courier_id
+// ── Proceed to payment ───────────────────────────────────────────
 function proceedToPayment() {
-    const fee = document.getElementById('riderFee').value;
+    const fee         = document.getElementById('riderFee').value;
     const serviceCode = document.getElementById('riderServiceCode').value;
-    const courierId = document.getElementById('riderCourierId').value;
-    
+    const courierId   = document.getElementById('riderCourierId').value;
+
     console.log('Proceeding to payment with:', { fee, serviceCode, courierId });
-    
+
     if (!fee || parseFloat(fee) <= 0) {
         showAlert('Please select a shipping option first.', 'warning');
         return;
     }
-    
     if (!serviceCode) {
         showAlert('Service code is missing. Please select a valid shipping option.', 'warning');
         return;
     }
-    
     if (!courierId) {
         showAlert('Courier ID is missing. Please select a valid shipping option.', 'warning');
         return;
     }
-    
+
     goStep(4);
 }
 
-// Helper function to show alerts
+// ── Alert helper ─────────────────────────────────────────────────
 function showAlert(message, type = 'warning') {
     const alertHtml = `<div class="inline-alert ${type}" id="tempAlert">${message}</div>`;
     const ratesList = document.getElementById('riderRatesList');
@@ -1279,7 +1520,6 @@ function showAlert(message, type = 'warning') {
         alert(message);
     }
 }
-
 
 // ── Payment selection ────────────────────────────────────────────
 function selectPayment(method) {
@@ -1296,4 +1536,10 @@ document.getElementById('riderForm').addEventListener('submit', function(e) {
         alert('Please select a shipping option first.');
     }
 });
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof google !== 'undefined') {
+        initAutocomplete();
+    }
+});
+
 </script>

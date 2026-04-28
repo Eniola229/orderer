@@ -8,7 +8,7 @@ use App\Traits\HasUuid;
 
 class Admin extends Authenticatable
 {
-    use HasUuid, Notifiable;
+    use HasUuid, Notifiable; 
 
     protected $guard = 'admin';
 

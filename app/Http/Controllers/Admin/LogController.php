@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
-use App\Models\Seller;
+use App\Models\Seller; 
 use App\Models\Admin;
 use Illuminate\Http\Request;
 
