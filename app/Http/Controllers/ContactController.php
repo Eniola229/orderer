@@ -29,12 +29,12 @@ class ContactController extends Controller
 
         // Use Brevo send method directly
         $brevo->send(
-            config('mail.from.address'),
+            'support@ordererweb.shop',
             'Orderer Support',
             "Contact Form: {$request->subject}",
             $html
         );
 
-        return back()->with('success', 'Message sent! We will get back to you within 24 hours.');
+        return back()->with('success', 'Message sent! We will get back to you soon, though your email.');
     }
 }

@@ -191,6 +191,21 @@ class CheckoutController extends Controller
                     $order->id
                 );
 
+                    foreach ($items as $item) {
+                        $product = $item['product'];
+                        $quantity = $item['cartItem']['quantity'];
+                        
+                        $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                            ->where('is_active', true)
+                            ->where('starts_at', '<=', now())
+                            ->where('ends_at', '>=', now())
+                            ->first();
+                        
+                        if ($flashSale) {
+                            $flashSale->increment('quantity_sold', $quantity);
+                        }
+                    }
+
                 $this->walletService->holdEscrow($order);
                 $this->bookShipmentForOrder($order, $user, $totalWeight, $subtotal);
 
@@ -462,6 +477,21 @@ class CheckoutController extends Controller
 
                 if ($order) {
                     $order->update(['payment_status' => 'paid']);
+
+                    foreach ($order->items as $orderItem) {
+                            $product = $orderItem->orderable; // Since it's a product
+                            $quantity = $orderItem->quantity;
+                            
+                            $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                                ->where('is_active', true)
+                                ->where('starts_at', '<=', now())
+                                ->where('ends_at', '>=', now())
+                                ->first();
+                            
+                            if ($flashSale) {
+                                $flashSale->increment('quantity_sold', $quantity);
+                            }
+                        }
                     $this->walletService->holdEscrow($order);
 
                     $user = auth('web')->user() ?? $order->user;

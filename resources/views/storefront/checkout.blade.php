@@ -91,8 +91,17 @@
 .pac-item:hover { background: #f0faf5; }
 .pac-matched { color: #2ECC71; font-weight: 600; }
 .pac-icon { display: none; }
-</style>
 
+.guarantee-item {
+    transition: all 0.2s ease;
+    cursor: default;
+}
+.guarantee-item:hover {
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transform: translateX(2px);
+}
+</style>
 <div class="checkout_area section-padding-80">
     <div class="container">
         @if(empty($cartItems))
@@ -379,6 +388,54 @@
                         <button type="submit" class="btn essence-btn w-100" id="placeOrderBtn">
                             <i class="fa fa-shopping-bag mr-2"></i> Place Order
                         </button>
+
+                        {{-- Delivery Guarantee Section --}}
+                            <div class="delivery-guarantee mt-2 mb-4">
+                                <div class="cart-page-heading mb-3">
+                                    <h5 class="mb-1">Delivery Guarantee</h5>
+                                    <p class="text-muted small">We've got you covered with our buyer protection</p>
+                                </div>
+                                
+                                <div class="guarantee-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                    <div class="guarantee-item d-flex align-items-center p-3 rounded" style="background: #f8f9fa; border-left: 3px solid #E74C3C;">
+                                        <i class="fa fa-exchange" style="font-size: 20px; color: #E74C3C; width: 32px;"></i>
+                                        <div>
+                                            <p class="mb-0 fw-semibold" style="font-size: 14px;">Return if damaged</p>
+                                            <small class="text-muted">Item arrives damaged</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="guarantee-item d-flex align-items-center p-3 rounded" style="background: #f8f9fa; border-left: 3px solid #F39C12;">
+                                        <i class="fa fa-calendar-times-o" style="font-size: 20px; color: #F39C12; width: 32px;"></i>
+                                        <div>
+                                            <p class="mb-0 fw-semibold" style="font-size: 14px;">15-day refund</p>
+                                            <small class="text-muted">If no update on order</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="guarantee-item d-flex align-items-center p-3 rounded" style="background: #f8f9fa; border-left: 3px solid #8E44AD;">
+                                        <i class="fa fa-clock-o" style="font-size: 20px; color: #8E44AD; width: 32px;"></i>
+                                        <div>
+                                            <p class="mb-0 fw-semibold" style="font-size: 14px;">₦1,000 credit</p>
+                                            <small class="text-muted">For delivery delay</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="guarantee-item d-flex align-items-center p-3 rounded" style="background: #f8f9fa; border-left: 3px solid #2ECC71;">
+                                        <i class="fa fa-undo" style="font-size: 20px; color: #2ECC71; width: 32px;"></i>
+                                        <div>
+                                            <p class="mb-0 fw-semibold" style="font-size: 14px;">60-day refund</p>
+                                            <small class="text-muted">If no delivery</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 p-2 text-center" style="background: #e8f5e9; border-radius: 8px;">
+                                    <i class="fa fa-shield" style="color: #2ECC71; margin-right: 6px;"></i>
+                                    <small>Orderer Protection covers eligible purchases. <a href="{{ route('legal.buyer-terms') }}" style="color: #2ECC71; text-decoration: none;">Learn more</a></small>
+                                </div>
+                            </div>
+
 
                     </div>
                 </div>

@@ -1,16 +1,16 @@
-@extends('layouts.admin')
+@extends('layouts.seller')
 @section('title', 'Create Flash Sale')
 @section('page_title', 'Create Flash Sale')
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('admin.flash-sales.index') }}">Flash Sales</a></li>
+    <li class="breadcrumb-item">
+        <a href="{{ route('seller.flash-sales.index') }}">Flash Sales</a>
+    </li>
     <li class="breadcrumb-item active">Create</li>
 @endsection
 
 @push('styles')
-{{-- Select2 CSS --}}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-    /* Blend Select2 with Bootstrap 5 */
     .select2-container--default .select2-selection--single {
         height: calc(1.5em + 0.75rem + 2px);
         padding: 0.375rem 0.75rem;
@@ -21,34 +21,25 @@
         align-items: center;
     }
     .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 1.5;
-        padding: 0;
-        color: #212529;
+        line-height: 1.5; padding: 0; color: #212529;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 100%;
-        top: 0;
-        right: 8px;
+        height: 100%; top: 0; right: 8px;
     }
     .select2-container--default .select2-search--dropdown .select2-search__field {
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.95rem;
+        border: 1px solid #dee2e6; border-radius: 0.25rem;
+        padding: 0.375rem 0.75rem; font-size: 0.95rem;
     }
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
         background-color: #0d6efd;
     }
     .select2-dropdown {
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
+        border: 1px solid #dee2e6; border-radius: 0.375rem;
         box-shadow: 0 4px 16px rgba(0,0,0,0.10);
     }
     .select2-container { width: 100% !important; }
 
-    /* Product option template styling */
     .product-option-name   { font-weight: 600; font-size: 0.95rem; }
-    .product-option-seller { font-size: 0.8rem; color: #6c757d; }
     .product-option-price  { font-size: 0.85rem; color: #198754; font-weight: 600; float: right; }
 </style>
 @endpush
@@ -56,54 +47,77 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-7">
+
+        {{-- Info banner --}}
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="feather-check-circle me-2"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        @endif
+
+        @if($products->isEmpty())
+        <div class="alert alert-warning">
+            <i class="feather-alert-triangle me-2"></i>
+            You don't have any <strong>approved</strong> products yet.
+            Flash sales can only be run on approved listings.
+        </div>
+        @else
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">New Flash Sale</h5>
+                <h5 class="card-title mb-0">
+                    <i class="feather-zap me-2 text-warning"></i> New Flash Sale
+                </h5>
             </div>
             <div class="card-body">
 
                 <div class="alert alert-info mb-4">
-                    <i class="feather-zap me-2"></i>
-                    Flash sales appear on the homepage with a countdown timer.
-                    They run for a limited time and drive urgency purchases.
+                    <i class="feather-info me-2"></i>
+                    Flash sales appear on the homepage with a countdown timer and drive urgency purchases.
+                    Set a discounted price and a time window — the rest is automatic.
                 </div>
 
-                <form action="{{ route('admin.flash-sales.store') }}" method="POST">
+                <form action="{{ route('seller.flash-sales.store') }}" method="POST">
                     @csrf
 
+                    {{-- Title --}}
                     <div class="mb-4">
                         <label class="form-label fw-bold">
                             Flash Sale Title <span class="text-danger">*</span>
                         </label>
-                        <input type="text" name="title" class="form-control"
+                        <input type="text" name="title" class="form-control @error('title') is-invalid @enderror"
                                value="{{ old('title') }}"
                                placeholder="e.g. Weekend Mega Sale" required>
+                        @error('title')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
+                    {{-- Product picker --}}
                     <div class="mb-4">
                         <label class="form-label fw-bold">
                             Select Product <span class="text-danger">*</span>
                         </label>
-                        {{-- Select2 will enhance this into a searchable dropdown --}}
                         <select name="product_id" id="productSelect" class="form-select" required>
-                            <option value="">Search for a product...</option>
+                            <option value="">Search for a product…</option>
                             @foreach($products as $product)
                             <option value="{{ $product->id }}"
                                     data-price="{{ $product->price }}"
-                                    data-seller="{{ $product->seller->business_name }}"
                                     {{ old('product_id') == $product->id ? 'selected' : '' }}>
                                 {{ $product->name }}
                             </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Type to search by product name. Only approved products are shown.</small>
+                        @error('product_id')
+                            <div class="text-danger fs-12 mt-1">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">Only your approved products are listed.</small>
                     </div>
 
+                    {{-- Prices --}}
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label class="form-label fw-bold">
-                                Original Price (NGN)
-                            </label>
+                            <label class="form-label fw-bold">Original Price (NGN)</label>
                             <div class="input-group">
                                 <span class="input-group-text">₦</span>
                                 <input type="text" id="originalPriceDisplay"
@@ -118,12 +132,11 @@
                             </label>
                             <div class="input-group">
                                 <span class="input-group-text">₦</span>
-                                <input type="number" name="sale_price"
+                                <input type="number" name="sale_price" id="salePriceInput"
                                        class="form-control @error('sale_price') is-invalid @enderror"
                                        value="{{ old('sale_price') }}"
                                        step="0.01" min="0.01"
-                                       placeholder="0.00" required
-                                       id="salePriceInput">
+                                       placeholder="0.00" required>
                             </div>
                             @error('sale_price')
                                 <div class="text-danger fs-12 mt-1">{{ $message }}</div>
@@ -132,14 +145,16 @@
                         </div>
                     </div>
 
+                    {{-- Quantity limit --}}
                     <div class="mb-4">
                         <label class="form-label fw-bold">Quantity Limit</label>
                         <input type="number" name="quantity_limit" class="form-control"
                                value="{{ old('quantity_limit') }}"
                                min="1" placeholder="Leave blank for unlimited">
-                        <small class="text-muted">Maximum units that can be sold at flash price.</small>
+                        <small class="text-muted">Max units sold at the flash price. Leave blank for unlimited.</small>
                     </div>
 
+                    {{-- Dates --}}
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-bold">
@@ -165,46 +180,42 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="feather-zap me-2"></i> Create Flash Sale
                         </button>
-                        <a href="{{ route('admin.flash-sales.index') }}"
+                        <a href="{{ route('seller.flash-sales.index') }}"
                            class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
+        @endif
+
     </div>
 </div>
+@endsection
 
 @push('scripts')
-{{-- jQuery (required by Select2 — skip if already loaded globally) --}}
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-{{-- Select2 JS --}}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 $(function () {
 
-    // ── Select2 init with rich option template ──────────────────────────
     function formatProductOption(option) {
-        if (!option.id) {
-            return option.text; // placeholder
-        }
-        const price  = parseFloat($(option.element).data('price') || 0);
-        const seller = $(option.element).data('seller') || '';
-
+        if (!option.id) return option.text;
+        const price = parseFloat($(option.element).data('price') || 0);
         return $(
             `<div>
-                <span class="product-option-price">₦${price.toLocaleString('en-NG', {minimumFractionDigits: 2})}</span>
-                <span class="product-option-name">${option.text}</span><br>
-                <span class="product-option-seller">${seller}</span>
+                <span class="product-option-price">
+                    ₦${price.toLocaleString('en-NG', {minimumFractionDigits: 2})}
+                </span>
+                <span class="product-option-name">${option.text}</span>
             </div>`
         );
     }
 
     $('#productSelect').select2({
-        placeholder: 'Type to search products…',
+        placeholder: 'Type to search your products…',
         allowClear: true,
         templateResult: formatProductOption,
-        // Show plain text in the selection box (not the full template)
         templateSelection: function(option) {
             if (!option.id) return option.text;
             const price = parseFloat($(option.element).data('price') || 0);
@@ -212,7 +223,6 @@ $(function () {
         }
     });
 
-    // ── Price & discount logic ───────────────────────────────────────────
     $('#productSelect').on('change', function () {
         const selected = $(this).find(':selected');
         const price    = parseFloat(selected.data('price') || 0);
@@ -230,7 +240,7 @@ $(function () {
         const preview = $('#discountPreview');
 
         if (orig > 0 && sale > 0 && sale < orig) {
-            const pct = Math.round(((orig - sale) / orig) * 100);
+            const pct   = Math.round(((orig - sale) / orig) * 100);
             const saved = (orig - sale).toLocaleString('en-NG', {minimumFractionDigits: 2});
             preview.text(`Buyers save ${pct}% (−₦${saved})`);
         } else {
@@ -238,12 +248,10 @@ $(function () {
         }
     }
 
-    // Trigger on page load in case old() value is pre-selected
+    // Restore on old() values
     if ($('#productSelect').val()) {
         $('#productSelect').trigger('change');
     }
 });
 </script>
 @endpush
-
-@endsection

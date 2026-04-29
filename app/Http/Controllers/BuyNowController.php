@@ -52,17 +52,22 @@ class BuyNowController extends Controller
             return back()->with('error', 'Not enough stock available.');
         }
 
-        $price = (float) ($product->sale_price ?? $product->price);
+        //keep the flash sale detection for price
+        $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+            ->where('is_active', true)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->first();
+
+        // Use flash sale price if available
+        $price = $flashSale ? (float) $flashSale->sale_price : (float) ($product->sale_price ?? $product->price);
 
         session([
             self::SESSION_KEY => [
                 'product_id'       => $product->id,
                 'quantity'         => $quantity,
-                'price'            => $price,
-                'selected_options' => $request->selected_options
-                    ?? (($raw = $request->input('selected_options_json'))
-                        ? json_decode($raw, true)
-                        : []),
+                'price'            => $price,  // This is the price the user pays
+                'selected_options' => $request->selected_options ?? [],
             ],
         ]);
 
@@ -87,13 +92,21 @@ class BuyNowController extends Controller
 
         $img = $product->images->where('is_primary', true)->first() ?? $product->images->first();
 
+        // GET THE REGULAR PRICE FOR COMPARISON (LIKE CHECKOUT CONTROLLER)
+        $regularPrice = (float) ($product->sale_price ?? $product->price);
+        $flashSalePrice = (float) $sessionItem['price'];
+        
+        // DETERMINE IF THIS IS A FLASH SALE BY COMPARING PRICES
+        $isFlashSale = $flashSalePrice < $regularPrice;
+
         $cartItems = [[
             'id'               => $product->id,
             'name'             => $product->name,
-            'price'            => $sessionItem['price'],
+            'price'            => $flashSalePrice,
+            'regular_price'    => $regularPrice,  // ADD REGULAR PRICE FOR VIEW
             'quantity'         => $sessionItem['quantity'],
             'image'            => $img?->image_url ?? null,
-            'is_flash_sale'    => false,
+            'is_flash_sale'    => $isFlashSale,   // USE COMPARISON RESULT
             'selected_options' => $sessionItem['selected_options'] ?? [],
         ]];
 
@@ -226,6 +239,17 @@ class BuyNowController extends Controller
                 );
 
                 $this->walletService->holdEscrow($order);
+
+                $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                    ->where('is_active', true)
+                    ->where('starts_at', '<=', now())
+                    ->where('ends_at', '>=', now())
+                    ->first();
+
+                if ($flashSale) {
+                    $flashSale->increment('quantity_sold', $quantity);
+                }
+
                 $this->bookShipment($order, $user, $weight, $subtotal, $product);
 
                 DB::commit();
@@ -296,6 +320,21 @@ class BuyNowController extends Controller
 
                 if ($order) {
                     $order->update(['payment_status' => 'paid']);
+
+                    $orderItem = $order->items->first();
+                    $product = $orderItem->orderable;
+                    $quantity = $orderItem->quantity;
+
+                    $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                        ->where('is_active', true)
+                        ->where('starts_at', '<=', now())
+                        ->where('ends_at', '>=', now())
+                        ->first();
+
+                    if ($flashSale) {
+                        $flashSale->increment('quantity_sold', $quantity);
+                    }
+
                     $this->walletService->holdEscrow($order);
 
                     $user = auth('web')->user() ?? $order->user;

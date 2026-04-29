@@ -65,7 +65,7 @@
     <p>Your payment is held in escrow and is not released to the Seller until:</p>
     <ul>
         <li>You confirm that you have received your order in satisfactory condition; or</li>
-        <li>7 days have elapsed after the order is marked as shipped without you raising a dispute.</li>
+        <li>3 days have elapsed after the order is marked as shipped without you raising a dispute.</li>
     </ul>
     <p>Do not confirm delivery until you have inspected your item. Once you confirm delivery, the transaction is considered complete and a refund may no longer be possible.</p>
 

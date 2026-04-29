@@ -93,11 +93,14 @@
                         <div class="d-flex justify-content-between align-items-center notifications-head">
                             <h6 class="fw-bold text-dark mb-0">Notifications</h6>
                             @if($sellerNotifCount > 0)
-                            <a href="{{ route('seller.notifications.read') }}"
-                               class="fs-12 text-muted">Mark all read</a>
+                            <form method="POST" action="{{ route('seller.notifications.read') }}" class="d-inline" id="markAllReadForm">
+                                @csrf
+                                <a href="#" class="fs-12 text-muted" onclick="event.preventDefault(); document.getElementById('markAllReadForm').submit();">
+                                    Mark all read
+                                </a>
+                            </form>
                             @endif
                         </div>
-
                         @php
                             $sellerNotifs = \App\Models\Notification::where('notifiable_type', 'App\Models\Seller')
                                 ->where('notifiable_id', auth('seller')->id())

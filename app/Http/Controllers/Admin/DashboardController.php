@@ -79,6 +79,7 @@ class DashboardController extends Controller
             'pending_withdrawals' => WithdrawalRequest::where('status', 'pending')->count(),
             'open_tickets'        => SupportTicket::where('status', 'open')->count(),
             'pending_ads'         => Ad::where('status', 'pending')->count(),
+            'pending_flash_sales' => \App\Models\FlashSale::whereNull('created_by')->count(),
         ];
 
         // ── 4. Revenue helper (from orders table) ────────────────────

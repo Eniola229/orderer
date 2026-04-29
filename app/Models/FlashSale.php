@@ -31,4 +31,9 @@ class FlashSale extends Model
             && now()->between($this->starts_at, $this->ends_at)
             && ($this->quantity_limit === null || $this->quantity_sold < $this->quantity_limit);
     }
+
+    // public function approvedBy()
+    // {
+    //     return $this->belongsTo(Admin::class, 'approved_by');
+    // }
 }

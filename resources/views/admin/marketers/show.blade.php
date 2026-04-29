@@ -131,46 +131,150 @@
                     <div class="text-muted fs-13">Pending</div>
                 </div>
             </div>
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="fs-28 fw-800 text-info">{{ $stats['verified'] }}</div>
+                    <div class="text-muted fs-13">Verified</div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="fs-28 fw-800 text-secondary">{{ $stats['unverified'] }}</div>
+                    <div class="text-muted fs-13">Unverified</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Enhanced Filter Section --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold">Filter Sellers</h6>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.marketers.show', $marketer) }}" class="row g-3">
+                    {{-- Seller Search --}}
+                    <div class="col-12">
+                        <label class="form-label fs-13 fw-semibold">Search Seller</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="feather-search"></i></span>
+                            <input type="text" name="seller_search" class="form-control" 
+                                   placeholder="Search by name, email, or business name..."
+                                   value="{{ $sellerSearch }}">
+                        </div>
+                    </div>
+                    
+                    {{-- Date Range --}}
+                    <div class="col-md-6">
+                        <label class="form-label fs-13 fw-semibold">Date From</label>
+                        <input type="date" name="date_from" class="form-control form-control-sm" 
+                               value="{{ $dateFrom }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fs-13 fw-semibold">Date To</label>
+                        <input type="date" name="date_to" class="form-control form-control-sm" 
+                               value="{{ $dateTo }}">
+                    </div>
+                    
+                    {{-- Verification Status --}}
+                    <div class="col-md-6">
+                        <label class="form-label fs-13 fw-semibold">Verification Status</label>
+                        <select name="verification_filter" class="form-select form-select-sm">
+                            <option value="all" {{ $verificationFilter == 'all' ? 'selected' : '' }}>All</option>
+                            <option value="pending" {{ $verificationFilter == 'pending' ? 'selected' : '' }}>Pending Verification</option>
+                            <option value="approved" {{ $verificationFilter == 'approved' ? 'selected' : '' }}>Verified</option>
+                            <option value="rejected" {{ $verificationFilter == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    
+                    {{-- Approval Status --}}
+                    <div class="col-md-6">
+                        <label class="form-label fs-13 fw-semibold">Approval Status</label>
+                        <select name="status_filter" class="form-select form-select-sm">
+                            <option value="all" {{ $statusFilter == 'all' ? 'selected' : '' }}>All</option>
+                            <option value="approved" {{ $statusFilter == 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="pending" {{ $statusFilter == 'pending' ? 'selected' : '' }}>Pending Approval</option>
+                        </select>
+                    </div>
+                    
+                    {{-- Action Buttons --}}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="feather-filter me-1"></i> Apply Filters
+                        </button>
+                        <a href="{{ route('admin.marketers.show', $marketer) }}" class="btn btn-secondary btn-sm">
+                            <i class="feather-rotate-ccw me-1"></i> Reset All Filters
+                        </a>
+                        @if($sellerSearch || $dateFrom || $dateTo || ($verificationFilter && $verificationFilter != 'all') || ($statusFilter && $statusFilter != 'all'))
+                            <span class="text-muted fs-12 ms-2">
+                                <i class="feather-info me-1"></i> Showing {{ $sellers->count() }} result(s)
+                            </span>
+                        @endif
+                    </div>
+                </form>
+            </div>
         </div>
 
         {{-- Referrals table --}}
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold">Referred Sellers</h6>
+                @if($sellers->count() > 0)
+                    <span class="badge bg-secondary">{{ $sellers->count() }} sellers</span>
+                @endif
             </div>
             <div class="card-body p-0">
-                @if($marketer->referredSellers->isEmpty())
+                @if($sellers->isEmpty())
                 <div class="text-center py-5">
                     <i class="feather-users" style="font-size:36px;color:#d1d5db;"></i>
-                    <p class="text-muted mt-3 mb-0">No sellers referred yet.</p>
+                    <p class="text-muted mt-3 mb-0">No sellers found with the selected filters.</p>
+                    @if($sellerSearch || $dateFrom || $dateTo || ($verificationFilter && $verificationFilter != 'all') || ($statusFilter && $statusFilter != 'all'))
+                        <button class="btn btn-link btn-sm mt-2" onclick="window.location.href='{{ route('admin.marketers.show', $marketer) }}'">
+                            <i class="feather-rotate-ccw me-1"></i> Clear all filters
+                        </button>
+                    @endif
                 </div>
                 @else
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead>
+                        <thead class="table-light">
                             <tr>
                                 <th>#</th>
                                 <th>Seller</th>
                                 <th>Business</th>
+                                <th>Email</th>
+                                <th>Verified?</th>
                                 <th>Status</th>
                                 <th>Joined</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($marketer->referredSellers as $seller)
+                            @foreach($sellers as $seller)
                             <tr>
                                 <td class="text-muted fs-13">{{ $loop->iteration }}</td>
                                 <td>
                                     <div class="fw-semibold fs-14">{{ $seller->full_name }}</div>
-                                    <div class="text-muted fs-12">{{ $seller->email }}</div>
                                 </td>
-                                <td class="fs-13">{{ $seller->business_name }}</td>
+                                <td class="fs-13">{{ $seller->business_name ?? 'N/A' }}</td>
+                                <td class="fs-13">{{ $seller->email }}</td>
+                                <td>
+                                    @if($seller->verification_status === 'approved')
+                                        <span class="badge bg-success-subtle text-success fw-semibold">
+                                            <i class="feather-check-circle me-1"></i> Yes
+                                        </span>
+                                    @elseif($seller->verification_status === 'rejected')
+                                        <span class="badge bg-danger-subtle text-danger fw-semibold">
+                                            <i class="feather-x-circle me-1"></i> No
+                                        </span>
+                                    @else
+                                        <span class="badge bg-warning-subtle text-warning fw-semibold">
+                                            <i class="feather-clock me-1"></i> Pending
+                                        </span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($seller->is_approved)
-                                        <span class="badge bg-success-subtle text-success fw-semibold">Approved</span>
-                                    @elseif($seller->verification_status === 'rejected')
-                                        <span class="badge bg-danger-subtle text-danger fw-semibold">Rejected</span>
+                                        <span class="badge bg-success-subtle text-success fw-semibold">Active</span>
                                     @else
                                         <span class="badge bg-warning-subtle text-warning fw-semibold">Pending</span>
                                     @endif
@@ -178,7 +282,7 @@
                                 <td class="text-muted fs-13">{{ $seller->created_at->format('d M Y') }}</td>
                                 <td>
                                     <a href="{{ route('admin.sellers.show', $seller) }}"
-                                       class="btn btn-sm btn-outline-secondary">
+                                       class="btn btn-sm btn-outline-secondary" title="View Seller">
                                         <i class="feather-eye"></i>
                                     </a>
                                 </td>

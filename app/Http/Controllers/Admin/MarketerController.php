@@ -53,18 +53,63 @@ class MarketerController extends Controller
             ->with('success', "Marketer account created. Code: {$marketer->marketing_code}");
     }
 
-    public function show(Marketer $marketer)
+    public function show(Request $request, Marketer $marketer)
     {
         if (!auth('admin')->user()->canManageAdmins()) abort(403);
 
-        $marketer->load('referredSellers');
+        // Get filter parameters
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $verificationFilter = $request->get('verification_filter');
+        $statusFilter = $request->get('status_filter');
+        $sellerSearch = $request->get('seller_search');
+        
+        // Build the query for sellers
+        $sellersQuery = $marketer->referredSellers();
+        
+        // Apply custom date range filter (from - to)
+        if ($dateFrom) {
+            $sellersQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $sellersQuery->whereDate('created_at', '<=', $dateTo);
+        }
+        
+        // Apply verification filter
+        if ($verificationFilter && $verificationFilter !== 'all') {
+            $sellersQuery->where('verification_status', $verificationFilter);
+        }
+        
+        // Apply status filter (approved/pending)
+        if ($statusFilter && $statusFilter !== 'all') {
+            $sellersQuery->where('is_approved', $statusFilter === 'approved');
+        }
+        
+        // Apply seller search (search by name, email, or business name)
+        if ($sellerSearch) {
+            $sellersQuery->where(function($q) use ($sellerSearch) {
+                $q->where('first_name', 'like', "%{$sellerSearch}%")
+                  ->orWhere('last_name', 'like', "%{$sellerSearch}%")
+                  ->orWhere('email', 'like', "%{$sellerSearch}%")
+                  ->orWhere('business_name', 'like', "%{$sellerSearch}%");
+            });
+        }
+        
+        // Get filtered sellers
+        $sellers = $sellersQuery->get();
+        
+        // Calculate stats based on original data (unfiltered)
         $stats = [
             'total'    => $marketer->referredSellers()->count(),
             'approved' => $marketer->referredSellers()->where('is_approved', true)->count(),
             'pending'  => $marketer->referredSellers()->where('is_approved', false)->count(),
+            'verified'  => $marketer->referredSellers()->where('verification_status', 'approved')->count(),
+            'unverified' => $marketer->referredSellers()->where('verification_status', '!=', 'approved')->count(),
         ];
-
-        return view('admin.marketers.show', compact('marketer', 'stats'));
+        
+        // Pass filter values back to view for persistence
+        return view('admin.marketers.show', compact('marketer', 'sellers', 'stats', 
+            'dateFrom', 'dateTo', 'verificationFilter', 'statusFilter', 'sellerSearch'));
     }
 
     public function edit(Marketer $marketer)

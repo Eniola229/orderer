@@ -143,11 +143,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
         // ==================== Flash Sale ====================
-        Route::get('/flash-sales', [FlashSaleController::class, 'index'])->name('flash-sales.index');
-        Route::get('/flash-sales/create', [FlashSaleController::class, 'create'])->name('flash-sales.create');
-        Route::post('/flash-sales/store', [FlashSaleController::class, 'store'])->name('flash-sales.store');
-        Route::put('/flash-sales/{flashSale}/toggle', [FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
-        Route::delete('/flash-sales/{flashSale}/destroy', [FlashSaleController::class, 'destroy'])->name('flash-sales.destroy');
+        Route::resource('flash-sales', FlashSaleController::class)->except(['edit', 'update']);
+        Route::put('flash-sales/{flashSale}/approve', [FlashSaleController::class, 'approve'])->name('flash-sales.approve');
+        Route::put('flash-sales/{flashSale}/reject', [FlashSaleController::class, 'reject'])->name('flash-sales.reject');
+        Route::put('flash-sales/{flashSale}/toggle', [FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
         // ==================== Logs ====================
         Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
 

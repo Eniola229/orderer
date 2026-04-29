@@ -50,7 +50,7 @@
     <p class="meta">Last updated: {{ date('F d, Y') }} &nbsp;·&nbsp; All refunds issued in Nigerian Naira (₦)</p>
 
     <div class="highlight-box">
-        <p>✅ Orderer uses an escrow system. Your money is protected — funds are only released to the seller after you confirm delivery or 7 days have passed.</p>
+        <p>✅ Orderer uses an escrow system. Your money is protected — funds are only released to the seller after you confirm delivery or 3 days have passed.</p>
     </div>
 
     <h2>1. How Our Escrow Protects You</h2>
@@ -64,11 +64,11 @@
             <p>Payment held in escrow. Seller begins processing your order.</p>
         </div>
         <div class="timeline-item">
-            <p class="day">Day 1–7 after shipment — Delivery Window</p>
+            <p class="day">Day 1–3 after shipment — Delivery Window</p>
             <p>You may raise a dispute at any point during this window if there is a problem with your order.</p>
         </div>
         <div class="timeline-item">
-            <p class="day">Day 7 after shipment — Auto-release</p>
+            <p class="day">Day 3 after shipment — Auto-release</p>
             <p>If no dispute is raised, funds are automatically released to the seller. Refund requests after this point are at Orderer's sole discretion.</p>
         </div>
         <div class="timeline-item">

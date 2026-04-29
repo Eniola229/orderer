@@ -10,7 +10,7 @@
                      alt="Orderer"
                      class="logo logo-sm" />
             </a>
-        </div>
+        </div> 
 
         <div class="navbar-content">
             <ul class="nxl-navbar">
@@ -42,6 +42,12 @@
                         </li>
                         <li class="nxl-item">
                             <a class="nxl-link" href="{{ route('seller.products.create') }}">Add Product</a>
+                        </li>
+                        <li class="nxl-item {{ request()->routeIs('seller.flash-sales.*') ? 'active' : '' }}">
+                            <a href="{{ route('seller.flash-sales.index') }}" class="nxl-link">
+                                <span class="nxl-micon"><i class="feather-zap"></i></span>
+                                <span class="nxl-mtext">Flash Sales</span>
+                            </a>
                         </li>
                     </ul>
                 </li>

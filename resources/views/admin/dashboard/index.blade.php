@@ -21,7 +21,7 @@
                     <p class="mb-0 text-muted" style="font-size:12px;">Awaiting approval</p>
                 </div>
             </div>
-        </a>
+        </a> 
     </div>
     @endif
     @if($stats['pending_products'])
@@ -61,6 +61,20 @@
                 <div>
                     <strong style="color:#1A5276;">{{ $stats['pending_ads'] }} Ads</strong>
                     <p class="mb-0 text-muted" style="font-size:12px;">Awaiting approval</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    @endif
+    @if($stats['pending_flash_sales'])
+    <div class="col-md-3 mb-2">
+        <a href="{{ route('admin.flash-sales.index') }}" class="text-decoration-none">
+            <div class="alert mb-0 d-flex align-items-center gap-3"
+                 style="background:#F4ECF7;border:1px solid #8E44AD;border-radius:10px;">
+                <i class="feather-zap" style="font-size:20px;color:#6C3483;flex-shrink:0;"></i>
+                <div>
+                    <strong style="color:#6C3483;">{{ $stats['pending_flash_sales'] }} Flash Sales</strong>
+                    <p class="mb-0 text-muted" style="font-size:12px;">Awaiting admin approval</p>
                 </div>
             </div>
         </a>
@@ -396,6 +410,14 @@
                     <i class="feather-trending-up me-2"></i> Approve Ads
                     @if($stats['pending_ads'])
                     <span class="badge bg-info ms-1">{{ $stats['pending_ads'] }}</span>
+                    @endif
+                </a>
+                @endif
+                @if($admin->canManageAds())
+                <a href="{{ route('admin.flash-sales.index') }}" class="btn btn-outline-success btn-sm">
+                    <i class="feather-zap me-2"></i> Review Flash Sales
+                    @if($stats['pending_flash_sales'])
+                    <span class="badge bg-info ms-1 text-muted">{{ $stats['pending_flash_sales'] }}</span>
                     @endif
                 </a>
                 @endif

@@ -18,6 +18,12 @@ class FlashSaleController extends Controller
         return view('admin.flash-sales.index', compact('flashSales'));
     }
 
+    public function show(FlashSale $flashSale)
+    {
+        $flashSale->load(['product.seller']);
+        return view('admin.flash-sales.show', compact('flashSale'));
+    }
+
     public function create()
     {
         $products = Product::where('status', 'approved')
@@ -49,7 +55,6 @@ class FlashSaleController extends Controller
             'starts_at'      => $request->starts_at,
             'ends_at'        => $request->ends_at,
             'is_active'      => true,
-            'created_by'     => auth('admin')->id(),
         ]);
 
         return redirect()->route('admin.flash-sales.index')
@@ -58,13 +63,20 @@ class FlashSaleController extends Controller
 
     public function toggle(FlashSale $flashSale)
     {
-        $flashSale->update(['is_active' => !$flashSale->is_active]);
-        return back()->with('success', 'Flash sale ' . ($flashSale->is_active ? 'activated' : 'paused') . '.');
+        $newStatus = !$flashSale->is_active;
+        
+        $flashSale->update([
+            'is_active' => $newStatus,
+            'created_by' => $newStatus ? auth('admin')->id() : null
+        ]);
+        
+        return back()->with('success', 'Flash sale ' . ($newStatus ? 'activated' : 'paused') . '.');
     }
-
+    
     public function destroy(FlashSale $flashSale)
     {
         $flashSale->delete();
-        return back()->with('success', 'Flash sale deleted.');
+        return redirect()->route('admin.flash-sales.index')
+            ->with('success', 'Flash sale deleted.');
     }
 }

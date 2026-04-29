@@ -17,6 +17,7 @@ use App\Http\Controllers\Seller\BrandController;
 use App\Http\Controllers\Seller\SupportController        as SellerSupportController;
 use App\Http\Controllers\Seller\NotificationController   as SellerNotificationController;
 use App\Http\Controllers\Seller\Auth\ResubmitVerificationController;
+use App\Http\Controllers\Seller\FlashSaleController as SellerFlashSaleController;
 
 Route::prefix('seller')->name('seller.')->group(function () {
 
@@ -27,7 +28,7 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/register',  [SellerRegisterController::class, 'showForm'])->name('register');
         Route::post('/register', [SellerRegisterController::class, 'register']);
 
-        // Password reset
+        // Password reset 
         Route::get('/password/reset',          [SellerPasswordReset::class, 'showForgotForm'])->name('password.request');
         Route::post('/password/email',         [SellerPasswordReset::class, 'sendResetLink'])->name('password.email');
         Route::get('/password/reset/{token}',  [SellerPasswordReset::class, 'showResetForm'])->name('password.reset');
@@ -117,6 +118,13 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/notifications',                  [SellerNotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/read',            [SellerNotificationController::class, 'markRead'])->name('notifications.read');
         Route::put('/notifications/{notification}',   [SellerNotificationController::class, 'markSingle'])->name('notifications.single');
+
+        //Flash Sales 
+        Route::get('/flash-sales',                   [SellerFlashSaleController::class, 'index'])->name('flash-sales.index');
+        Route::get('/flash-sales/create',            [SellerFlashSaleController::class, 'create'])->name('flash-sales.create');
+        Route::post('/flash-sales',                  [SellerFlashSaleController::class, 'store'])->name('flash-sales.store');
+        Route::put('/flash-sales/{flashSale}/toggle',[SellerFlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
+        Route::delete('/flash-sales/{flashSale}',    [SellerFlashSaleController::class, 'destroy'])->name('flash-sales.destroy');
 
     });
 });
