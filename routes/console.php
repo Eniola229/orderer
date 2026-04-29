@@ -2,7 +2,9 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;  // ← Add this
+use Illuminate\Support\Facades\Schedule; 
+use Illuminate\Support\Facades\Log;
+
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -24,8 +26,14 @@ Schedule::call(function () {
         ->update(['is_active' => false]);
 })->hourly();
 
-// Check order status
+// Check order status 
 Schedule::command('orders:sync-shipping-status')->everyFifteenMinutes();
 
 // For ads
 Schedule::command('ads:charge')->dailyAt('13:05');
+
+//For Order Payment Status
+Schedule::command('korapay:check-pending-orders')
+         ->everyFiveMinutes()
+         ->withoutOverlapping()
+         ->onOneServer();

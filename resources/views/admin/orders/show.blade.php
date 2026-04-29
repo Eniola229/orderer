@@ -20,7 +20,7 @@ function adminOrderStatusBadge(string $status): string {
         'cancelled'  => 'bg-danger text-white',
         'disputed'   => 'bg-danger text-white',
         'paid'       => 'bg-success text-white',
-        'failed'     => 'bg-danger text-white',
+        'failed'     => 'bg-danger text-white', 
         'refunded'   => 'bg-secondary text-white',
         'held'       => 'bg-warning text-dark',
         'released'   => 'bg-success text-white',
@@ -229,7 +229,7 @@ function adminOrderStatusBadge(string $status): string {
 
 
         {{-- Admin actions --}}
-        @if(auth('admin')->user()->canEditOrders() && !in_array($order->status, ['completed','cancelled']))
+        @if(auth('admin')->user()->canEditOrders() && !in_array($order->status, ['completed','cancelled']) && $order->payment_status === 'paid')
         <div class="card mb-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">Admin Actions</h5>

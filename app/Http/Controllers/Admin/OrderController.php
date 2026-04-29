@@ -90,6 +90,10 @@ class OrderController extends Controller
     {
         if (!auth('admin')->user()->canEditOrders()) abort(403);
 
+        if ($order->payment_status !== 'paid') {
+            return back()->with('error', 'Cannot complete an unpaid order.');
+        }
+
         if (in_array($order->status, ['completed', 'cancelled'])) {
             return back()->with('error', 'Order already finalised.');
         }
@@ -122,6 +126,10 @@ class OrderController extends Controller
     public function forceRefund(Order $order, \App\Services\ShipbubbleService $shipbubble)
     {
         if (!auth('admin')->user()->canEditOrders()) abort(403);
+
+        if ($order->payment_status !== 'paid') {
+            return back()->with('error', 'Cannot refund an unpaid order.');
+        }
 
         if (in_array($order->status, ['completed', 'cancelled', 'refunded'])) {
             return back()->with('error', 'Order is already finalised and cannot be refunded.');
