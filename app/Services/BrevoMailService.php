@@ -147,6 +147,21 @@ class BrevoMailService
         );
     }
 
+    public function sendOrderStatusUpdate($user, $order, $sellerItems, string $status, ?string $trackingNumber = null): bool
+    {
+        $subjects = [
+            'confirmed' => "Items from your order #{$order->order_number} have been confirmed",
+            'shipped'   => "Items from your order #{$order->order_number} have been shipped",
+            'delivered' => "Items from your order #{$order->order_number} have been delivered",
+        ];
+
+        return $this->send(
+            $user->email,
+            $user->full_name,
+            $subjects[$status] ?? "Update on items in order #{$order->order_number}",
+            $this->orderStatusUpdateHtml($user, $order, $sellerItems, $status, $trackingNumber)
+        );
+    }
 
     // -------------------------------------------------------
     // Email HTML templates
@@ -435,6 +450,107 @@ protected function withdrawalRejectedHtml($withdrawal, $seller, $amount, $reason
             
             <p style='color:#888;font-size:13px;margin-top:24px;'>
                 If you have questions, please contact support@ordererweb.shop
+            </p>
+        </div>
+        <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+            &copy; " . date('Y') . " Orderer. All rights reserved.
+        </div>
+    </div>";
+}
+
+protected function orderStatusUpdateHtml($user, $order, $sellerItems, string $status, ?string $trackingNumber): string
+{
+    $configs = [
+        'confirmed' => [
+            'color'   => '#2ECC71',
+            'heading' => 'Items Confirmed! 🎉',
+            'message' => 'The following items from your order have been confirmed by the seller and are being prepared.',
+            'cta'     => 'View Order',
+        ],
+        'shipped' => [
+            'color'   => '#3498DB',
+            'heading' => 'Items Shipped! 📦',
+            'message' => 'The following items from your order are on their way to you.',
+            'cta'     => 'Track Shipment',
+        ],
+        'delivered' => [
+            'color'   => '#2ECC71',
+            'heading' => 'Items Delivered! ✅',
+            'message' => 'The following items from your order have been marked as delivered.',
+            'cta'     => 'View Order',
+        ],
+    ];
+
+    $c = $configs[$status] ?? [
+        'color'   => '#2ECC71',
+        'heading' => 'Order Update',
+        'message' => 'The following items in your order have been updated to ' . ucfirst($status) . '.',
+        'cta'     => 'View Order',
+    ];
+
+    // Build items rows
+    $itemRows = '';
+    foreach ($sellerItems as $item) {
+        $itemRows .= "
+        <tr>
+            <td style='padding:10px 0;border-bottom:1px solid #eee;font-size:14px;'>
+                " . e($item->product_name ?? $item->product->name ?? 'Product') . "
+            </td>
+            <td style='padding:10px 0;border-bottom:1px solid #eee;font-size:14px;text-align:center;'>
+                x{$item->quantity}
+            </td>
+            <td style='padding:10px 0;border-bottom:1px solid #eee;font-size:14px;text-align:right;'>
+                ₦" . number_format($item->total_price * $item->quantity, 2) . "
+            </td>
+        </tr>";
+    }
+
+    $trackingBlock = '';
+    if ($trackingNumber) {
+        $trackingBlock = "
+        <div style='background:#f8f9fa;padding:16px;border-radius:8px;margin:20px 0;font-size:14px;'>
+            <strong>Tracking Number:</strong> <code>{$trackingNumber}</code>
+        </div>";
+    }
+
+    return "
+    <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+        <div style='background:{$c['color']};padding:30px;text-align:center;'>
+            <h1 style='color:#fff;margin:0;'>{$c['heading']}</h1>
+        </div>
+        <div style='padding:30px;background:#fff;'>
+            <p>Hi <strong>{$user->first_name}</strong>,</p>
+            <p>{$c['message']}</p>
+
+            <div style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>
+                <p style='margin:0 0 12px 0;font-size:13px;color:#6c757d;'>
+                    Order <strong>#{$order->order_number}</strong>
+                </p>
+                <table style='width:100%;'>
+                    <thead>
+                        <tr>
+                            <th style='font-size:12px;color:#6c757d;text-align:left;padding-bottom:8px;font-weight:normal;'>Item</th>
+                            <th style='font-size:12px;color:#6c757d;text-align:center;padding-bottom:8px;font-weight:normal;'>Qty</th>
+                            <th style='font-size:12px;color:#6c757d;text-align:right;padding-bottom:8px;font-weight:normal;'>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {$itemRows}
+                    </tbody>
+                </table>
+            </div>
+
+            {$trackingBlock}
+
+            <div style='text-align:center;margin:30px 0;'>
+                <a href='" . route('buyer.orders.show', $order->id) . "'
+                   style='background:{$c['color']};color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
+                    {$c['cta']}
+                </a>
+            </div>
+
+            <p style='color:#888;font-size:13px;'>
+                Questions? Contact us at support@ordererweb.shop
             </p>
         </div>
         <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>

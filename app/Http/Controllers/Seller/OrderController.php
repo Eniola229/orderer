@@ -25,6 +25,9 @@ class OrderController extends Controller
 
         $query = OrderItem::where('seller_id', $sellerId)
             ->with(['order.user', 'order'])
+            ->whereHas('order', function ($q) {
+                $q->whereNotIn('payment_status', ['pending', 'failed']);
+            })
             ->latest();
 
         if ($request->status && $request->status !== 'all') {
@@ -34,19 +37,26 @@ class OrderController extends Controller
         if ($request->search) {
             $search = $request->search;
             $query->whereHas('order', function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhere('shipping_name', 'like', "%{$search}%");
+                $q->whereNotIn('payment_status', ['pending', 'failed'])
+                  ->where(function ($q) use ($search) {
+                      $q->where('order_number', 'like', "%{$search}%")
+                        ->orWhere('shipping_name', 'like', "%{$search}%");
+                  });
             });
         }
 
         $items = $query->paginate(20)->withQueryString();
 
+        // Reusable base to keep stats consistent with the same filter
+        $base = fn() => OrderItem::where('seller_id', $sellerId)
+            ->whereHas('order', fn($q) => $q->whereNotIn('payment_status', ['pending', 'failed']));
+
         $stats = [
-            'total'     => OrderItem::where('seller_id', $sellerId)->count(),
-            'pending'   => OrderItem::where('seller_id', $sellerId)->where('status', 'pending')->count(),
-            'confirmed' => OrderItem::where('seller_id', $sellerId)->where('status', 'confirmed')->count(),
-            'shipped'   => OrderItem::where('seller_id', $sellerId)->where('status', 'shipped')->count(),
-            'completed' => OrderItem::where('seller_id', $sellerId)->where('status', 'completed')->count(),
+            'total'     => $base()->count(),
+            'pending'   => $base()->where('status', 'pending')->count(),
+            'confirmed' => $base()->where('status', 'confirmed')->count(),
+            'shipped'   => $base()->where('status', 'shipped')->count(),
+            'completed' => $base()->where('status', 'completed')->count(),
         ];
 
         return view('seller.orders.index', compact('items', 'stats'));
@@ -157,6 +167,27 @@ class OrderController extends Controller
                 'action_url'      => route('buyer.orders.show', $order->id),
             ]);
         });
+
+        try {
+            $sellerItems = OrderItem::where('order_id', $order->id)
+                ->where('seller_id', $sellerId)
+                ->with('product')
+                ->get();
+
+            $this->brevo->sendOrderStatusUpdate(
+                $order->user,
+                $order,
+                $sellerItems,
+                $newStatus,
+                $request->tracking_number ?? null
+            );
+        } catch (\Exception $e) {
+            \Log::error('Order status email failed', [
+                'order_id' => $order->id,
+                'status'   => $newStatus,
+                'error'    => $e->getMessage(),
+            ]);
+        }
 
         return back()->with('success', "Order status updated to " . ucfirst($newStatus) . ".");
     }
