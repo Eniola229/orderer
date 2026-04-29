@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <p class="text-muted fs-13 mt-2">
-                    Supported countries for direct bank payout: <strong>NGN, KES, GHS, XOF, XAF, EGP, ZAR and TSZ</strong>.
+                    Supported countries for direct bank payout: <strong>NGN</strong>.
                     If your country isn't listed, you can still withdraw using a USD-enabled account such as
                     <strong>Grey, Geegpay, Cleva, or Chipper Cash</strong> — select <em>United States (USD)</em>
                     as the country and choose <em>Yes — it accepts USD</em>.
@@ -157,7 +157,7 @@
                                 <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
                                     <input type="radio" name="dollar_capable" value="no"
                                            {{ old('dollar_capable', 'no') === 'no' ? 'checked' : '' }}>
-                                    No — only (NGN, KES, GHS, XOF, XAF, EGP, ZAR and TSZ)
+                                    No — only (NGN)
                                 </label>
                             </div>
                             @error('dollar_capable')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
@@ -262,7 +262,7 @@
                     </li>
                     <li class="mb-0">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Processing takes 1–3 business days
+                        Processing takes within 2-3 hours
                     </li>
                 </ul>
             </div>

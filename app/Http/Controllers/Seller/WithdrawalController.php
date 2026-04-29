@@ -112,7 +112,7 @@ class WithdrawalController extends Controller
         );
 
         return redirect()->route('seller.withdrawals.index')
-            ->with('success', "Withdrawal request of ₦{$request->amount} submitted. We will process within 24–48 hours.");
+            ->with('success', "Withdrawal request of ₦{$request->amount} submitted. We will process within 2-3 hours.");
     }
 
     /**
