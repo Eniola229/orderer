@@ -26,7 +26,7 @@ class SyncOrderShippingStatus extends Command
     public function handle(): int
     {
         // Fetch all active items that have a shipbubble_shipment_id
-        $activeItems = OrderItem::whereNotIn('status', ['delivered', 'completed', 'cancelled'])
+        $activeItems = OrderItem::whereNotIn('status', ['completed', 'cancelled'])
             ->whereNotNull('shipbubble_shipment_id')
             ->with(['order', 'seller'])
             ->get();

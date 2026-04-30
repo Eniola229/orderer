@@ -8,7 +8,7 @@
 
 @section('content')
 
-@php 
+@php  
 function orderStatusBadge(string $status): string {
     return match($status) {
         'pending'    => 'bg-warning text-dark',
@@ -82,24 +82,39 @@ function orderStatusBadge(string $status): string {
             </div>
         </div>
 
-        {{-- Confirm delivery --}}
-        @if($order->status === 'shipped')
+        {{-- Confirm delivery per seller shipment --}}
+        @php
+            $shipmentGroups = $order->items
+                ->whereNotIn('status', ['pending', 'confirmed', 'completed', 'cancelled'])
+                ->groupBy('seller_id');
+        @endphp
+
+        @foreach($shipmentGroups as $sellerId => $sellerItems)
+        @php
+            $sellerName = $sellerItems->first()->seller->business_name ?? 'Seller';
+            $itemNames  = $sellerItems->pluck('item_name')->map(fn($n) => \Str::limit($n, 50))->join(', ');
+        @endphp
         <div class="card mb-3">
             <div class="card-body">
                 <div class="alert alert-info mb-3">
                     <i class="feather-truck me-2"></i>
-                    Your order is on the way! Confirm delivery once you receive it to release payment to the seller.
+                    <strong>{{ $sellerName }}</strong> has shipped your item(s). Confirm delivery once you get the item(s) to release payment to the seller.
                 </div>
-                <form action="{{ route('buyer.orders.confirm', $order->id) }}" method="POST">
+                <p class="fs-13 text-muted mb-3">
+                    <strong>Items:</strong> {{ $itemNames }}
+                </p>
+                <form action="{{ route('buyer.orders.confirm.item', $order->id) }}" method="POST">
                     @csrf @method('PUT')
+                    <input type="hidden" name="seller_id" value="{{ $sellerId }}">
                     <button type="submit" class="btn btn-success"
-                            onclick="return confirm('Confirm you have received this order?')">
-                        <i class="feather-check-circle me-2"></i> Confirm Delivery
+                            onclick="return confirm('Confirm you have received these items from {{ addslashes($sellerName) }}?')">
+                        <i class="feather-check-circle me-2"></i>
+                        Confirm Delivery for: {{ $itemNames }}
                     </button>
                 </form>
             </div>
         </div>
-        @endif
+        @endforeach
 
         {{-- Status timeline --}}
         <div class="card">

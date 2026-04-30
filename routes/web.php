@@ -204,7 +204,7 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     // Orders
     Route::get('/orders',                    [BuyerOrders::class, 'index'])->name('orders');
     Route::get('/orders/{order}',            [BuyerOrders::class, 'show'])->name('orders.show');
-    Route::put('/orders/{order}/confirm',    [BuyerOrders::class, 'confirmDelivery'])->name('orders.confirm');
+    Route::put('orders/{order}/confirm-item', [BuyerOrders::class, 'confirmItem'])->name('orders.confirm.item');
     // ── Rider booking ────────────────────────────────────
     Route::get('/rider',          fn() => view('storefront.rider'))->name('rider.booking');
 

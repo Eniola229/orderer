@@ -180,7 +180,7 @@ class WalletService
             ]);
 
             $item->update([
-                'status'       => 'delivered',
+                'status'       => 'completed',
                 'delivered_at' => now(),
             ]);
 

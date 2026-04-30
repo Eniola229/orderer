@@ -38,42 +38,56 @@ class OrderController extends Controller
         return view('buyer.orders.show', compact('order'));
     }
 
-    public function confirmDelivery(Order $order)
+    public function confirmItem(Request $request, Order $order)
     {
-        if ($order->user_id !== auth('web')->id()) abort(403);
+        $request->validate([
+            'seller_id' => ['required', 'string'],
+        ]);
 
-        if ($order->status !== 'shipped') {
-            return back()->with('error', 'This order cannot be confirmed yet.');
+        $buyerId  = auth('web')->id();
+        $sellerId = $request->seller_id;
+
+        // Guard — this order belongs to this buyer
+        if ($order->user_id !== $buyerId) abort(403);
+
+        // Get all shipped items for this seller in this order
+        $items = \App\Models\OrderItem::where('order_id', $order->id)
+            ->where('seller_id', $sellerId)
+            ->whereIn('status', ['shipped', 'delivered'])
+            ->get();
+
+        if ($items->isEmpty()) {
+            return back()->with('error', 'No shipped or delivered items found for this seller.');
         }
 
-        // Log status change
-        OrderStatusLog::create([
-            'order_id'        => $order->id,
-            'from_status'     => 'shipped',
-            'to_status'       => 'delivered',
-            'changed_by_type' => 'buyer',
-            'changed_by_id'   => auth('web')->id(),
-            'note'            => 'Buyer confirmed delivery.',
-        ]);
-
-        $order->update([
-            'status'       => 'completed',
-            'delivered_at' => now(),
-        ]);
-
-        // Release escrow
-        $this->wallet->releaseEscrow($order);
+        foreach ($items as $item) {
+            try {
+                app(\App\Services\WalletService::class)->releaseEscrowForItem($item);
+            } catch (\Exception $e) {
+                \Log::error("confirmItem — failed for item #{$item->id}: " . $e->getMessage());
+                return back()->with('error', "Could not confirm delivery for '{$item->item_name}': " . $e->getMessage());
+            }
+        }
 
         // Notify seller
         \App\Models\Notification::create([
             'notifiable_type' => 'App\Models\Seller',
-            'notifiable_id'   => $order->items->first()->seller_id,
-            'type'            => 'delivery_confirmed',
+            'notifiable_id'   => $sellerId,
+            'type'            => 'order_delivered',
             'title'           => 'Delivery Confirmed',
-            'body'            => "Order #{$order->order_number} has been delivered. Payment released to your wallet.",
+            'body'            => "Buyer confirmed delivery for order #{$order->order_number}. Payment has been released.",
             'action_url'      => route('seller.orders.show', $order->id),
         ]);
 
-        return back()->with('success', 'Delivery confirmed! Payment released to the seller.');
+        \App\Models\OrderStatusLog::create([
+            'order_id'        => $order->id,
+            'from_status'     => 'shipped',
+            'to_status'       => 'delivered',
+            'changed_by_type' => 'buyer',
+            'changed_by_id'   => $buyerId,
+            'note'            => "Buyer confirmed delivery of " . $items->count() . " item(s) from seller.",
+        ]);
+
+        return back()->with('success', 'Delivery confirmed! Payment has been released to the seller.');
     }
 }

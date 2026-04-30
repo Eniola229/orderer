@@ -11,7 +11,7 @@ use App\Services\ShipbubbleService;
 use App\Services\BrevoMailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+ 
 class OrderController extends Controller
 {
     public function __construct(
