@@ -23,7 +23,7 @@ use App\Http\Controllers\Admin\DeliveryBookingController;
 use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Admin\MarketerController;
  
-Route::prefix('admin')->name('admin.')->group(function () { 
+Route::prefix('20050619/admin')->name('admin.')->group(function () { 
 
     // Guest only
     Route::middleware('guest.admin')->group(function () {
@@ -83,7 +83,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::put('/orders/{order}/complete', [OrderController::class, 'forceComplete'])->name('orders.complete');
         Route::put('/orders/{order}/refund', [OrderController::class, 'forceRefund'])->name('orders.refund');
-        Route::put('orders/{order}/items/{item}/cancel', [OrderController::class, 'cancelOrderItem'])
+        Route::put('/orders/{order}/items/{item}/cancel', [OrderController::class, 'cancelOrderItem'])
             ->name('orders.items.cancel');
 
         // ==================== Finance ====================
@@ -143,12 +143,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile.index');
         Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.update-password');
         // ==================== Flash Sale ====================
-        Route::resource('flash-sales', FlashSaleController::class)->except(['edit', 'update']);
-        Route::put('flash-sales/{flashSale}/approve', [FlashSaleController::class, 'approve'])->name('flash-sales.approve');
-        Route::put('flash-sales/{flashSale}/reject', [FlashSaleController::class, 'reject'])->name('flash-sales.reject');
-        Route::put('flash-sales/{flashSale}/toggle', [FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
+        Route::resource('/flash-sales', FlashSaleController::class)->except(['edit', 'update']);
+        Route::put('/flash-sales/{flashSale}/approve', [FlashSaleController::class, 'approve'])->name('flash-sales.approve');
+        Route::put('/flash-sales/{flashSale}/reject', [FlashSaleController::class, 'reject'])->name('flash-sales.reject');
+        Route::put('/flash-sales/{flashSale}/toggle', [FlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
         // ==================== Logs ====================
-        Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+        Route::get('//logs', [LogController::class, 'index'])->name('logs.index');
+
 
         Route::get('/delivery-bookings',                      [DeliveryBookingController::class, 'index'])->name('delivery-bookings.index');
         Route::get('/delivery-bookings/{deliveryBooking}',    [DeliveryBookingController::class, 'show'])->name('delivery-bookings.show');

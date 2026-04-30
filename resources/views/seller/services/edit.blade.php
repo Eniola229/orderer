@@ -16,7 +16,7 @@
 @endif
 
 <form action="{{ route('seller.services.update', $service->id) }}" 
-      method="POST" 
+      method="POST"  
       enctype="multipart/form-data"
       id="serviceForm">
     @csrf
@@ -168,6 +168,19 @@
                     </div>
                     <div class="d-flex flex-wrap gap-2 mt-3" id="imagePreviewGrid"></div>
                 </div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label fw-bold">Portfolio / Work URL</label>
+                <input type="url"
+                       name="portfolio_url"
+                       class="form-control @error('portfolio_url') is-invalid @enderror"
+                       value="{{ old('portfolio_url', $service->portfolio_url) }}"
+                       placeholder="https://behance.net/yourwork">
+                @error('portfolio_url')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+                <small class="text-muted">Link to your Behance, Dribbble, Google Drive, or any portfolio site.</small>
             </div>
 
         </div>

@@ -35,7 +35,7 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
-                            践
+                            
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Name</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Slug</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Commission</th>

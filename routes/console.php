@@ -6,18 +6,9 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Log;
 
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
-// Auto-release escrow for orders shipped 3+ days ago
-Schedule::command('escrow:auto-release')->hourly();
-
 // Check price drop alerts — run every 6 hours
 Schedule::command('alerts:price-drops')->everySixHours();
 
-// Auto-award badges based on criteria — daily
-//Schedule::command('badges:auto-award')->daily()->at('03:00');
 
 // Clean up expired flash sales
 Schedule::call(function () {

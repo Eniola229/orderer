@@ -16,7 +16,7 @@ class ServiceListing extends Model
         'description', 'pricing_type', 'price',
         'delivery_time', 'location', 'portfolio_images',
         'status', 'rejection_reason',
-        'average_rating', 'total_reviews','approved_by'
+        'average_rating', 'total_reviews','approved_by', 'portfolio_url',
     ];
 
     protected $casts = [

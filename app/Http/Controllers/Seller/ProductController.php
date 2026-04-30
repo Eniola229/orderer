@@ -59,7 +59,7 @@ class ProductController extends Controller
                                        ->ignore(auth('seller')->id(), 'seller_id')],
             'images'          => ['required', 'array', 'min:1', 'max:8'],
             'images.*'        => ['image', 'mimes:jpg,jpeg,png,webp,avif', 'max:4096'],
-            'video'           => ['nullable', 'file', 'mimes:mp4,mov,avi', 'max:51200'],
+            'video'           => ['nullable', 'file', 'mimes:mp4,mov,avi', 'max:10240'],
 
             // Options (optional)
             'options'                        => ['nullable', 'array', 'max:5'],

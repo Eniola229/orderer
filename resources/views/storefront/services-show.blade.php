@@ -23,7 +23,7 @@
 <style>
     .service-gallery {
         position: relative;
-        border-radius: 12px;
+        border-radius: 12px; 
         overflow: hidden;
         background: #f8f9fa;
     }
@@ -317,6 +317,17 @@
                             <div class="info-label">Description</div>
                             <div class="info-value" style="line-height: 1.6;">{{ $service->description }}</div>
                         </div>
+                    @endif
+
+                    @if($service->portfolio_url)
+                    <hr>
+                    <div class="mb-3">
+                        <div class="info-label">Portfolio</div>
+                        <a href="{{ $service->portfolio_url }}" target="_blank" 
+                           class="btn btn-sm btn-outline-success">
+                            <i class="fa fa-external-link mr-1"></i> View Portfolio Work
+                        </a>
+                    </div>
                     @endif
                 </div>
             </div>

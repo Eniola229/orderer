@@ -48,7 +48,7 @@ class CheckoutController extends Controller
                 'quantity'         => $item->quantity,
                 'image'            => $img?->image_url ?? null,
                 'is_flash_sale'    => $isFlashSale,
-                'selected_options' => $item->selected_options ?? [], // CHANGED: pass through
+                'selected_options' => $item->selected_options ?? [], 
             ];
         })->toArray();
 
@@ -98,7 +98,7 @@ class CheckoutController extends Controller
                 'cartItem'         => [
                     'price'            => $item->price,
                     'quantity'         => $item->quantity,
-                    'selected_options' => $item->selected_options, // CHANGED: carry through
+                    'selected_options' => $item->selected_options, 
                 ],
                 'total'            => $totalPrice,
             ];
@@ -150,7 +150,6 @@ class CheckoutController extends Controller
                 $primaryImg     = $product->images->where('is_primary', true)->first()
                                   ?? $product->images->first();
 
-                // CHANGED: include selected_options snapshot on the order item
                 OrderItem::create([
                     'order_id'          => $order->id,
                     'seller_id'         => $product->seller_id,
@@ -165,7 +164,7 @@ class CheckoutController extends Controller
                     'commission_amount' => $commissionAmt,
                     'seller_earnings'   => $sellerEarnings,
                     'status'            => 'pending',
-                    'selected_options'  => $cartItem['selected_options'], // CHANGED
+                    'selected_options'  => $cartItem['selected_options'], 
                 ]);
 
                 $product->decrement('stock', $cartItem['quantity']);

@@ -8,7 +8,7 @@
 @section('content')
 
 @if(!$brand)
-
+ 
 {{-- Create brand --}}
 <div class="row justify-content-center">
     <div class="col-lg-7">
@@ -218,6 +218,14 @@
                     <i class="feather-external-link me-1"></i> Visit Website
                 </a>
                 @endif
+
+                {{-- Share Brand --}}
+                <div class="mt-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100"
+                            onclick="shareBrand()">
+                        <i class="feather-share-2 me-1"></i> Share Brand
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -226,3 +234,26 @@
 @endif
 
 @endsection
+
+@push('scripts')
+<script>
+function shareBrand() {
+    var url = '{{ route('brands.show', $brand->slug) }}';
+    var name = '{{ addslashes($brand->name) }}';
+
+    if (navigator.share) {
+        navigator.share({
+            title: name + ' — Orderer',
+            text: 'Check out ' + name + ' on Orderer!',
+            url: url,
+        });
+    } else {
+        navigator.clipboard.writeText(url).then(function () {
+            alert('Brand link copied to clipboard!');
+        }).catch(function () {
+            prompt('Copy this link:', url);
+        });
+    }
+}
+</script>
+@endpush

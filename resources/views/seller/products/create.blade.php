@@ -211,7 +211,7 @@
                                style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
                         <i class="feather-video mb-2 d-block text-muted" style="font-size:32px;"></i>
                         <p class="text-muted mb-1">Click to upload a product video</p>
-                        <small class="text-muted">MP4, MOV, AVI — max 50MB</small>
+                        <small class="text-muted">MP4, MOV, AVI — max 10MB</small>
                     </div>
                     <p id="videoFileName" class="text-success fs-13 mt-2 mb-0" style="display:none;"></p>
                 </div>

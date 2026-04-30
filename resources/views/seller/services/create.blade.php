@@ -22,7 +22,7 @@
             <div class="card mb-3">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Service Information</h5>
-                </div>
+                </div> 
                 <div class="card-body">
 
                     <div class="mb-4">
@@ -151,7 +151,18 @@
                     <div class="d-flex flex-wrap gap-2 mt-3" id="portfolioPreviewGrid"></div>
                 </div>
             </div>
-
+            <div class="mt-3">
+                <label class="form-label fw-bold">Portfolio / Work URL</label>
+                <input type="url"
+                       name="portfolio_url"
+                       class="form-control @error('portfolio_url') is-invalid @enderror"
+                       value="{{ old('portfolio_url') }}"
+                       placeholder="https://behance.net/yourwork or https://drive.google.com/...">
+                @error('portfolio_url')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+                <small class="text-muted">Link to your Behance, Dribbble, Google Drive, or any portfolio site.</small>
+            </div>
         </div>
 
         {{-- Right --}}

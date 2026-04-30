@@ -15,7 +15,7 @@ class ServiceController extends Controller
     public function __construct(CloudinaryService $cloudinary)
     {
         $this->cloudinary = $cloudinary;
-    }
+    } 
 
     public function index()
     {
@@ -43,6 +43,7 @@ class ServiceController extends Controller
             'delivery_time' => ['nullable', 'string', 'max:100'],
             'location'      => ['nullable', 'string', 'max:200'],
             'portfolio.*'   => ['image', 'mimes:jpg,jpeg,png', 'max:10096'],
+            'portfolio_url' => ['nullable', 'url', 'max:500'],
         ]);
 
         $portfolioUrls = [];
@@ -67,6 +68,7 @@ class ServiceController extends Controller
             'location'         => $request->location,
             'portfolio_images' => $portfolioUrls,
             'status'           => 'pending',
+            'portfolio_url' => $request->portfolio_url,
         ]);
 
         return redirect()->route('seller.services.index')
@@ -112,7 +114,8 @@ class ServiceController extends Controller
             'delivery_time'  => ['nullable', 'string', 'max:100'],
             'location'       => ['nullable', 'string', 'max:200'],
             'portfolio.*'    => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10096'],
-            'remove_images'  => ['nullable', 'string'], // Change to string since it's comma-separated
+            'remove_images'  => ['nullable', 'string'], 
+            'portfolio_url' => ['nullable', 'url', 'max:500'],
         ]);
 
         // Prepare update data
@@ -123,6 +126,7 @@ class ServiceController extends Controller
             'pricing_type'  => $request->pricing_type,
             'delivery_time' => $request->delivery_time,
             'location'      => $request->location,
+            'portfolio_url' => $request->portfolio_url,
         ];
 
         // Handle price based on pricing type

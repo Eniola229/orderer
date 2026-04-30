@@ -163,6 +163,212 @@ class BrevoMailService
         );
     }
 
+    public function sendLoginNotification($user, string $ip, string $userAgent, string $guard = 'buyer'): bool
+    {
+        $name     = $user->first_name;
+        $email    = $user->email;
+        $fullName = $user->full_name;
+        $time     = now()->format('M d, Y H:i') . ' UTC';
+        $color    = match($guard) {
+            'seller' => '#2ECC71',
+            'admin'  => '#E74C3C',
+            default  => '#2ECC71',
+        };
+
+        $roleLabel = match($guard) {
+            'seller' => 'Seller account',
+            'admin'  => 'Admin account',
+            default  => 'account',  // buyer — just "account"
+        };
+
+        $browser = $this->parseBrowser($userAgent);
+        $os      = $this->parseOS($userAgent);
+
+        return $this->send(
+            $email,
+            $fullName,
+            "New login to your Orderer {$roleLabel}",
+            "
+            <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+                <div style='background:{$color};padding:30px;text-align:center;'>
+                    <h1 style='color:#fff;margin:0;'>New Login Detected</h1>
+                </div>
+                <div style='padding:30px;background:#fff;'>
+                    <p>Hi <strong>{$name}</strong>,</p>
+                    <p>A new login to your Orderer {$roleLabel} was detected.</p>
+                    <div style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>
+                        <table style='width:100%;font-size:14px;'>
+                            <tr>
+                                <td style='padding:8px 0;color:#6c757d;'>Time:</td>
+                                <td style='padding:8px 0;font-weight:bold;'>{$time}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:8px 0;color:#6c757d;'>IP Address:</td>
+                                <td style='padding:8px 0;font-weight:bold;'>{$ip}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:8px 0;color:#6c757d;'>Browser:</td>
+                                <td style='padding:8px 0;font-weight:bold;'>{$browser}</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:8px 0;color:#6c757d;'>Operating System:</td>
+                                <td style='padding:8px 0;font-weight:bold;'>{$os}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <p style='color:#888;font-size:13px;'>
+                        If this was not you, please contact us immediately at support@ordererweb.shop
+                    </p>
+                </div>
+                <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+                    &copy; " . date('Y') . " Orderer. All rights reserved.
+                </div>
+            </div>"
+        );
+    }
+
+    protected function parseBrowser(string $ua): string
+    {
+        return match(true) {
+            str_contains($ua, 'Edg')            => 'Microsoft Edge',
+            str_contains($ua, 'OPR')
+                || str_contains($ua, 'Opera')   => 'Opera',
+            str_contains($ua, 'Chrome')         => 'Chrome',
+            str_contains($ua, 'Firefox')        => 'Firefox',
+            str_contains($ua, 'Safari')         => 'Safari',
+            str_contains($ua, 'MSIE')
+                || str_contains($ua, 'Trident') => 'Internet Explorer',
+            default                             => 'Unknown Browser',
+        };
+    }
+
+    protected function parseOS(string $ua): string
+    {
+        return match(true) {
+            str_contains($ua, 'Windows NT')  => 'Windows',
+            str_contains($ua, 'Macintosh')   => 'macOS',
+            str_contains($ua, 'iPhone')      => 'iOS (iPhone)',
+            str_contains($ua, 'iPad')        => 'iOS (iPad)',
+            str_contains($ua, 'Android')     => 'Android',
+            str_contains($ua, 'Linux')       => 'Linux',
+            default                          => 'Unknown OS',
+        };
+    }
+
+    public function sendPriceDropAlert($user, $product, float $currentPrice, float $targetPrice): bool
+    {
+        $saving = $targetPrice - $currentPrice;
+
+        return $this->send(
+            $user->email,
+            $user->full_name,
+            "Price Drop: {$product->name} hit your target price!",
+            "
+            <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+                <div style='background:#2ECC71;padding:30px;text-align:center;'>
+                    <h1 style='color:#fff;margin:0;'>Price Drop Alert! 🎉</h1>
+                </div>
+                <div style='padding:30px;background:#fff;'>
+                    <p>Hi <strong>{$user->first_name}</strong>,</p>
+                    <p>Great news! A product you're watching has dropped to your target price.</p>
+                    <div style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>
+                        <p style='margin:0 0 8px 0;font-weight:bold;font-size:16px;'>{$product->name}</p>
+                        <table style='width:100%;font-size:14px;'>
+                            <tr>
+                                <td style='padding:6px 0;color:#6c757d;'>Your Target:</td>
+                                <td style='padding:6px 0;font-weight:bold;'>₦" . number_format($targetPrice, 2) . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;color:#6c757d;'>Current Price:</td>
+                                <td style='padding:6px 0;font-weight:bold;color:#2ECC71;'>₦" . number_format($currentPrice, 2) . "</td>
+                            </tr>
+                            <tr>
+                                <td style='padding:6px 0;color:#6c757d;'>You Save:</td>
+                                <td style='padding:6px 0;font-weight:bold;color:#E74C3C;'>₦" . number_format($saving, 2) . "</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style='text-align:center;margin:30px 0;'>
+                        <a href='" . route('product.show', $product->slug) . "'
+                           style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
+                            Buy Now
+                        </a>
+                    </div>
+                    <p style='color:#888;font-size:13px;'>Prices can change — grab it while it lasts!</p>
+                </div>
+                <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+                    &copy; " . date('Y') . " Orderer. All rights reserved.
+                </div>
+            </div>"
+        );
+    }
+
+    public function sendCartPriceDropAlert($user, array $changedItems): bool
+    {
+        $itemRows = '';
+        foreach ($changedItems as $item) {
+            $flashBadge = $item['is_flash'] 
+                ? "<span style='background:#E74C3C;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;'>⚡ Flash Sale</span>" 
+                : '';
+
+            $itemRows .= "
+            <tr>
+                <td style='padding:12px 0;border-bottom:1px solid #eee;font-size:14px;'>
+                    <a href='{$item['url']}' style='color:#212529;text-decoration:none;font-weight:600;'>
+                        {$item['name']}
+                    </a>{$flashBadge}
+                </td>
+                <td style='padding:12px 0;border-bottom:1px solid #eee;font-size:14px;text-align:center;'>
+                    <span style='text-decoration:line-through;color:#aaa;'>₦" . number_format($item['old_price'], 2) . "</span>
+                </td>
+                <td style='padding:12px 0;border-bottom:1px solid #eee;font-size:14px;text-align:center;color:#2ECC71;font-weight:bold;'>
+                    ₦" . number_format($item['new_price'], 2) . "
+                </td>
+                <td style='padding:12px 0;border-bottom:1px solid #eee;font-size:14px;text-align:right;color:#E74C3C;font-weight:bold;'>
+                    -₦" . number_format($item['saving'], 2) . "
+                </td>
+            </tr>";
+        }
+
+        return $this->send(
+            $user->email,
+            $user->full_name,
+            "🛒 Price drop on " . count($changedItems) . " item(s) in your cart!",
+            "
+            <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+                <div style='background:#2ECC71;padding:30px;text-align:center;'>
+                    <h1 style='color:#fff;margin:0;'>Items in Your Cart Got Cheaper! 🛒</h1>
+                </div>
+                <div style='padding:30px;background:#fff;'>
+                    <p>Hi <strong>{$user->first_name}</strong>,</p>
+                    <p>Good news — the price dropped on " . count($changedItems) . " item(s) sitting in your cart. Your cart has been updated automatically.</p>
+                    <div style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>
+                        <table style='width:100%;'>
+                            <thead>
+                                <tr>
+                                    <th style='font-size:12px;color:#6c757d;text-align:left;padding-bottom:8px;font-weight:normal;'>Item</th>
+                                    <th style='font-size:12px;color:#6c757d;text-align:center;padding-bottom:8px;font-weight:normal;'>Was</th>
+                                    <th style='font-size:12px;color:#6c757d;text-align:center;padding-bottom:8px;font-weight:normal;'>Now</th>
+                                    <th style='font-size:12px;color:#6c757d;text-align:right;padding-bottom:8px;font-weight:normal;'>Saving</th>
+                                </tr>
+                            </thead>
+                            <tbody>{$itemRows}</tbody>
+                        </table>
+                    </div>
+                    <div style='text-align:center;margin:30px 0;'>
+                        <a href='" . route('cart.index') . "'
+                           style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
+                            View My Cart
+                        </a>
+                    </div>
+                    <p style='color:#888;font-size:13px;'>Prices may change — complete your order soon!</p>
+                </div>
+                <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+                    &copy; " . date('Y') . " Orderer. All rights reserved.
+                </div>
+            </div>"
+        );
+    }
     // -------------------------------------------------------
     // Email HTML templates
     // -------------------------------------------------------

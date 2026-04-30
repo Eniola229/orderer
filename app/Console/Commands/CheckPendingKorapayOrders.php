@@ -88,10 +88,26 @@ class CheckPendingKorapayOrders extends Command
                     $paid++;
 
                 } elseif (in_array($korapayStatus, ['failed', 'expired', 'reversed'])) {
-                    DB::transaction(fn() => $order->update([
-                        'payment_status' => 'failed',
-                        'status'         => 'cancelled',
-                    ]));
+                    DB::transaction(function () use ($order) {
+                        // 1. Revert inventory changes
+                        foreach ($order->items as $orderItem) {
+                            $product = $orderItem->orderable;
+                            if (!$product) continue;
+                            
+                            // Revert stock (opposite of what happened when order was created)
+                            $product->increment('stock', $orderItem->quantity);
+                            
+                            // Revert total_sold (opposite of what happened when order was created)
+                            $product->decrement('total_sold', $orderItem->quantity);
+
+                        }
+                        
+                        // 2. Mark order as failed
+                        $order->update([
+                            'payment_status' => 'failed',
+                            'status'         => 'cancelled',
+                        ]);
+                    });
                     $failed++;
                 } else {
                     $skipped++;

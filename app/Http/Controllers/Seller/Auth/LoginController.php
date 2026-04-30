@@ -11,7 +11,7 @@ class LoginController extends Controller
     {
         return view('seller.auth.login');
     }
-
+ 
     public function login(Request $request)
     {
         $request->validate([
@@ -42,6 +42,13 @@ class LoginController extends Controller
             'last_login_at' => now(),
             'last_login_ip' => $request->ip(),
         ]);
+
+        try {
+            app(\App\Services\BrevoMailService::class)
+                ->sendLoginNotification($seller, $request->ip(), $request->userAgent(), 'seller');
+        } catch (\Exception $e) {
+            \Log::error('Login email failed (seller): ' . $e->getMessage());
+        }
 
         $request->session()->regenerate();
 

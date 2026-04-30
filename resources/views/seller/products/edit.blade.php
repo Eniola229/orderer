@@ -244,7 +244,7 @@
             <div class="card mb-3">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="card-title mb-0">Product Video</h5>
-                    <small class="text-muted">Optional — Max 50MB</small>
+                    <small class="text-muted">Optional — Max 10MB</small>
                 </div>
                 <div class="card-body">
                     

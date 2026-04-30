@@ -72,12 +72,12 @@
             <div class="col-md-2">
                 <label class="form-label fw-semibold fs-12">Min Price</label>
                 <input type="number" name="min_price" class="form-control form-control-sm" 
-                       value="{{ request('min_price') }}" placeholder="$0">
+                       value="{{ request('min_price') }}" placeholder="₦0">
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold fs-12">Max Price</label>
                 <input type="number" name="max_price" class="form-control form-control-sm" 
-                       value="{{ request('max_price') }}" placeholder="$9999">
+                       value="{{ request('max_price') }}" placeholder="₦9999">
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <div class="d-flex gap-2 w-100">
@@ -99,7 +99,7 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    践
+                    
                         <th class="fs-11 text-uppercase text-muted fw-semibold" width="5%"></th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Product</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
@@ -327,6 +327,7 @@
                 </tbody>
               
         </div>
+    </table>
         <div class="p-3">{{ $products->links() }}</div>
         @else
         <div class="text-center py-5 text-muted">

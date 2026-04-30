@@ -49,7 +49,7 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    亚
+                    
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Amount (NGN)</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Exchange Rate</th>

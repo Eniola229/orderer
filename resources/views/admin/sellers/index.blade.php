@@ -33,7 +33,7 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
-                    亚
+                    <td>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Email</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>

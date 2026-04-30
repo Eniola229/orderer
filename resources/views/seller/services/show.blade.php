@@ -19,7 +19,7 @@
         height: 100px;
         object-fit: cover;
         border-radius: 8px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid #e5e7eb; 
         cursor: pointer;
         transition: transform 0.2s;
     }
@@ -135,6 +135,15 @@
                         <p class="fw-semibold mb-0">{{ $service->revisions ?? 'Not specified' }}</p>
                     </div>
                 </div>
+
+                @if($service->portfolio_url)
+                <div class="col-md-6 mb-3">
+                    <label class="text-muted d-block fs-12 mb-1">Portfolio URL</label>
+                    <a href="{{ $service->portfolio_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="feather-external-link me-1"></i> View Portfolio
+                    </a>
+                </div>
+                @endif
             </div>
         </div>
 

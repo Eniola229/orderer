@@ -181,6 +181,7 @@ class WalletService
 
             $item->update([
                 'status'       => 'completed',
+                'shipping_status'  => 'completed',
                 'delivered_at' => now(),
             ]);
 

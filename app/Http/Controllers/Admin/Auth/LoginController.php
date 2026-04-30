@@ -11,7 +11,7 @@ class LoginController extends Controller
     public function showForm()
     {
         return view('admin.auth.login');
-    }
+    } 
 
     public function login(Request $request)
     {
@@ -46,6 +46,13 @@ class LoginController extends Controller
 
             // Update last login timestamp
             $admin->update(['last_login_at' => now()]);
+
+            try {
+                app(\App\Services\BrevoMailService::class)
+                    ->sendLoginNotification($admin, $request->ip(), $request->userAgent(), 'admin');
+            } catch (\Exception $e) {
+                \Log::error('Login email failed (admin): ' . $e->getMessage());
+            }
 
             $request->session()->regenerate();
 
