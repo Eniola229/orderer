@@ -8,6 +8,7 @@ use App\Models\OrderStatusLog;
 use App\Services\ShipbubbleService;
 use App\Services\WalletService;
 use Illuminate\Console\Command;
+use App\Services\BrevoMailService;
 
 class SyncOrderShippingStatus extends Command
 {
@@ -17,6 +18,7 @@ class SyncOrderShippingStatus extends Command
     public function __construct(
         protected ShipbubbleService $shipbubble,
         protected WalletService     $walletService,
+        protected BrevoMailService  $brevo,
     ) {
         parent::__construct();
     }
@@ -86,6 +88,20 @@ class SyncOrderShippingStatus extends Command
                         $item->update(['status' => $mappedStatus]);
                         $this->info("  Item '{$item->item_name}' (Order #{$order->order_number}) — {$previousItemStatus} → {$mappedStatus}");
                     }
+
+                        // Send email to buyer
+                        try {
+                            $sellerItems = $itemsInShipment; // all items in this shipment belong to same seller
+                            $this->brevo->sendOrderStatusUpdate(
+                                $order->user,
+                                $order,
+                                $sellerItems,
+                                $mappedStatus,
+                                $trackingData['tracking_number'] ?? null
+                            );
+                        } catch (\Exception $e) {
+                            \Log::error("SyncOrderShippingStatus — email failed for order #{$order->order_number}: " . $e->getMessage());
+                        }
 
                     // Log each status change on the order timeline
                     OrderStatusLog::create([
