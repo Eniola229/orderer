@@ -282,13 +282,16 @@
                     </div>
                 @endif
                 @if(auth('admin')->user()->canModerateSellers())
-                <div class="d-grid">
+                <div class="d-grid mt-1">
                 <form action="{{ route('admin.products.feature', $product) }}" method="POST" onclick="event.stopPropagation()">
                     @csrf @method('PUT')
                     <button type="submit"
                             class="btn btn-sm {{ $product->is_featured ? 'btn-warning' : 'btn-outline-secondary' }}"
                             title="{{ $product->is_featured ? 'Remove from featured' : 'Mark as featured' }}">
                         <i class="feather-star"></i>
+                            <span class="d-none d-sm-inline">
+                                 {{ $product->is_featured ? ' Unfeature' : ' Feature' }}
+                            </span>
                     </button>
                 </form>
             </div>
