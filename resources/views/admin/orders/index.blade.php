@@ -14,7 +14,7 @@
         margin-bottom: 20px;
     }
 </style>
-
+ 
 {{-- Stats Cards --}}
 <div class="row mb-4">
     <div class="col-md-3 mb-2">

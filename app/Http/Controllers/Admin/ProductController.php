@@ -16,25 +16,18 @@ class ProductController extends Controller
 
         $query = Product::with(['seller', 'category', 'images', 'subcategory']);
 
-        // Filter by status
         if ($request->status && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
-
-        // Filter by category
         if ($request->category_id) {
             $query->where('category_id', $request->category_id);
         }
-
-        // Filter by price range
         if ($request->min_price) {
             $query->where('price', '>=', $request->min_price);
         }
         if ($request->max_price) {
             $query->where('price', '<=', $request->max_price);
         }
-
-        // Filter by stock status
         if ($request->stock_status) {
             if ($request->stock_status === 'in_stock') {
                 $query->where('stock', '>', 0);
@@ -44,8 +37,11 @@ class ProductController extends Controller
                 $query->where('stock', '>', 0)->where('stock', '<=', 5);
             }
         }
+        // ← ADD THIS
+        if ($request->featured === 'yes') {
+            $query->where('is_featured', true);
+        }
 
-        // Search by product name or seller
         if ($request->search) {
             $s = $request->search;
             $query->where(function($q) use ($s) {
@@ -55,14 +51,24 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->latest()->paginate(20)->withQueryString();
-
-        // Get categories for filter dropdown
+        $products   = $query->latest()->paginate(20)->withQueryString();
         $categories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
+        
+        // ← ADD THIS
+        $featuredCount = Product::where('is_featured', true)->count();
 
-        return view('admin.products.index', compact('products', 'categories'));
+        return view('admin.products.index', compact('products', 'categories', 'featuredCount'));
     }
 
+    public function toggleFeatured(Product $product)
+    {
+        if (!auth('admin')->user()->canModerateSellers()) abort(403);
+
+        $product->update(['is_featured' => !$product->is_featured]);
+
+        $status = $product->is_featured ? 'featured' : 'unfeatured';
+        return back()->with('success', "Product \"{$product->name}\" {$status}.");
+    }
     public function show(Product $product)
     {
         if (!auth('admin')->user()->canView()) abort(403);

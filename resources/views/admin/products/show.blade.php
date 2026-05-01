@@ -21,7 +21,7 @@
         border-radius: 8px;
         border: 1px solid #e5e7eb;
         cursor: pointer;
-    }
+    } 
     .modal-image {
         position: fixed;
         top: 0;
@@ -280,6 +280,16 @@
                             </button>
                         </form>
                     </div>
+                @endif
+                @if(auth('admin')->user()->canModerateSellers())
+                <form action="{{ route('admin.products.feature', $product) }}" method="POST" onclick="event.stopPropagation()">
+                    @csrf @method('PUT')
+                    <button type="submit"
+                            class="btn btn-sm {{ $product->is_featured ? 'btn-warning' : 'btn-outline-secondary' }}"
+                            title="{{ $product->is_featured ? 'Remove from featured' : 'Mark as featured' }}">
+                        <i class="feather-star"></i>
+                    </button>
+                </form>
                 @endif
             </div>
         </div>

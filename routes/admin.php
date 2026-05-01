@@ -22,7 +22,7 @@ use App\Http\Controllers\Admin\FlashSaleController;
 use App\Http\Controllers\Admin\DeliveryBookingController;
 use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Admin\MarketerController;
- 
+  
 Route::prefix('20050619/admin')->name('admin.')->group(function () { 
 
     // Guest only
@@ -76,6 +76,7 @@ Route::prefix('20050619/admin')->name('admin.')->group(function () {
         Route::put('/products/{product}/reject', [ProductController::class, 'reject'])->name('products.reject');
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
         Route::put('/products/{product}/suspend', [ProductController::class, 'suspend'])->name('products.suspend');
+        Route::put('/products/{product}/feature', [ProductController::class, 'toggleFeatured'])->name('products.feature');
 
         // ==================== Orders ====================
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');

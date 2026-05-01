@@ -10,7 +10,7 @@ use App\Models\EscrowHold;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
-{
+{ 
     public function __construct(protected WalletService $wallet) {}
 
     public function index(Request $request)

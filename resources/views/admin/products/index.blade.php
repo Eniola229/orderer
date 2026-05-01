@@ -15,12 +15,24 @@
     .product-details td {
         border-top: none !important;
         padding: 0 !important;
-    }
+    } 
     .feather-chevron-right, .feather-chevron-down {
         transition: transform 0.3s ease;
     }
 </style>
 
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Featured Products</p>
+                <h2 class="fw-bold mb-0 text-warning">{{ number_format($featuredCount) }}</h2>
+                <a href="{{ route('admin.products.index', ['featured' => 'yes']) }}" 
+                   class="fs-12 text-muted">View featured →</a>
+            </div>
+        </div>
+    </div>
+</div>
 {{-- Advanced Filters Card --}}
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -69,6 +81,14 @@
                     <option value="out_of_stock" {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                 </select>
             </div>
+
+            <div class="col-md-2">
+                    <label class="form-label fw-semibold fs-12">Featured</label>
+                    <select name="featured" class="form-select form-select-sm">
+                        <option value="">All Products</option>
+                        <option value="yes" {{ request('featured') === 'yes' ? 'selected' : '' }}>Featured Only</option>
+                    </select>
+                </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold fs-12">Min Price</label>
                 <input type="number" name="min_price" class="form-control form-control-sm" 
