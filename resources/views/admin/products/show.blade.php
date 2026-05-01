@@ -282,6 +282,7 @@
                     </div>
                 @endif
                 @if(auth('admin')->user()->canModerateSellers())
+                <div class="d-grid">
                 <form action="{{ route('admin.products.feature', $product) }}" method="POST" onclick="event.stopPropagation()">
                     @csrf @method('PUT')
                     <button type="submit"
@@ -290,6 +291,7 @@
                         <i class="feather-star"></i>
                     </button>
                 </form>
+            </div>
                 @endif
             </div>
         </div>
