@@ -18,11 +18,9 @@
                         A product of <strong>AfricGEM International Company Limited</strong>
                     </p>
                     <div class="ord-footer-social">
-                        <a href="#" title="Facebook"><i class="fa fa-facebook"></i></a>
-                        <a href="#" title="Instagram"><i class="fa fa-instagram"></i></a>
-                        <a href="#" title="Twitter / X"><i class="fa fa-twitter"></i></a>
-                        <a href="#" title="Pinterest"><i class="fa fa-pinterest"></i></a>
-                        <a href="#" title="YouTube"><i class="fa fa-youtube-play"></i></a>
+                        <a href="https://www.instagram.com/_orderer_/" title="Instagram" target="_blank"><i class="fa fa-instagram"></i></a>
+                        <a href="https://www.instagram.com/_orderer_/" title="Tiktok" target="_blank"><i class="fa fa-tiktok"></i></a>
+                        <a href="https://x.com/_orderer_" title="Twitter / X"><i class="fa fa-twitter" target="_blank"></i></a>
                     </div>
                 </div>
 

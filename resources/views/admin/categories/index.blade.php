@@ -227,7 +227,8 @@
         const iconInput = document.getElementById('editIcon');
         const isActiveCheckbox = document.getElementById('editIsActive');
         
-        form.action = `/admin/categories/${id}`;
+        form.action = "{{ route('admin.categories.update', ['category' => '__ID__']) }}".replace('__ID__', id);
+
         nameInput.value = name;
         commissionInput.value = commissionRate;
         iconInput.value = icon || '';
