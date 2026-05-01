@@ -30,7 +30,7 @@
                         </div>
                         <div>
                             <p style="margin:0;font-weight:600;font-size:14px;">WhatsApp</p>
-                            <a href="https://wa.me/234800000000" target="_blank" style="color:#2ECC71;font-size:13px;">+234 800 000 0000</a>
+                            <a href="https://wa.me/08152880128" target="_blank" style="color:#2ECC71;font-size:13px;">+234 815 288 0128</a>
                         </div>
                     </div>
                     <div style="display:flex;gap:14px;">

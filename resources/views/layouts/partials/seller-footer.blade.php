@@ -55,7 +55,7 @@
                         <p>Submit a support ticket</p>
                     </div>
                 </a>
-                <a href="https://wa.me/YOUR_WHATSAPP_NUMBER" target="_blank" class="support-option">
+                <a href="https://wa.me/08152880128" target="_blank" class="support-option">
                     <div class="support-option-icon whatsapp">
                         <i class="feather-message-square"></i>
                     </div>
