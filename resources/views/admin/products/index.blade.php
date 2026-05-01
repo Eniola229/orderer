@@ -25,10 +25,50 @@
     <div class="col-md-3">
         <div class="card">
             <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Total Products</p>
+                <h2 class="fw-bold mb-0 text-primary">{{ number_format($totalProductsCount) }}</h2>
+                <a href="{{ route('admin.products.index') }}" 
+                   class="fs-12 text-muted">View all →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-3">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Featured Products</p>
                 <h2 class="fw-bold mb-0 text-warning">{{ number_format($featuredCount) }}</h2>
                 <a href="{{ route('admin.products.index', ['featured' => 'yes']) }}" 
                    class="fs-12 text-muted">View featured →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Low Stock (≤5)</p>
+                <h2 class="fw-bold mb-0 text-danger">{{ number_format($lowStockCount) }}</h2>
+                <a href="{{ route('admin.products.index', ['stock_status' => 'low_stock']) }}" 
+                   class="fs-12 text-muted">View low stock →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2 col-lg-2">
+        <div class="card">
+            <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Out of Stock</p>
+                <h2 class="fw-bold mb-0 text-secondary">{{ number_format($outOfStockCount) }}</h2>
+                <a href="{{ route('admin.products.index', ['stock_status' => 'out_of_stock']) }}" 
+                   class="fs-12 text-muted">View out of stock →</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-3">
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Pending Approval</p>
+                <h2 class="fw-bold mb-0 text-info">{{ number_format($pendingProductsCount) }}</h2>
+                <a href="{{ route('admin.products.index', ['status' => 'pending']) }}" 
+                   class="fs-12 text-muted">View pending →</a>
             </div>
         </div>
     </div>

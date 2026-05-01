@@ -37,7 +37,7 @@ class ProductController extends Controller
                 $query->where('stock', '>', 0)->where('stock', '<=', 5);
             }
         }
-        // ← ADD THIS
+        
         if ($request->featured === 'yes') {
             $query->where('is_featured', true);
         }
@@ -51,15 +51,17 @@ class ProductController extends Controller
             });
         }
 
-        $products   = $query->latest()->paginate(20)->withQueryString();
+        $products = $query->latest()->paginate(20)->withQueryString();
         $categories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
         
-        // ← ADD THIS
         $featuredCount = Product::where('is_featured', true)->count();
+        $lowStockCount = Product::where('stock', '>', 0)->where('stock', '<=', 5)->count();
+        $outOfStockCount = Product::where('stock', '=', 0)->count();
+        $totalProductsCount = Product::count();
+        $pendingProductsCount = Product::where('status', 'pending')->count();
 
-        return view('admin.products.index', compact('products', 'categories', 'featuredCount'));
+        return view('admin.products.index', compact('products', 'categories', 'featuredCount', 'lowStockCount', 'outOfStockCount', 'totalProductsCount', 'pendingProductsCount'));
     }
-
     public function toggleFeatured(Product $product)
     {
         if (!auth('admin')->user()->canModerateSellers()) abort(403);
