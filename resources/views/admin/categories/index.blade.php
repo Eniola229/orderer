@@ -248,7 +248,7 @@
         const form = document.getElementById('addSubcategoryForm');
         const title = document.getElementById('addSubcategoryTitle');
         
-        form.action = `/admin/categories/${id}/sub`;
+        form.action = "{{ route('admin.categories.subcategory', ['category' => '__ID__']) }}".replace('__ID__', id);
         title.innerHTML = `Add Subcategory to ${categoryName}`;
         
         modal.style.display = 'flex';

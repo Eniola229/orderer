@@ -16,9 +16,9 @@ Schedule::call(function () {
         ->where('is_active', true)
         ->update(['is_active' => false]);
 })->hourly();
-
+ 
 // Check order status 
-Schedule::command('orders:sync-shipping-status')->everyFifteenMinutes();
+Schedule::command('orders-sync:sync-shipping-status')->everyFifteenMinutes();
 
 // For ads
 Schedule::command('ads:charge')->dailyAt('13:05');

@@ -9,10 +9,10 @@ use App\Services\ShipbubbleService;
 use App\Services\WalletService;
 use Illuminate\Console\Command;
 use App\Services\BrevoMailService;
-
+ 
 class SyncOrderShippingStatus extends Command
 {
-    protected $signature   = 'orders:sync-shipping-status';
+    protected $signature   = 'orders-sync:sync-shipping-status';
     protected $description = 'Check Shipbubble for shipping updates on active order items and update statuses + release escrow on delivery.';
 
     public function __construct(
@@ -170,3 +170,4 @@ class SyncOrderShippingStatus extends Command
             $order->update(['status' => $lowestStatus]);
         }
     }
+}
