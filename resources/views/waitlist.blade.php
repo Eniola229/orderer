@@ -252,7 +252,7 @@
     <a href="{{ url('/') }}">
         <img src="{{ asset('img/core-img/logo.png') }}" alt="Orderer" />
     </a>
-    <a href="mailto:us@ordererweb.shop">Get in touch</a>
+    <a href="mailto:us@ordererweb.com">Get in touch</a>
 </nav>
 
 <main>

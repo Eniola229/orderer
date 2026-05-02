@@ -72,7 +72,7 @@
 
     <h2 id="who">1. Who We Are</h2>
     <p>Orderer ("we", "us", "our") is an online marketplace platform headquartered in Lagos, Nigeria. We act as a Data Controller in respect of personal data collected through our Platform (website and mobile application).</p>
-    <p>Our Data Protection Officer can be reached at <a href="mailto:dpo@ordererweb.shop">dpo@ordererweb.shop</a>.</p>
+    <p>Our Data Protection Officer can be reached at <a href="mailto:dpo@ordererweb.com">dpo@ordererweb.com</a>.</p>
 
     <h2 id="data-we-collect">2. Data We Collect</h2>
     <h3>2.1 Information You Provide</h3>
@@ -169,13 +169,13 @@
         <li><strong>Right to object:</strong> object to processing based on legitimate interests;</li>
         <li><strong>Right to withdraw consent:</strong> at any time, without affecting prior processing.</li>
     </ul>
-    <p>To exercise any of these rights, contact us at <a href="mailto:dpo@ordererweb.shop">dpo@ordererweb.shop</a>. We will respond within 30 days.</p>
+    <p>To exercise any of these rights, contact us at <a href="mailto:dpo@ordererweb.com">dpo@ordererweb.com</a>. We will respond within 30 days.</p>
 
     <h2 id="cookies">10. Cookies</h2>
     <p>We use cookies and similar technologies to enhance your experience. For full details, please see our <a href="{{ route('legal.cookies') }}">Cookie Policy</a>.</p>
 
     <h2 id="children">11. Children's Privacy</h2>
-    <p>Our Platform is not directed at persons under 18 years of age. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us immediately at <a href="mailto:dpo@ordererweb.shop">dpo@ordererweb.shop</a> and we will delete it promptly.</p>
+    <p>Our Platform is not directed at persons under 18 years of age. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us immediately at <a href="mailto:dpo@ordererweb.com">dpo@ordererweb.com</a> and we will delete it promptly.</p>
 
     <h2 id="changes">12. Changes to This Policy</h2>
     <p>We may update this Privacy Policy periodically. We will notify you of material changes via email or a prominent notice on the Platform. Continued use of the Platform after notification constitutes acceptance of the updated Policy.</p>
@@ -183,7 +183,7 @@
     <h2 id="contact">13. Contact and Complaints</h2>
     <p>For privacy queries or to exercise your rights, contact our Data Protection Officer:</p>
     <ul>
-        <li>Email: <a href="mailto:dpo@ordererweb.shop">dpo@ordererweb.shop</a></li>
+        <li>Email: <a href="mailto:dpo@ordererweb.com">dpo@ordererweb.com</a></li>
         <li>Address: Lagos, Nigeria</li>
     </ul>
     <p>If you are not satisfied with our response, you have the right to lodge a complaint with the Nigeria Data Protection Commission (NDPC) at <a href="https://ndpc.gov.ng" target="_blank">ndpc.gov.ng</a>.</p>

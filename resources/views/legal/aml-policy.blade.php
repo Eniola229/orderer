@@ -140,7 +140,7 @@
     </ul>
 
     <div class="warning-box">
-        <p>⚠ If you are aware of or suspect any money laundering or terrorist financing activity on the Platform, you are legally obligated under the MLPPA 2022 to report it. Do not tip off the suspect. Contact us confidentially at <a href="mailto:compliance@ordererweb.shop" style="color:#A93226;">compliance@ordererweb.shop</a>.</p>
+        <p>⚠ If you are aware of or suspect any money laundering or terrorist financing activity on the Platform, you are legally obligated under the MLPPA 2022 to report it. Do not tip off the suspect. Contact us confidentially at <a href="mailto:compliance@ordererweb.com" style="color:#A93226;">compliance@ordererweb.com</a>.</p>
     </div>
 
     <h2 id="reporting">6. Reporting Obligations</h2>
@@ -208,7 +208,7 @@
     <h2 id="contact">13. Contact and Reporting</h2>
     <p>To report suspicious activity or AML/CFT concerns confidentially:</p>
     <ul>
-        <li>Email: <a href="mailto:compliance@ordererweb.web">compliance@ordererweb.shop</a></li>
+        <li>Email: <a href="mailto:compliance@ordererweb.web">compliance@ordererweb.com</a></li>
         <li>Address: Lagos, Nigeria</li>
     </ul>
     <p>External reports may also be made directly to:</p>

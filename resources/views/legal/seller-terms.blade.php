@@ -227,7 +227,7 @@
     <p>You agree to indemnify and hold Orderer harmless from any claims, damages, losses, or expenses (including legal fees) arising from your violation of these Terms or applicable Nigerian law.</p>
 
     <h2 id="contact">14. Contact</h2>
-    <p>For seller enquiries: <a href="mailto:sellers@ordererweb.shop">sellers@ordererweb.shop</a></p>
+    <p>For seller enquiries: <a href="mailto:sellers@ordererweb.com">sellers@ordererweb.com</a></p>
     <p>For dispute escalation: open a support ticket from your Seller Dashboard.</p>
 
 </div>

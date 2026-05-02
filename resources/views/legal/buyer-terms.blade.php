@@ -120,7 +120,7 @@
     </ul>
 
     <h2>11. Contact</h2>
-    <p>For buyer support: <a href="{{ route('contact') }}">ordererweb.shop/contact</a> or open a support ticket from your dashboard.</p>
+    <p>For buyer support: <a href="{{ route('contact') }}">ordererweb.com/contact</a> or open a support ticket from your dashboard.</p>
 
 </div>
 

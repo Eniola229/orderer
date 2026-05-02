@@ -166,7 +166,7 @@
     </ul>
 
     <h2>9. Contact</h2>
-    <p>For shipping queries: <a href="{{ route('contact') }}">ordererweb.shop/contact</a> or open a ticket from your dashboard.</p>
+    <p>For shipping queries: <a href="{{ route('contact') }}">ordererweb.com/contact</a> or open a ticket from your dashboard.</p>
 
 </div>
 

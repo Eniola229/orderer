@@ -177,13 +177,13 @@
 
     <h2>6. Cookie Consent</h2>
     <p>On your first visit to Orderer, you will be shown a cookie consent banner. By clicking "Accept All", you consent to all cookie categories. You may choose to accept only essential cookies by clicking "Manage Preferences".</p>
-    <p>You may withdraw or change your cookie consent at any time by clearing your browser cookies and revisiting the Platform, or by contacting us at <a href="mailto:privacy@ordererweb.shop">privacy@ordererweb.shop</a>.</p>
+    <p>You may withdraw or change your cookie consent at any time by clearing your browser cookies and revisiting the Platform, or by contacting us at <a href="mailto:privacy@ordererweb.com">privacy@ordererweb.com</a>.</p>
 
     <h2>7. Updates to This Policy</h2>
     <p>We may update this Cookie Policy from time to time. We will notify you of significant changes through the Platform. Continued use after the update date constitutes acceptance.</p>
 
     <h2>8. Contact</h2>
-    <p>For cookie-related queries: <a href="mailto:privacy@ordererweb.shop">privacy@ordererweb.shop</a></p>
+    <p>For cookie-related queries: <a href="mailto:privacy@ordererweb.com">privacy@ordererweb.com</a></p>
 
 </div>
 

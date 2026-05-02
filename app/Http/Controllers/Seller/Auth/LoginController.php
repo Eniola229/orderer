@@ -33,7 +33,7 @@ class LoginController extends Controller
         if (!$seller->is_active) {
             auth('seller')->logout();
             return back()->withErrors([
-                'email' => 'Your seller account has been suspended. Contact support@ordererweb.shop'
+                'email' => 'Your seller account has been suspended. Contact support@ordererweb.com'
             ]);
         }
 

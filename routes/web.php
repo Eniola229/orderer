@@ -93,7 +93,7 @@ Route::post('/address/validate', function (\Illuminate\Http\Request $request, \A
     try {
         $result = $shipbubble->validateAddress([
             'name'    => $request->name,
-            'email'   => $request->email ?? 'noreply@ordererweb.shop',
+            'email'   => $request->email ?? 'noreply@ordererweb.com',
             'phone'   => $request->phone,
             'address' => $request->address,
             'city'    => $request->city ?? $request->state,

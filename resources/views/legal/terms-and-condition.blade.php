@@ -108,7 +108,7 @@
     <p>Sellers are required to submit identification documents and undergo an approval process before their listings become publicly visible. Orderer reserves the right to approve or reject any seller application without providing reasons. Approved sellers must comply with all applicable Nigerian business and tax regulations.</p>
 
     <h3>4.3 Account Security</h3>
-    <p>You must immediately notify us at <a href="mailto:support@ordererweb.shop">support@ordererweb.shop</a> if you suspect any unauthorised access to your account. Orderer will not be liable for any loss or damage arising from your failure to comply with this obligation.</p>
+    <p>You must immediately notify us at <a href="mailto:support@ordererweb.com">support@ordererweb.com</a> if you suspect any unauthorised access to your account. Orderer will not be liable for any loss or damage arising from your failure to comply with this obligation.</p>
 
     <h2 id="marketplace">5. Marketplace Rules</h2>
     <h3>5.1 Seller Obligations</h3>
@@ -219,7 +219,7 @@
         <li>Your access to the Platform ceases immediately;</li>
         <li>Any pending orders must be fulfilled or cancelled in accordance with Orderer's policies;</li>
         <li>Wallet balances will be settled after deducting any amounts owed to Orderer, subject to our investigation processes;</li>
-        <li>You may request account deletion by contacting <a href="mailto:support@ordererweb.shop">support@ordererweb.shop</a>.</li>
+        <li>You may request account deletion by contacting <a href="mailto:support@ordererweb.com">support@ordererweb.com</a>.</li>
     </ul>
 
     <h2 id="governing">13. Governing Law</h2>
@@ -231,8 +231,8 @@
     <h2 id="contact">15. Contact Us</h2>
     <p>For questions about these Terms, please contact us:</p>
     <ul>
-        <li>Email: <a href="mailto:legal@ordererweb.shop">legal@ordererweb.shop</a></li>
-        <li>Support: <a href="{{ route('contact') }}">ordererweb.shop/contact</a></li>
+        <li>Email: <a href="mailto:legal@ordererweb.com">legal@ordererweb.com</a></li>
+        <li>Support: <a href="{{ route('contact') }}">ordererweb.com/contact</a></li>
         <li>Address: Lagos, Nigeria</li>
     </ul>
 

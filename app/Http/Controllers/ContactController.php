@@ -29,7 +29,7 @@ class ContactController extends Controller
 
         // Use Brevo send method directly
         $brevo->send(
-            'support@ordererweb.shop',
+            'support@ordererweb.com',
             'Orderer Support',
             "Contact Form: {$request->subject}",
             $html

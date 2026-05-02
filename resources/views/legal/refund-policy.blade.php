@@ -111,7 +111,7 @@
         <li>Provide a clear description of the issue and upload supporting evidence (photos, videos, screenshots);</li>
         <li>Our support team will review your case within <strong>3–5 business days</strong>.</li>
     </ol>
-    <p>Alternatively, contact our support team at <a href="{{ route('contact') }}">ordererweb.shop/contact</a> or open a support ticket from your account dashboard.</p>
+    <p>Alternatively, contact our support team at <a href="{{ route('contact') }}">ordererweb.com/contact</a> or open a support ticket from your account dashboard.</p>
 
     <h2>6. Dispute Resolution Process</h2>
     <p>Once a dispute is raised:</p>
@@ -146,7 +146,7 @@
     <p>Ad campaign fees paid from a Seller's Ads Balance are non-refundable once an ad has been approved and activated, as the service (ad impressions and exposure) has been delivered. Unspent budget at the time of ad deletion or rejection is refunded to the Ads Balance, not the main wallet.</p>
 
     <h2>10. Contact</h2>
-    <p>For refund queries: <a href="mailto:support@ordererweb.shop">support@ordererweb.shop</a> or open a ticket from your dashboard.</p>
+    <p>For refund queries: <a href="mailto:support@ordererweb.com">support@ordererweb.com</a> or open a ticket from your dashboard.</p>
 
 </div>
 

@@ -166,7 +166,7 @@
         <li>Attempt to reverse-engineer, decompile, or disassemble any part of the Platform's software;</li>
         <li>Interfere with or disrupt the Platform's infrastructure, servers, or networks;</li>
         <li>Conduct or facilitate Distributed Denial of Service (DDoS) attacks;</li>
-        <li>Exploit any bugs or vulnerabilities rather than reporting them responsibly to <a href="mailto:security@ordererweb.shop">security@ordererweb.shop</a>.</li>
+        <li>Exploit any bugs or vulnerabilities rather than reporting them responsibly to <a href="mailto:security@ordererweb.com">security@ordererweb.com</a>.</li>
     </ul>
 
     <div class="warning-box">
@@ -181,7 +181,7 @@
         <li>List counterfeit goods bearing the brand or trademark of another entity without authorisation;</li>
         <li>Use Orderer to facilitate unauthorised use of licensed software, media, or digital content.</li>
     </ul>
-    <p>Orderer will respond to valid intellectual property complaints from rights holders. If you believe your rights have been infringed, contact <a href="mailto:legal@ordererweb.shop">legal@ordererweb.shop</a>.</p>
+    <p>Orderer will respond to valid intellectual property complaints from rights holders. If you believe your rights have been infringed, contact <a href="mailto:legal@ordererweb.com">legal@ordererweb.com</a>.</p>
 
     <h2 id="minors">7. Protection of Minors</h2>
     <p>Orderer takes the protection of minors extremely seriously. You must not:</p>
@@ -219,7 +219,7 @@
     <ul>
         <li>Use the "Report" button on any listing or message;</li>
         <li>Open a support ticket from your account dashboard;</li>
-        <li>Email: <a href="mailto:trust@ordererweb.shop">trust@ordererweb.shop</a></li>
+        <li>Email: <a href="mailto:trust@ordererweb.com">trust@ordererweb.com</a></li>
     </ul>
     <p>All reports are reviewed by our Trust and Safety team. We do not tolerate retaliation against users who report violations in good faith.</p>
 
@@ -227,7 +227,7 @@
     <p>Orderer may update this Acceptable Use Policy from time to time to reflect changes in law, technology, or Platform operations. Updated versions will be published on the Platform with the effective date. Continued use of the Platform after such updates constitutes acceptance of the revised Policy.</p>
 
     <hr>
-    <p style="font-size:14px;color:#888;">For questions about this Policy: <a href="mailto:legal@ordererweb.shop">legal@ordererweb.shop</a></p>
+    <p style="font-size:14px;color:#888;">For questions about this Policy: <a href="mailto:legal@ordererweb.com">legal@ordererweb.com</a></p>
 
 </div>
 

@@ -118,7 +118,7 @@
     <p>Orderer reserves the right to modify this Disclaimer at any time. Changes will be posted on this page with an updated effective date. Your continued use of the Platform after any changes constitutes your acceptance of the revised Disclaimer.</p>
 
     <h2>13. Contact</h2>
-    <p>For questions about this Disclaimer: <a href="mailto:legal@ordererweb.shop">legal@ordererweb.shop</a></p>
+    <p>For questions about this Disclaimer: <a href="mailto:legal@ordererweb.com">legal@ordererweb.com</a></p>
 
 </div>
 
