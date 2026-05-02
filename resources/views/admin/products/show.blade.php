@@ -415,7 +415,8 @@
         const form = document.getElementById('approveForm');
         const productInfo = document.getElementById('approveProductInfo');
         
-        form.action = `/admin/products/${id}/approve`;
+        form.action = "{{ route('admin.products.approve', ['product' => '__ID__']) }}".replace('__ID__', id);
+      
         productInfo.innerHTML = `<strong>${productName}</strong><br>This product will be approved and become visible to buyers.`;
         
         modal.style.display = 'flex';
@@ -434,7 +435,8 @@
         const form = document.getElementById('rejectForm');
         const productInfo = document.getElementById('rejectProductInfo');
         
-        form.action = `/admin/products/${id}/reject`;
+        form.action = "{{ route('admin.products.reject', ['product' => '__ID__']) }}".replace('__ID__', id);
+      
         productInfo.innerHTML = `<strong>${productName}</strong><br>Please provide a reason for rejection.`;
         
         modal.style.display = 'flex';
@@ -453,7 +455,8 @@
         const form = document.getElementById('suspendForm');
         const productInfo = document.getElementById('suspendProductInfo');
         
-        form.action = `/admin/products/${id}/suspend`;
+        form.action = "{{ route('admin.products.suspend', ['product' => '__ID__']) }}".replace('__ID__', id);
+      
         productInfo.innerHTML = `<strong>${productName}</strong><br>This product will be suspended and hidden from buyers.`;
         
         modal.style.display = 'flex';
