@@ -81,7 +81,7 @@ class TikTokEventService
     public function uploadProduct($product, Request $request, $user = null): void
     {
         $this->send(
-            eventName:  'Upload Product',
+            eventName:  'CustomizeProduct',
             properties: $this->productProperties($product),
             request:    $request,
             user:       $user,
