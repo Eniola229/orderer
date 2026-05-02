@@ -174,9 +174,15 @@
                         <label class="form-label fw-bold">Location</label>
                         <input type="text"
                                name="location"
-                               class="form-control"
-                               value="{{ old('location', $product->location) }}"
-                               placeholder="City, State (e.g. Lagos, Nigeria)">
+                               class="form-control bg-light"
+                              value="{{ auth('seller')->user()->business_address ?? '' }}"
+                               readonly
+                               style="cursor: default; pointer-events: none;">
+                        <small class="text-muted">
+                            <i class="feather-info me-1"></i>
+                            This is your registered business address. To change it, update it from your
+                            <a href="{{ route('seller.profile') }}">profile settings</a>.
+                        </small>
                     </div>
 
                 </div>

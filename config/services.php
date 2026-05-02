@@ -50,4 +50,10 @@ return [
         'base_url' => env('SHIPBUBBLE_BASE_URL', 'https://api.shipbubble.com/v1'),
     ],
 
+    'tiktok' => [
+        'access_token' => env('TIKTOK_ACCESS_TOKEN'),
+        'pixel_id'     => env('TIKTOK_PIXEL_ID', 'D7R5SH3C77U6QAB80D90'),
+        'currency'     => env('TIKTOK_CURRENCY', 'NGN'),
+    ],
+
 ];

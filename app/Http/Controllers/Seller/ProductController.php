@@ -12,15 +12,15 @@ use App\Models\Category;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Services\TikTokEventService;
+
 
 class ProductController extends Controller
 {
-    protected CloudinaryService $cloudinary;
-
-    public function __construct(CloudinaryService $cloudinary)
-    {
-        $this->cloudinary = $cloudinary;
-    }
+    public function __construct(
+        protected CloudinaryService   $cloudinary,
+        protected TikTokEventService  $tikTok,
+    ) {}
 
     public function index()
     {
@@ -44,7 +44,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'            => ['required', 'string', 'max:255'],
+            'name'            => ['required', 'string', 'max:255', 'unique:products'],
             'category_id'     => ['required', 'exists:categories,id'],
             'subcategory_id'  => ['nullable', 'exists:subcategories,id'],
             'description'     => ['required', 'string', 'min:30'],
@@ -118,9 +118,14 @@ class ProductController extends Controller
         // Save options
         $this->saveOptions($request, $product);
 
+        $this->tikTok->uploadProduct($product, $request, auth('seller')->user());
+
+
         return redirect()->route('seller.products.index')
             ->with('success', 'Product submitted for review. We will notify you once it is approved.');
     }
+
+
 
     public function show(Product $product)
     {
@@ -154,7 +159,7 @@ class ProductController extends Controller
         $this->authorizeProduct($product);
 
         $request->validate([
-            'name'           => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'unique:products,name,' . $product->id],
             'category_id'    => ['required', 'exists:categories,id'],
             'subcategory_id' => ['nullable', 'exists:subcategories,id'],
             'description'    => ['required', 'string', 'min:30'],

@@ -13,6 +13,7 @@ use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\TikTokEventService;
 
 class CheckoutController extends Controller
 {
@@ -20,7 +21,8 @@ class CheckoutController extends Controller
         protected WalletService     $walletService,
         protected KorapayService    $korapay,
         protected BrevoMailService  $brevo,
-        protected ShipbubbleService $shipbubble
+        protected ShipbubbleService $shipbubble,
+        protected TikTokEventService  $tikTok,
     ) {} 
 
     public function index()
@@ -53,6 +55,18 @@ class CheckoutController extends Controller
         })->toArray();
 
         $subtotal = collect($cartItems)->sum(fn($i) => $i['price'] * $i['quantity']);
+
+        // TikTok — user landed on checkout page
+        $this->tikTok->send(
+            eventName:  'InitiateCheckout',
+            properties: [
+                'content_type' => 'product',
+                'value'        => $subtotal,
+            ],
+            request:    request(),
+            user:       auth('web')->user(),
+            eventId:    'checkout_' . auth('web')->id() . '_' . time(),
+        );
 
         return view('storefront.checkout', compact('cartItems', 'subtotal'));
     }
@@ -212,6 +226,9 @@ class CheckoutController extends Controller
                 $this->getCart()->items()->delete();
                 $this->sendOrderEmails($user, $order);
 
+                // TikTok — order placed via wallet
+                $this->tikTok->placeAnOrder($order, $request, $user);
+
                 return redirect()->route('buyer.orders.show', $order->id)
                     ->with('success', "Order #{$order->order_number} placed successfully!");
 
@@ -222,6 +239,9 @@ class CheckoutController extends Controller
 
                 DB::commit();
                 $this->getCart()->items()->delete();
+
+                // TikTok — order placed, going to Korapay
+                $this->tikTok->placeAnOrder($order, $request, $user);
 
                 $checkoutData = $this->korapay->initializeCheckout(
                     $user->email,
@@ -496,6 +516,9 @@ class CheckoutController extends Controller
                     $user = auth('web')->user() ?? $order->user;
                     $this->bookShipmentForOrder($order, $user, $order->package_weight ?? 0.5, $order->declared_value ?? $order->subtotal);
                     $this->sendOrderEmails($user, $order);
+
+                    // TikTok — Korapay payment confirmed
+                    $this->tikTok->purchase($order, $request, auth('web')->user() ?? $order->user);
 
                     return redirect()->route('buyer.orders.show', $order->id)
                         ->with('success', "Payment successful! Order #{$order->order_number} confirmed.");

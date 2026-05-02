@@ -13,6 +13,7 @@ use App\Services\BrevoMailService;
 use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\TikTokEventService;
 
 class BuyNowController extends Controller
 {
@@ -23,7 +24,8 @@ class BuyNowController extends Controller
         protected WalletService     $walletService,
         protected KorapayService    $korapay,
         protected BrevoMailService  $brevo,
-        protected ShipbubbleService $shipbubble
+        protected ShipbubbleService $shipbubble,
+        protected TikTokEventService $tikTok,
     ) {}
 
     // ─── STEP 1 ─────────────────────────────────────────────────────────────────
@@ -112,6 +114,20 @@ class BuyNowController extends Controller
 
         $subtotal = $sessionItem['price'] * $sessionItem['quantity'];
         $isBuyNow = true;
+
+        // TikTok — user reached Buy Now checkout page
+        $this->tikTok->send(
+            eventName:  'InitiateCheckout',
+            properties: [
+                'content_id'   => (string) $product->id,
+                'content_type' => 'product',
+                'content_name' => $product->name,
+                'value'        => $subtotal,
+            ],
+            request:    request(),
+            user:       auth('web')->user(),
+            eventId:    'buynow_checkout_' . $product->id . '_' . auth('web')->id(),
+        );
 
         return view('storefront.checkout', compact('cartItems', 'subtotal', 'isBuyNow'));
     }
@@ -256,6 +272,9 @@ class BuyNowController extends Controller
                 session()->forget(self::SESSION_KEY);
                 $this->sendOrderEmails($user, $order);
 
+                // TikTok — Buy Now order placed via wallet
+                $this->tikTok->placeAnOrder($order, $request, $user);
+
                 return redirect()->route('buyer.orders.show', $order->id)
                     ->with('success', "Order #{$order->order_number} placed successfully!");
 
@@ -270,6 +289,9 @@ class BuyNowController extends Controller
                 // Store order ID in session for callback verification
                 session(['buy_now_order_id' => $order->id]);
                 session()->forget(self::SESSION_KEY);
+
+                // 🔥 TikTok — Buy Now order placed, going to Korapay
+                $this->tikTok->placeAnOrder($order, $request, $user);
 
                 $checkoutData = $this->korapay->initializeCheckout(
                     $user->email,
@@ -346,6 +368,10 @@ class BuyNowController extends Controller
                     
                     $this->bookShipment($order, $user, $weight, $subtotal, $product);
                     $this->sendOrderEmails($user, $order);
+
+                     //TikTok — Buy Now Korapay payment confirmed
+                    $this->tikTok->purchase($order, $request, auth('web')->user() ?? $order->user);
+
 
                     // Clear any remaining session data
                     session()->forget(self::SESSION_KEY);
