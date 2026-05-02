@@ -516,7 +516,8 @@
         const form = document.getElementById('approveForm');
         const info = document.getElementById('approveProductInfo');
         
-        form.action = `/admin/products/${id}/approve`;
+        form.action = "{{ route('admin.products.approve', ['product' => '__ID__']) }}".replace('__ID__', id);
+        
         info.innerHTML = `<strong>${productName}</strong><br>This product will be approved and become visible to buyers.`;
         
         modal.style.display = 'flex';
@@ -534,7 +535,8 @@
         const form = document.getElementById('rejectForm');
         const info = document.getElementById('rejectProductInfo');
         
-        form.action = `/admin/products/${id}/reject`;
+        form.action = "{{ route('admin.products.reject', ['product' => '__ID__']) }}".replace('__ID__', id);
+        
         info.innerHTML = `<strong>${productName}</strong><br>Please provide a reason for rejection.`;
         
         modal.style.display = 'flex';

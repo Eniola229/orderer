@@ -238,8 +238,8 @@
 @push('scripts')
 <script>
 function shareBrand() {
-    var url = '{{ route('brands.show', $brand->slug) }}';
-    var name = '{{ addslashes($brand->name) }}';
+    var url = '{{ $brand ? route('brands.show', $brand->slug) : '' }}';
+    var name = '{{ $brand ? addslashes($brand->name) : '' }}';
 
     if (navigator.share) {
         navigator.share({
@@ -247,7 +247,7 @@ function shareBrand() {
             text: 'Check out ' + name + ' on Orderer!',
             url: url,
         });
-    } else {
+    } else { 
         navigator.clipboard.writeText(url).then(function () {
             alert('Brand link copied to clipboard!');
         }).catch(function () {
