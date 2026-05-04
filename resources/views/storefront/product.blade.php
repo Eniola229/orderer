@@ -13,9 +13,14 @@
             <div class="col-12">
                 <div class="page-title text-center">
                     <h2 class="fs-2 fs-md-1">{{ Str::limit($product->name, 40) }}</h2>
-                    <button onclick="shareProduct()" style="background: none; border: 1px solid #2ECC71; border-radius: 50px; padding: 6px 20px; margin-top: 10px; font-size: 13px; color: #2ECC71; cursor: pointer;">
-                        <i class="fa fa-share-alt mr-1"></i> Share
-                    </button>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                        <button onclick="shareProduct()" style="background:none;border:1px solid #2ECC71;border-radius:50px;padding:6px 20px;font-size:13px;color:#2ECC71;cursor:pointer;">
+                            <i class="fa fa-share-alt mr-1"></i> Share
+                        </button>
+                        <button onclick="document.getElementById('supportModal').style.display='flex'" style="background:none;border:1px solid #E74C3C;border-radius:50px;padding:6px 20px;font-size:13px;color:#E74C3C;cursor:pointer;">
+                            <i class="fa fa-flag mr-1"></i> Report Problem
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -430,6 +435,8 @@
         </div>
         @endif
 
+
+
         {{-- Description + Reviews --}}
         <div class="row mt-5">
             <div class="col-12">
@@ -648,6 +655,81 @@
     </div>
 </section>
 
+{{-- Support / Report Modal --}}
+<div id="supportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .25s ease;">
+        
+        {{-- Header --}}
+        <div style="background:#1a1a2e;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <i class="fa fa-flag" style="color:#E74C3C;font-size:16px;"></i>
+                <h5 style="margin:0;color:#fff;font-size:16px;font-weight:700;">Report a Problem</h5>
+            </div>
+            <button onclick="document.getElementById('supportModal').style.display='none'"
+                    style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">
+                &times;
+            </button>
+        </div>
+
+        {{-- Product context --}}
+        <div style="background:#f8f8f8;padding:12px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;">
+            @php $pImg = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
+            <img src="{{ $pImg->image_url ?? asset('img/product-img/product-1.jpg') }}"
+                 style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #eee;" alt="">
+            <div style="flex:1;min-width:0;">
+                <p style="margin:0;font-size:13px;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ Str::limit($product->name, 45) }}
+                </p>
+                <p style="margin:0;font-size:11px;color:#888;">Product ID: {{ $product->id }}</p>
+            </div>
+        </div>
+
+        {{-- Body --}}
+        <div style="padding:24px;">
+            <p style="font-size:13px;color:#666;margin-bottom:20px;">
+                Having a problem with this product or listing? Choose how you'd like to reach us and we'll get back to you quickly.
+            </p>
+
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                
+                {{-- WhatsApp --}}
+                <a href="https://wa.me/2348152880128?text={{ urlencode('Hi! I want to report a problem with this product: ' . $product->name . ' (ID: ' . $product->id . ') — URL: ' . request()->url()) }}"
+                   target="_blank"
+                   style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;background:#F0FFF7;border:1.5px solid #2ECC71;text-decoration:none;transition:transform .15s;"
+                   onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#25D366;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa fa-whatsapp" style="color:#fff;font-size:20px;"></i>
+                    </div>
+                    <div>
+                        <p style="margin:0;font-weight:700;font-size:14px;color:#1a1a1a;">Chat on WhatsApp</p>
+                        <p style="margin:0;font-size:12px;color:#666;">Fastest response · Usually replies in minutes</p>
+                    </div>
+                    <i class="fa fa-chevron-right" style="color:#2ECC71;margin-left:auto;"></i>
+                </a>
+
+                {{-- Support Ticket --}}
+                <a href="{{ route('buyer.support') }}?product_id={{ $product->id }}&subject={{ urlencode('Problem with: ' . $product->name) }}"
+                   style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;background:#F5F5FF;border:1.5px solid #7B68EE;text-decoration:none;transition:transform .15s;"
+                   onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+                    <div style="width:40px;height:40px;border-radius:10px;background:#7B68EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa fa-ticket" style="color:#fff;font-size:18px;"></i>
+                    </div>
+                    <div>
+                        <p style="margin:0;font-weight:700;font-size:14px;color:#1a1a1a;">Open a Support Ticket</p>
+                        <p style="margin:0;font-size:12px;color:#666;">We'll follow up via email · Usually within 24 hrs</p>
+                    </div>
+                    <i class="fa fa-chevron-right" style="color:#7B68EE;margin-left:auto;"></i>
+                </a>
+
+            </div>
+
+            <p style="text-align:center;font-size:11px;color:#aaa;margin-top:20px;margin-bottom:0;">
+                Our support team is available Mon – Fri: 8am – 8pm WAT | Sat – Sun: 10am – 6pm WAT
+            </p>
+        </div>
+    </div>
+</div>
+
 {{-- Review Image Modal --}}
 <div id="reviewImageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999999; align-items: center; justify-content: center; cursor: pointer;">
     <img id="modalReviewImage" src="" style="max-width: 90%; max-height: 90%; object-fit: contain;">
@@ -676,6 +758,24 @@
     transform: translateY(-1px);
 }
 </style>
+
+<style>
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+// Close modal when clicking backdrop
+document.getElementById('supportModal').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('supportModal').style.display = 'none';
+});
+</script>
 
 <script>
 // Auto-select first option for each option group if none selected

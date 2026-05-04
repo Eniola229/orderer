@@ -120,9 +120,12 @@ class ProductController extends Controller
 
         $this->tikTok->uploadProduct($product, $request, auth('seller')->user());
 
-
         return redirect()->route('seller.products.index')
-            ->with('success', 'Product submitted for review. We will notify you once it is approved.');
+            ->with('success', 'Product submitted for review. We will notify you once it is approved.')
+            ->with('x_product_submitted', [         
+                'product_id' => $product->id,
+                'email'      => auth('seller')->user()->email,
+            ]);
     }
 
 

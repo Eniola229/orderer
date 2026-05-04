@@ -125,4 +125,16 @@
     </div>
 </div>
 
+<!-- X ads -->
+@if(session('x_product_submitted'))
+@php $xData = session('x_product_submitted'); @endphp
+<script>
+  twq('event', 'tw-rc8yq-rc8yu', {
+    conversion_id: '{{ $xData['product_id'] }}',
+    email_address: '{{ $xData['email'] }}',
+    phone_number:  null
+  });
+</script>
+@endif
+
 @endsection
