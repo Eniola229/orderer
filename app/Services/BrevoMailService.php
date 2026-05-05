@@ -58,7 +58,7 @@ class BrevoMailService
         return $this->send(
             $seller->email,
             $seller->full_name,
-            'Your Orderer seller account is under review',
+            'Welcome to Orderer — your global store starts here.',
             $this->welcomeSellerHtml($seller)
         );
     }

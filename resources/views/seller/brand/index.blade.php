@@ -103,7 +103,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Website</label>
+                        <label class="form-label fw-bold">Website  <small>(Optional)</small></label>
                         <input type="url" name="website" class="form-control"
                                value="{{ old('website', $brand->website) }}">
                     </div>
