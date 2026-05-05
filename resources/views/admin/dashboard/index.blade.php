@@ -8,7 +8,7 @@
 @section('content')
 
 {{-- ── Pending alert strip ─────────────────────────────────────── --}}
-@if($stats['pending_sellers'] || $stats['pending_products'] || $stats['pending_withdrawals'] || $stats['pending_ads'])
+@if($stats['pending_sellers'] || $stats['pending_products'] || $stats['pending_withdrawals'] || $stats['pending_ads'] || $stats['pending_houses'] || $stats['pending_services'])
 <div class="row mb-3">
     @if($stats['pending_sellers'])
     <div class="col-md-3 mb-2">

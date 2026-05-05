@@ -20,7 +20,10 @@
                     <h3 style="font-weight: 600; margin-bottom: 20px;">Too Many Requests</h3>
                     <p style="color: #888; margin-bottom: 30px;">Sorry, you are making too many requests. Please wait a moment and try again.</p>
                     <a href="{{ url('/') }}" class="btn essence-btn">
-                        <i class="fa fa-home mr-2"></i> Back to Home
+                        <i class="fa fa-refresh mr-2"></i> Home Page
+                    </a>
+                    <a href="javascript:history.back()" class="btn essence-btn ml-2" style="background:transparent; border:2px solid #2ECC71; color:#2ECC71;">
+                        <i class="fa fa-arrow-left mr-2"></i> Go Back
                     </a>
                 </div>
             </div>
