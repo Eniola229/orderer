@@ -91,7 +91,7 @@ class RegisterController extends Controller
             'is_verified_business' => $isVerified,
             'verification_status'  => 'pending',
             'is_active'            => true,
-            'is_approved'          => false,
+            'is_approved'          => !$isVerified,
             'referral_code'        => strtoupper(Str::random(8)),
             'referred_by'          => $referredBy,
             'marketer_id'          => $marketerId,   // ← NEW
@@ -118,7 +118,8 @@ class RegisterController extends Controller
         $brevo->sendWelcomeSeller($seller);
         auth('seller')->login($seller);
 
-        return redirect()->route('seller.pending')
-            ->with('info', 'Your account has been created and is awaiting approval.');
+        return $isVerified
+            ? redirect()->route('seller.pending')->with('info', 'Your account has been created and is awaiting approval.')
+            : redirect()->route('seller.dashboard')->with('success', 'Welcome! Your account is ready.');
     }
 }

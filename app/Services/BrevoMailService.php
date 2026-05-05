@@ -401,17 +401,36 @@ class BrevoMailService
 
     protected function welcomeSellerHtml($seller): string
     {
+        $isVerified = $seller->is_verified_business;
+
+        $bodyContent = $isVerified
+            ? "
+                <p>Hi <strong>{$seller->first_name}</strong>,</p>
+                <p>Thank you for applying to sell on Orderer. Your application for <strong>{$seller->business_name}</strong> has been received and is currently under review.</p>
+                <p>Our team will verify your submitted documents within <strong>24 hours</strong> and notify you via email once your account is approved.</p>
+                <p>In the meantime, feel free to reach out if you have any questions.</p>
+              "
+            : "
+                <p>Hi <strong>{$seller->first_name}</strong>,</p>
+                <p>Welcome to Orderer! Your seller account for <strong>{$seller->business_name}</strong> has been created and is <strong style='color:#2ECC71;'>ready to go</strong>.</p>
+                <p>You can log in now and start setting up your store — add your products, configure your profile, and start selling!</p>
+                <a href='".route('seller.dashboard')."'
+                   style='display:inline-block;margin-top:16px;padding:12px 28px;background:#2ECC71;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;'>
+                    Go to My Dashboard
+                </a>
+              ";
+
         return "
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
             <div style='background:#2ECC71;padding:30px;text-align:center;'>
-                <h1 style='color:#fff;margin:0;'>Seller Application Received</h1>
+                <h1 style='color:#fff;margin:0;'>
+                    " . ($isVerified ? 'Application Received' : 'Welcome to Orderer!') . "
+                </h1>
             </div>
             <div style='padding:30px;background:#fff;'>
-                <p>Hi <strong>{$seller->first_name}</strong>,</p>
-                <p>Thank you for applying to sell on Orderer. Your application for <strong>{$seller->business_name}</strong> is currently under review.</p>
-                <p>Our team will review your details within <strong>24 hours</strong> and notify you via email once approved.</p>
+                {$bodyContent}
                 <p style='color:#888;font-size:13px;margin-top:24px;'>
-                    Questions? Email us at support@ordererweb.com
+                    Questions? Email us at <a href='mailto:support@ordererweb.com' style='color:#2ECC71;'>support@ordererweb.com</a>
                 </p>
             </div>
             <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
