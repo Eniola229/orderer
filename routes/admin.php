@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\LogController;
-use App\Http\Controllers\Admin\AdController;
+use App\Http\Controllers\Admin\AdController; 
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\HouseController;

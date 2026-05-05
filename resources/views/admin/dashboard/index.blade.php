@@ -4,7 +4,7 @@
 @section('breadcrumb')
     <li class="breadcrumb-item active">Overview</li>
 @endsection
-
+ 
 @section('content')
 
 {{-- ── Pending alert strip ─────────────────────────────────────── --}}
@@ -75,6 +75,36 @@
                 <div>
                     <strong style="color:#6C3483;">{{ $stats['pending_flash_sales'] }} Flash Sales</strong>
                     <p class="mb-0 text-muted" style="font-size:12px;">Awaiting admin approval</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    @endif
+
+    @if($stats['pending_houses'])
+    <div class="col-md-3 mb-2">
+        <a href="{{ route('admin.houses.pending') }}" class="text-decoration-none">
+            <div class="alert mb-0 d-flex align-items-center gap-3"
+                 style="background:#E8F8F5;border:1px solid #1ABC9C;border-radius:10px;">
+                <i class="feather-home" style="font-size:20px;color:#148F77;flex-shrink:0;"></i>
+                <div>
+                    <strong style="color:#148F77;">{{ $stats['pending_houses'] }} Houses</strong>
+                    <p class="mb-0 text-muted" style="font-size:12px;">Awaiting approval</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    @endif
+
+    @if($stats['pending_services'])
+    <div class="col-md-3 mb-2">
+        <a href="{{ route('admin.services.pending') }}" class="text-decoration-none">
+            <div class="alert mb-0 d-flex align-items-center gap-3"
+                 style="background:#FDF2E9;border:1px solid #E67E22;border-radius:10px;">
+                <i class="feather-briefcase" style="font-size:20px;color:#CA6F1E;flex-shrink:0;"></i>
+                <div>
+                    <strong style="color:#CA6F1E;">{{ $stats['pending_services'] }} Services</strong>
+                    <p class="mb-0 text-muted" style="font-size:12px;">Awaiting approval</p>
                 </div>
             </div>
         </a>
@@ -388,6 +418,15 @@
                     <span class="badge bg-primary ms-1">{{ $stats['pending_products'] }}</span>
                     @endif
                 </a>
+
+                <a href="{{ route('admin.houses.pending') }}" class="btn btn-outline-success btn-sm">
+                    <i class="feather-home me-2"></i> Review Houses
+                    <span class="badge bg-success ms-1">{{ $stats['pending_houses'] }}</span>
+                </a>
+                <a href="{{ route('admin.services.pending') }}" class="btn btn-outline-warning btn-sm">
+                    <i class="feather-briefcase me-2"></i> Review Services
+                    <span class="badge bg-warning text-dark ms-1">{{ $stats['pending_services'] }}</span>
+                </a>
                 @endif
                 @if($admin->canManageFinance())
                 <a href="{{ route('admin.withdrawals.index') }}" class="btn btn-outline-success btn-sm">
@@ -421,6 +460,7 @@
                     @endif
                 </a>
                 @endif
+
             </div>
         </div>
 

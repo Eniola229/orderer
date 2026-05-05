@@ -505,7 +505,7 @@
         const form = document.getElementById('approveForm');
         const propertyInfo = document.getElementById('approvePropertyInfo');
         
-        form.action = `/admin/houses/${id}/approve`;
+        form.action = "{{ route('admin.houses.approve', ['houses' => '__ID__']) }}".replace('__ID__', id);
         propertyInfo.innerHTML = `<strong>${propertyName}</strong><br>This property will be approved and become visible to buyers.`;
         
         modal.style.display = 'flex';
@@ -524,7 +524,7 @@
         const form = document.getElementById('rejectForm');
         const propertyInfo = document.getElementById('rejectPropertyInfo');
         
-        form.action = `/admin/houses/${id}/reject`;
+        form.action = "{{ route('admin.houses.reject', ['houses' => '__ID__']) }}".replace('__ID__', id);
         propertyInfo.innerHTML = `<strong>${propertyName}</strong><br>Please provide a reason for rejection.`;
         
         modal.style.display = 'flex';
@@ -543,7 +543,7 @@
         const form = document.getElementById('suspendForm');
         const propertyInfo = document.getElementById('suspendPropertyInfo');
         
-        form.action = `/admin/houses/${id}/suspend`;
+        form.action = "{{ route('admin.houses.suspend', ['houses' => '__ID__']) }}".replace('__ID__', id);
         propertyInfo.innerHTML = `<strong>${propertyName}</strong><br>This property will be suspended and hidden from buyers.`;
         
         modal.style.display = 'flex';

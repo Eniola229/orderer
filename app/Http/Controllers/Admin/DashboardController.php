@@ -44,7 +44,7 @@ class DashboardController extends Controller
                             ? (int) $range
                             : 30;
             $dateFrom = now()->subDays($days)->startOfDay();
-            $dateTo   = now()->endOfDay();
+            $dateTo   = now()->endOfDay(); 
         }
 
         $periodDays = max(1, (int) $dateFrom->diffInDays($dateTo));
@@ -80,6 +80,8 @@ class DashboardController extends Controller
             'open_tickets'        => SupportTicket::where('status', 'open')->count(),
             'pending_ads'         => Ad::where('status', 'pending')->count(),
             'pending_flash_sales' => \App\Models\FlashSale::whereNull('created_by')->count(),
+            'pending_houses'      => \App\Models\HouseListing::where('status', 'pending')->count(),
+            'pending_services'    => \App\Models\ServiceListing::where('status', 'pending')->count(),
         ];
 
         // ── 4. Revenue helper (from orders table) ────────────────────

@@ -511,7 +511,7 @@
         const form = document.getElementById('rejectForm');
         const sellerInfo = document.getElementById('modalSellerInfo');
         
-        form.action = `/admin/sellers/${id}/reject`;
+        form.action = "{{ route('admin.sellers.reject', ['seller' => '__ID__']) }}".replace('__ID__', id);
         sellerInfo.innerHTML = `<strong>${sellerName}</strong><br>This seller application will be rejected.`;
         
         modal.style.display = 'flex';
@@ -519,7 +519,7 @@
     }
     
     function closeRejectModal() {
-        const modal = document.getElementById('rejectModal');
+        const modal = document.getElementById('rejectModal'); 
         modal.style.display = 'none';
         document.body.style.overflow = '';
     }
@@ -529,7 +529,7 @@
         const form = document.getElementById('suspendForm');
         const sellerInfo = document.getElementById('suspendSellerInfo');
         
-        form.action = `/admin/sellers/${id}/suspend`;
+        form.action = "{{ route('admin.sellers.suspend', ['seller' => '__ID__']) }}".replace('__ID__', id);
         sellerInfo.innerHTML = `<strong>${sellerName}</strong><br>This seller will be suspended and unable to list products.`;
         
         modal.style.display = 'flex';

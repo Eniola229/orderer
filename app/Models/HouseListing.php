@@ -17,7 +17,7 @@ class HouseListing extends Model
         'location', 'address', 'city', 'state', 'country',
         'bedrooms', 'bathrooms', 'toilets', 'size_sqm',
         'features', 'video_tour_url', 'status', 'rejection_reason','approved_by'
-    ];
+    ]; 
 
     protected $casts = [
         'features' => 'array',
