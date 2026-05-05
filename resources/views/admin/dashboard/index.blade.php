@@ -83,7 +83,7 @@
 
     @if($stats['pending_houses'])
     <div class="col-md-3 mb-2">
-        <a href="{{ route('admin.houses.pending') }}" class="text-decoration-none">
+        <a href="{{ route('admin.houses.index') }}" class="text-decoration-none">
             <div class="alert mb-0 d-flex align-items-center gap-3"
                  style="background:#E8F8F5;border:1px solid #1ABC9C;border-radius:10px;">
                 <i class="feather-home" style="font-size:20px;color:#148F77;flex-shrink:0;"></i>
@@ -98,7 +98,7 @@
 
     @if($stats['pending_services'])
     <div class="col-md-3 mb-2">
-        <a href="{{ route('admin.services.pending') }}" class="text-decoration-none">
+        <a href="{{ route('admin.services.index') }}" class="text-decoration-none">
             <div class="alert mb-0 d-flex align-items-center gap-3"
                  style="background:#FDF2E9;border:1px solid #E67E22;border-radius:10px;">
                 <i class="feather-briefcase" style="font-size:20px;color:#CA6F1E;flex-shrink:0;"></i>
