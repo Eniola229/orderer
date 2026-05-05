@@ -446,7 +446,7 @@
         const form = document.getElementById('approveForm');
         const serviceInfo = document.getElementById('approveServiceInfo');
         
-        form.action = "{{ route('admin.services.approve', ['services' => '__ID__']) }}".replace('__ID__', id);
+        form.action = "{{ route('admin.services.approve', ['service' => '__ID__']) }}".replace('__ID__', id);
         serviceInfo.innerHTML = `<strong>${serviceName}</strong><br>This service will be approved and become visible to buyers.`;
         
         modal.style.display = 'flex';
@@ -465,7 +465,7 @@
         const form = document.getElementById('rejectForm');
         const serviceInfo = document.getElementById('rejectServiceInfo');
         
-        form.action = "{{ route('admin.services.reject', ['services' => '__ID__']) }}".replace('__ID__', id);
+        form.action = "{{ route('admin.services.reject', ['service' => '__ID__']) }}".replace('__ID__', id);
         
         serviceInfo.innerHTML = `<strong>${serviceName}</strong><br>Please provide a reason for rejection.`;
         
@@ -485,7 +485,7 @@
         const form = document.getElementById('suspendForm');
         const serviceInfo = document.getElementById('suspendServiceInfo');
         
-        fform.action = "{{ route('admin.services.suspend', ['services' => '__ID__']) }}".replace('__ID__', id);
+        fform.action = "{{ route('admin.services.suspend', ['service' => '__ID__']) }}".replace('__ID__', id);
         
         serviceInfo.innerHTML = `<strong>${serviceName}</strong><br>This service will be suspended and hidden from buyers.`;
         
