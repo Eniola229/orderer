@@ -43,6 +43,8 @@
             $pageTitle = 'Home';
         } elseif ($routeName === 'shop' || request()->is('shop*')) {
             $pageTitle = 'Shop';
+        } elseif ($routeName === 'rider' || request()->is('rider*')) {
+            $pageTitle = 'Book a Delivery';
         } elseif (isset($product)) {
             $pageTitle = $product->name;
         } elseif (isset($brand)) {

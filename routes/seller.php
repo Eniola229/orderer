@@ -80,10 +80,12 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::put('/orders/{order}/status',     [SellerOrderController::class, 'updateStatus'])->name('orders.status');
 
         // Wallet
-        Route::get('/wallet',            [SellerWalletController::class, 'index'])->name('wallet.index');
-        Route::post('/wallet/topup',     [SellerWalletController::class, 'topupWallet'])->name('wallet.topup');
-        Route::post('/wallet/topup-ads', [SellerWalletController::class, 'topupAds'])->name('wallet.topup.ads');
-        Route::get('/wallet/callback',   [SellerWalletController::class, 'topupCallback'])->name('wallet.topup.callback');
+        Route::get('/wallet',                    [SellerWalletController::class, 'index'])->name('wallet.index');
+        Route::post('/wallet/topup',             [SellerWalletController::class, 'topupWallet'])->name('wallet.topup');
+        Route::post('/wallet/topup-ads',         [SellerWalletController::class, 'topupAds'])->name('wallet.topup.ads');
+        Route::get('/wallet/callback',           [SellerWalletController::class, 'topupCallback'])->name('wallet.topup.callback');
+        Route::post('/wallet/monnify/init',      [SellerWalletController::class, 'monnifyInit'])->name('wallet.monnify.init');
+        Route::post('/wallet/monnify/verify',    [SellerWalletController::class, 'monnifyVerify'])->name('wallet.monnify.verify'); 
 
         // Withdrawals
         Route::get('/withdrawals',         [WithdrawalController::class, 'index'])->name('withdrawals.index');

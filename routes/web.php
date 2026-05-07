@@ -11,12 +11,14 @@ use App\Http\Controllers\Buyer\WishlistController       as BuyerWishlist;
 use App\Http\Controllers\Buyer\ReferralController       as BuyerReferral;
 use App\Http\Controllers\Buyer\ProfileController        as BuyerProfile;
 use App\Http\Controllers\Buyer\SupportController        as BuyerSupport;
+use App\Http\Controllers\Buyer\NotificationController as BuyerNotificationController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\BuyNowController;
+
 
 
 // -------------------------------------------------------
@@ -36,7 +38,7 @@ Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])-
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
 //Waitlist
 Route::get('/waitlist', fn() => view('waitlist'))->name('waitlist');
-
+ 
 // ── Legal Pages ───────────────────────────────────────────────────────────────
 Route::prefix('legal')->name('legal.')->group(function () {
     Route::get('/terms-and-conditions',    [LegalController::class, 'terms'])->name('terms');
@@ -145,9 +147,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout',          [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout/place',   [CheckoutController::class, 'place'])->name('checkout.place');
     Route::get('/checkout/callback', [CheckoutController::class, 'callback'])->name('checkout.callback');
+    Route::post('/checkout/monnify/verify', [App\Http\Controllers\CheckoutController::class, 'monnifyVerify'])
+    ->middleware('auth')
+    ->name('checkout.monnify.verify');
 
     //FOR BUY NOW
     Route::get('/buy-now/callback', [BuyNowController::class, 'callback'])->name('buy-now.callback');
+    Route::post('/buy-now/monnify/verify', [App\Http\Controllers\BuyNowController::class, 'monnifyVerify'])
+    ->name('buy-now.monnify.verify');
+
 
 });
 
@@ -186,6 +194,12 @@ Route::post('/logout', [BuyerLoginController::class, 'logout'])
     Route::get('/rider/track/{booking}', [App\Http\Controllers\RiderBookingController::class, 'track'])
          ->middleware('auth')
          ->name('rider.track');
+    Route::post('/rider/book',                  [App\Http\Controllers\RiderBookingController::class, 'book'])
+        ->middleware('auth')
+        ->name('rider.book');
+    Route::post('/rider/monnify/verify',        [App\Http\Controllers\RiderBookingController::class, 'monnifyVerify'])
+        ->middleware('auth')
+        ->name('rider.monnify.verify');
 
     // ── Checkout rates ───────────────────────────────────
     Route::post('/checkout/rates', [App\Http\Controllers\CheckoutController::class, 'getRates'])
@@ -210,10 +224,12 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
 
 
     // Wallet
-    Route::get('/wallet',           [BuyerWallet::class, 'index'])->name('wallet');
-    Route::post('/wallet/topup',    [BuyerWallet::class, 'topup'])->name('wallet.topup');
-    Route::get('/wallet/callback',  [BuyerWallet::class, 'callback'])->name('wallet.callback');
-
+    Route::get('/wallet',                    [BuyerWallet::class, 'index'])->name('wallet');
+    Route::post('/wallet/topup',             [BuyerWallet::class, 'topup'])->name('wallet.topup');
+    Route::get('/wallet/callback',           [BuyerWallet::class, 'callback'])->name('wallet.callback');
+    Route::get('/wallet/callback/monnify',   [BuyerWallet::class, 'monnifyCallback'])->name('wallet.callback.monnify');           
+    Route::post('/wallet/monnify/init',         [BuyerWallet::class, 'monnifyInit'])->name('wallet.monnify.init');
+    Route::post('/wallet/monnify/verify',       [BuyerWallet::class, 'monnifyVerify'])->name('wallet.monnify.verify');
     // Wishlist
     Route::get('/wishlist',              [BuyerWishlist::class, 'index'])->name('wishlist');
     Route::post('/wishlist/toggle',      [BuyerWishlist::class, 'toggle'])->name('wishlist.toggle');
@@ -239,6 +255,9 @@ Route::middleware('auth')->prefix('account')->name('buyer.')->group(function () 
     Route::get('/bookings',           [App\Http\Controllers\RiderBookingController::class, 'myBookings'])->name('bookings');
     Route::get('/bookings/{booking}', [App\Http\Controllers\RiderBookingController::class, 'showBooking'])->name('bookings.show');
     Route::get('/bookings/{booking}/track', [App\Http\Controllers\RiderBookingController::class, 'track'])->name('bookings.track');
+
+    //Notifications
+    Route::post('/notifications/read',            [BuyerNotificationController::class, 'markRead'])->name('notifications.read');
 
 
 });

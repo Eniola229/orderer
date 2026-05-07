@@ -58,7 +58,7 @@
                                @if(isset($wallet) && $wallet->balance > 0)
                                max="{{ $wallet->balance }}"
                                @endif
-                               placeholder="Minimum ₦100.00" required>
+                               placeholder="Minimum ₦1000.00" required>
                         @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     {{-- Show wallet balance info --}}

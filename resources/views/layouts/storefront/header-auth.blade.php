@@ -39,6 +39,8 @@
             $pageTitle = 'Home';
         } elseif ($routeName === 'shop' || request()->is('shop*')) {
             $pageTitle = 'Shop';
+        } elseif ($routeName === 'rider' || request()->is('rider*')) {
+            $pageTitle = 'Book a Delivery';
         } elseif (isset($product)) {
             $pageTitle = $product->name;
         } elseif (isset($brand)) {
@@ -99,6 +101,7 @@
     <link rel="stylesheet" href="{{ asset('css/core-style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('dashboard/assets/css/orderer-theme.css') }}" />
+    @stack('head')
 </head>
 <body>
 <!-- ================================================

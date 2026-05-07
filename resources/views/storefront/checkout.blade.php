@@ -16,7 +16,7 @@
     </div>
 </div>  
 
-<style> 
+<style>  
 
     .rate-card {
         cursor: pointer;
@@ -359,7 +359,22 @@
                                     @endif
                                 </div>
                             </div>
-
+                            <div class="card payment-method-card mb-3" id="monnifyMethodCard">
+                                <div class="card-header bg-transparent border-bottom-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="custom-control custom-radio mr-3">
+                                            <input type="radio" name="payment_method" id="paymentMonnify" class="custom-control-input" value="monnify">
+                                            <label class="custom-control-label" for="paymentMonnify">
+                                                <strong>Pay with Monnify</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-0 ml-4 pl-2">
+                                        <i class="fa fa-lock mr-1" style="color:#2ECC71;"></i>
+                                        Card · Bank Transfer · USSD · Phone Number
+                                    </p>
+                                </div>
+                            </div>
                             <div class="card payment-method-card mb-3" id="korapayMethodCard">
                                 <div class="card-header bg-transparent border-bottom-0">
                                     <div class="d-flex align-items-center">
@@ -372,7 +387,7 @@
                                     </div>
                                     <p class="text-muted small mt-2 mb-0 ml-4 pl-2">
                                         <i class="fa fa-lock mr-1" style="color:#2ECC71;"></i>
-                                        Secure card or bank transfer payment. You will be redirected to complete your payment.
+                                        Card or bank transfer payment. You will be redirected to complete your payment.
                                     </p>
                                 </div>
                             </div>
@@ -462,7 +477,7 @@
 <script src="{{ asset('js/plugins.js') }}"></script>
 <script src="{{ asset('js/classy-nav.min.js') }}"></script>
 <script src="{{ asset('js/active.js') }}"></script>
-
+<script type="text/javascript" src="https://sdk.monnify.com/plugin/monnify.js"></script>
 <script>
 const isBuyNow = {{ isset($isBuyNow) && $isBuyNow ? 'true' : 'false' }};
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -586,18 +601,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── Payment method selection ─────────────────────────────────────
+document.getElementById('monnifyMethodCard').addEventListener('click', function() {
+    document.getElementById('paymentMonnify').checked = true;
+    document.getElementById('monnifyMethodCard').classList.add('selected');
+    document.getElementById('walletMethodCard').classList.remove('selected');
+    document.getElementById('korapayMethodCard').classList.remove('selected');
+});
+
 document.getElementById('walletMethodCard').addEventListener('click', function() {
     document.getElementById('paymentWallet').checked = true;
     document.getElementById('walletMethodCard').classList.add('selected');
     document.getElementById('korapayMethodCard').classList.remove('selected');
+    document.getElementById('monnifyMethodCard').classList.remove('selected');
 });
 
 document.getElementById('korapayMethodCard').addEventListener('click', function() {
     document.getElementById('paymentKorapay').checked = true;
     document.getElementById('korapayMethodCard').classList.add('selected');
     document.getElementById('walletMethodCard').classList.remove('selected');
+    document.getElementById('monnifyMethodCard').classList.remove('selected');
 });
-
 // ── Check all address fields filled ─────────────────────────────
 function allAddressFieldsFilled() {
     const name    = document.getElementById('shipping_name').value;
@@ -803,22 +826,127 @@ setTimeout(() => {
 // ── Form submission ──────────────────────────────────────────────
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     const shippingSelected = document.getElementById('selectedServiceCode').value;
-
     if (!shippingSelected) {
         e.preventDefault();
         alert('Please select a shipping method.');
         return;
     }
-
     if (!document.getElementById('terms').checked) {
         e.preventDefault();
         alert('Please agree to the Terms & Conditions.');
         return;
     }
 
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+    if (paymentMethod === 'monnify') {
+        e.preventDefault();
+        if (typeof window.MonnifySDK === 'undefined') {
+            alert('Monnify is still loading — please try again in a moment.');
+            return;
+        }
+        launchMonnifyCheckout();
+        return;
+    }
+
     document.getElementById('orderLoader').style.display = 'flex';
     document.getElementById('placeOrderBtn').disabled = true;
 });
+
+function launchMonnifyCheckout() {
+    const btn = document.getElementById('placeOrderBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span> Initializing...';
+
+    const form     = document.getElementById('checkoutForm');
+    const formData = new FormData(form);
+    // Force monnify so the server returns JSON config
+    formData.set('payment_method', 'monnify');
+
+    const actionUrl = isBuyNow ? '{{ route("buy-now.place") }}' : '{{ route("checkout.place") }}';
+    const verifyUrl = isBuyNow ? '{{ route("buy-now.monnify.verify") }}' : '{{ route("checkout.monnify.verify") }}';
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept':       'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+    })
+    .then(res => {
+        if (!res.ok) return res.text().then(t => { throw new Error('Server error: ' + t.substring(0, 200)); });
+        return res.json();
+    })
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-shopping-bag mr-2"></i> Place Order';
+
+        if (!data.paymentReference) {
+            alert(data.message || 'Could not initialize payment. Please try again.');
+            return;
+        }
+
+        window.MonnifySDK.initialize({
+            amount:             data.amount,
+            currency:           'NGN',
+            reference:          data.paymentReference,
+            customerFullName:   data.customerName,
+            customerEmail:      data.email,
+            apiKey:             data.apiKey,
+            contractCode:       data.contractCode,
+            paymentDescription: 'Order Payment',
+            isTestMode:         {{ app()->environment('production') ? 'false' : 'true' }},
+
+            onComplete: function(response) {
+                const ref = (response && response.paymentReference)
+                    ? response.paymentReference : data.paymentReference;
+                verifyMonnifyOrder(ref, data.orderId, verifyUrl);
+            },
+            onClose: function(closeData) {
+                if (closeData && closeData.paymentStatus === 'USER_CANCELLED') return;
+                if (closeData && closeData.paymentReference) {
+                    verifyMonnifyOrder(closeData.paymentReference, data.orderId, verifyUrl);
+                }
+            },
+        });
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-shopping-bag mr-2"></i> Place Order';
+        alert(err.message || 'Could not initialize payment. Please try again.');
+    });
+}
+
+function verifyMonnifyOrder(reference, orderId, verifyUrl) {
+    // Show a simple overlay
+    document.getElementById('orderLoader').style.display = 'flex';
+    document.querySelector('#orderLoader p:first-of-type').textContent = 'Verifying payment...';
+
+    fetch(verifyUrl, {
+        method:  'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept':       'application/json',
+        },
+        body: JSON.stringify({ reference: reference, order_id: orderId }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            document.getElementById('orderLoader').style.display = 'none';
+            alert(data.message || 'Payment verification failed. Contact support if you were charged.');
+        }
+    })
+    .catch(() => {
+        document.getElementById('orderLoader').style.display = 'none';
+        alert('Verification error. Contact support if you were charged.');
+    });
+}
 </script>
 </body>
 </html>

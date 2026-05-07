@@ -37,6 +37,7 @@
     twq('config','rc8yq'); 
     </script>
     <!-- End X Pixel Base Code -->
+    @stack('head')
     @stack('styles')
 </head>
 <body>

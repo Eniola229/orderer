@@ -2,16 +2,21 @@
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
 
+@push('head')
+<script type="text/javascript" src="https://sdk.monnify.com/plugin/monnify.js"></script>
+@endpush
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
+/* Light mode variables - will be applied via class */
 :root {
     --green:       #1DB954;
     --green-dark:  #158a3e;
     --green-glow:  rgba(29,185,84,0.15);
     --bg:          #0a0a0a;
     --surface:     #141414;
-    --surface2:    #1c1c1c;
+    --surface2:    #1c1c1c; 
     --border:      #2a2a2a;
     --border-active: #1DB954;
     --text:        #f0f0f0;
@@ -22,9 +27,105 @@
     --radius-sm:   8px;
 }
 
+/* Light mode theme */
+body.light-mode {
+    --bg:          #f5f5f5;
+    --surface:     #ffffff;
+    --surface2:    #f8f9fa;
+    --border:      #e0e0e0;
+    --text:        #1a1a1a;
+    --text-muted:  #6c757d;
+    --text-dim:    #adb5bd;
+}
+
+body.light-mode .pac-container {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+}
+
+body.light-mode .pac-item {
+    color: var(--text) !important;
+    background: var(--surface) !important;
+}
+
+body.light-mode .pac-item:hover {
+    background: var(--surface2) !important;
+}
+
+body.light-mode .btn-secondary {
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+body.light-mode .btn-secondary:hover {
+    color: var(--text);
+    border-color: var(--text-muted);
+}
+
+body.light-mode .custom-select-trigger,
+body.light-mode .field-group input,
+body.light-mode .field-group select,
+body.light-mode .field-group textarea {
+    color: var(--text);
+    background: var(--surface2);
+}
+
+body.light-mode .pay-option .pay-icon {
+    background: var(--surface2);
+}
+
+body.light-mode .rate-card-logo {
+    background: var(--surface2);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+/* Theme toggle button styles */
+.theme-toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 8px 16px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.theme-toggle-btn:hover {
+    border-color: var(--green);
+    transform: scale(1.05);
+}
+
+.theme-toggle-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:hover svg {
+    transform: rotate(15deg);
+}
+
+/* Smooth transition for theme switching */
+body,
+body * {
+    transition: background-color 0.3s ease, 
+                border-color 0.3s ease, 
+                color 0.2s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Ensure Google Maps autocomplete also transitions */
+.pac-container,
+.pac-item {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
 
 /* ── Page wrapper ── */
 .booking-page {
@@ -737,15 +838,54 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
     }
     .pac-matched { color: var(--green); font-weight: 600; }
     .pac-icon { display: none; } /* hide the Google pin icon */
+
+    /* Smooth transitions for all themeable elements */
+    .card-block,
+    .pay-option,
+    .rate-card,
+    .type-option,
+    .btn-primary-full,
+    .btn-secondary,
+    .field-group input,
+    .field-group select,
+    .field-group textarea,
+    .custom-select-trigger,
+    .summary-box,
+    .pac-container,
+    .pac-item {
+        transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 </style>
 
 <div class="booking-page">
     <div class="booking-shell">
 
-        <div class="booking-hero">
-            <h1>Book a Delivery</h1>
-            <p>Fast, reliable shipping powered by top couriers</p>
-        </div>
+<div class="booking-hero">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle theme">
+            <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span style="margin-left: 8px; font-size: 13px;">Dark/Light</span>
+        </button>
+    </div>
+    <h1>Book a Delivery</h1>
+    <p>Fast, reliable shipping powered by top couriers</p>
+</div>
 
         @auth('web')
 
@@ -1028,6 +1168,21 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         @endif
                     </div>
 
+                    <div class="pay-option" id="opt-monnify" onclick="selectPayment('monnify')">
+                        <div class="pay-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M22 10H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M16 14H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M12 14H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M8 14H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="pay-label">Monnify</div>
+                            <div class="pay-sub">Card · Bank Transfer · USSD · Phone Number</div>
+                        </div>
+                    </div>
                     <div class="pay-option {{ auth('web')->user()->wallet_balance <= 0 ? 'selected' : '' }}"
                          id="payOptKorapay" onclick="selectPayment('korapay')">
                         <div class="pay-icon">💳</div>
@@ -1048,7 +1203,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
                         </svg>
                         Back
                     </button>
-                    <button type="submit" class="btn-primary-full">
+                    <button type="button" class="btn-primary-full" onclick="handleConfirmPay()">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M2 8h12M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -1078,7 +1233,7 @@ body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--t
 <script src="{{ asset('js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('js/classy-nav.min.js') }}"></script>
 <script src="{{ asset('js/active.js') }}"></script>
-
+<script type="text/javascript" src="https://sdk.monnify.com/plugin/monnify.js"></script>
 <script>
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 let currentStep = 1;
@@ -1086,7 +1241,6 @@ const TOTAL_STEPS = 4;
 
 // ── Google Places Autocomplete ───────────────────────────────────
 function initAutocomplete() {
-    // Wait for DOM to be fully ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupAutoCompletes);
     } else {
@@ -1124,11 +1278,9 @@ function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restri
 
     const autocomplete = new google.maps.places.Autocomplete(addressInput, options);
 
-    // ── Prevent Enter key from submitting the form when dropdown is open ──
     addressInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            // Force close dropdown on Enter
             const pacContainers = document.querySelectorAll('.pac-container');
             pacContainers.forEach(container => {
                 container.style.display = 'none';
@@ -1140,13 +1292,11 @@ function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restri
     autocomplete.addListener('place_changed', function () {
         const place = autocomplete.getPlace();
         
-        // ── IMMEDIATELY CLOSE THE DROPDOWN ──
         const pacContainers = document.querySelectorAll('.pac-container');
         pacContainers.forEach(container => {
             container.style.display = 'none';
         });
         
-        // Remove focus from input to prevent dropdown from reopening
         addressInput.blur();
         
         if (!place || !place.address_components) return;
@@ -1162,13 +1312,10 @@ function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restri
             if (types.includes('country'))               countryCode  = component.short_name;
         });
 
-        // Street only — city/country appended later on button click
         const street = [streetNumber, route].filter(Boolean).join(' ');
         
-        // Clean up the formatted address - remove country and postal code for the street field
         let cleanAddress = street || place.formatted_address;
         if (cleanAddress) {
-            // Remove country and postal code from the end
             cleanAddress = cleanAddress.replace(/,\s*[A-Z]{2}$/, '');
             cleanAddress = cleanAddress.replace(/,\s*\d{5,6}$/, '');
             cleanAddress = cleanAddress.replace(/,\s*Nigeria$/i, '');
@@ -1190,13 +1337,11 @@ function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restri
             trySelect();
         }
 
-        // ── Trigger input event so any listeners know value changed ──
         addressInput.dispatchEvent(new Event('input', { bubbles: true }));
         if (cityInput) cityInput.dispatchEvent(new Event('input', { bubbles: true }));
         if (countrySelect) countrySelect.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    // ── Close dropdown when clicking outside ──
     document.addEventListener('click', function(e) {
         if (!addressInput.contains(e.target)) {
             const pacContainers = document.querySelectorAll('.pac-container');
@@ -1206,18 +1351,13 @@ function setupAddressAutocomplete(addressInput, cityInput, countrySelect, restri
         }
     });
     
-    // ── Stop clicks inside pac-container from being swallowed but ensure it doesn't interfere ──
     document.addEventListener('mousedown', function(e) {
         const pacContainer = e.target.closest('.pac-container');
         if (pacContainer) {
-            // Allow the click to register but don't prevent default behavior
-            setTimeout(() => {
-                // Small delay to let the place_changed event fire
-            }, 10);
+            setTimeout(() => {}, 10);
         }
     }, true);
 }
-
 
 // ── Step navigation ──────────────────────────────────────────────
 function goStep(n) {
@@ -1298,8 +1438,6 @@ document.querySelector('#step-panel-1 .btn-primary-full').addEventListener('clic
 
 // ── Step 2 → 3: validate + fetch rates ──────────────────────────
 function validateAddressesAndFetchRates() {
-
-    // ── Auto-build full addresses before validation ──
     const pickupStreet  = document.querySelector('[name="pickup_address"]').value.trim();
     const pickupCity    = document.querySelector('[name="pickup_city"]').value.trim();
     const pickupCountryEl = document.querySelector('[name="pickup_country"]');
@@ -1320,7 +1458,6 @@ function validateAddressesAndFetchRates() {
         document.querySelector('[name="delivery_address"]').value = full;
     }
 
-    // ── Original validation below (unchanged) ──
     const required = [
         'sender_name','sender_phone','pickup_address','pickup_city','pickup_country',
         'recipient_name','recipient_phone','delivery_address','delivery_city','delivery_country'
@@ -1378,7 +1515,6 @@ function fetchRiderRates() {
     .then(r => r.json())
     .then(data => {
         document.getElementById('riderRatesLoading').style.display = 'none';
-        console.log('Shipbubble rates response:', data);
 
         if (!data.success) {
             document.getElementById('riderRatesList').innerHTML =
@@ -1395,8 +1531,6 @@ function fetchRiderRates() {
 
         let html = '';
         rates.forEach(function(rate, idx) {
-            console.log('Rate data:', rate);
-
             const courier     = rate.courier_name  || rate.carrier || 'Courier';
             const courierId   = rate.courier_id    || rate.carrier_id || '';
             const service     = rate.service_type  || rate.service_name || 'Standard';
@@ -1431,8 +1565,6 @@ function fetchRiderRates() {
         const firstCard = document.querySelector('.rate-card');
         if (firstCard) {
             firstCard.click();
-        } else {
-            console.warn('No rate cards were created');
         }
     })
     .catch(err => {
@@ -1445,8 +1577,6 @@ function fetchRiderRates() {
 
 // ── Select a rate ────────────────────────────────────────────────
 function selectRiderRate(el, serviceCode, courierId, price, carrier, service, rateDataJson) {
-    console.log('Selecting rate:', { serviceCode, courierId, price, carrier, service });
-
     document.querySelectorAll('.rate-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
 
@@ -1473,13 +1603,6 @@ function selectRiderRate(el, serviceCode, courierId, price, carrier, service, ra
     const SERVICE_FEE = 200;
     const total = (parseFloat(price) || 0) + SERVICE_FEE;
     document.getElementById('displayRiderTotal').textContent = '₦' + total.toFixed(2);
-
-    console.log('Hidden fields after selection:', {
-        service_code: document.getElementById('riderServiceCode').value,
-        courier_id:   document.getElementById('riderCourierId').value,
-        carrier:      document.getElementById('riderCarrier').value,
-        fee:          document.getElementById('riderFee').value
-    });
 }
 
 // ── Proceed to payment ───────────────────────────────────────────
@@ -1487,8 +1610,6 @@ function proceedToPayment() {
     const fee         = document.getElementById('riderFee').value;
     const serviceCode = document.getElementById('riderServiceCode').value;
     const courierId   = document.getElementById('riderCourierId').value;
-
-    console.log('Proceeding to payment with:', { fee, serviceCode, courierId });
 
     if (!fee || parseFloat(fee) <= 0) {
         showAlert('Please select a shipping option first.', 'warning');
@@ -1526,20 +1647,335 @@ function selectPayment(method) {
     document.getElementById('paymentMethod').value = method;
     document.getElementById('payOptWallet').classList.toggle('selected', method === 'wallet');
     document.getElementById('payOptKorapay').classList.toggle('selected', method === 'korapay');
+    
+    const monnifyOpt = document.getElementById('opt-monnify');
+    if (monnifyOpt) {
+        if (method === 'monnify') {
+            monnifyOpt.classList.add('selected');
+        } else {
+            monnifyOpt.classList.remove('selected');
+        }
+    }
+    hideMsg();
 }
 
-// ── Form submit guard ────────────────────────────────────────────
-document.getElementById('riderForm').addEventListener('submit', function(e) {
+// ── UI helpers for Monnify (matching your working topup code) ────
+function setBusy(label) {
+    const btn = document.querySelector('#step-panel-4 .btn-primary-full');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + label;
+    }
+}
+
+function setIdle() {
+    const btn = document.querySelector('#step-panel-4 .btn-primary-full');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 8h12M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Confirm & Pay`;
+    }
+}
+
+function showMsg(message, type) {
+    let msgBox = document.getElementById('payment-msg');
+    if (!msgBox) {
+        msgBox = document.createElement('div');
+        msgBox.id = 'payment-msg';
+        msgBox.className = 'alert d-none mb-3';
+        const paymentBlock = document.querySelector('#step-panel-4 .card-block:last-child');
+        if (paymentBlock) {
+            paymentBlock.insertBefore(msgBox, paymentBlock.firstChild);
+        }
+    }
+    msgBox.className = `alert alert-${type} mb-3`;
+    msgBox.textContent = message;
+    msgBox.style.display = 'block';
+    msgBox.style.backgroundColor = type === 'danger' ? 'rgba(231,76,60,0.1)' : 'rgba(29,185,84,0.1)';
+    msgBox.style.color = type === 'danger' ? '#e74c3c' : '#1DB954';
+    msgBox.style.border = `1px solid ${type === 'danger' ? '#e74c3c' : '#1DB954'}`;
+    msgBox.style.borderRadius = 'var(--radius-sm)';
+    msgBox.style.padding = '12px 16px';
+    
+    setTimeout(() => {
+        if (msgBox) msgBox.style.display = 'none';
+    }, 5000);
+}
+
+function hideMsg() {
+    const msgBox = document.getElementById('payment-msg');
+    if (msgBox) msgBox.style.display = 'none';
+}
+
+// ─── Verify popup (from your working code) ───────────────────────
+function showVerifyPopup() {
+    let overlay = document.getElementById('verify-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'verify-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000000;
+        `;
+        overlay.innerHTML = `
+            <div style="background: var(--surface); border-radius: var(--radius); padding: 32px; max-width: 400px; width: 90%; text-align: center; border: 1px solid var(--border);">
+                <div id="verify-state-loading">
+                    <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+                    <h3 style="margin-bottom: 12px;">Verifying Payment</h3>
+                    <p style="color: var(--text-muted);">Please wait while we confirm your transaction...</p>
+                </div>
+                <div id="verify-state-success" style="display: none;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                    <h3 style="color: var(--green); margin-bottom: 12px;">Payment Successful!</h3>
+                    <p id="verify-success-msg" style="color: var(--text-muted);"></p>
+                    <p style="color: var(--text-muted); margin-top: 12px;">Redirecting...</p>
+                </div>
+                <div id="verify-state-error" style="display: none;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">❌</div>
+                    <h3 style="color: var(--red); margin-bottom: 12px;">Verification Failed</h3>
+                    <p id="verify-error-msg" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+                    <button onclick="closeVerifyPopup()" 
+                            style="padding: 10px 20px; background: var(--green); border: none; border-radius: var(--radius-sm); color: white; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    
+    overlay.style.display = 'flex';
+    document.getElementById('verify-state-loading').style.display = 'block';
+    document.getElementById('verify-state-success').style.display = 'none';
+    document.getElementById('verify-state-error').style.display = 'none';
+}
+
+function showVerifySuccess(message, bookingId) {
+    document.getElementById('verify-state-loading').style.display = 'none';
+    document.getElementById('verify-state-success').style.display = 'block';
+    document.getElementById('verify-state-error').style.display = 'none';
+    document.getElementById('verify-success-msg').textContent = message;
+    
+    setTimeout(function() {
+        window.location.href = '{{ url("account/bookings") }}/' + bookingId;
+    }, 2500);
+}
+
+function showVerifyError(message) {
+    document.getElementById('verify-state-loading').style.display = 'none';
+    document.getElementById('verify-state-success').style.display = 'none';
+    document.getElementById('verify-state-error').style.display = 'block';
+    document.getElementById('verify-error-msg').textContent = message;
+}
+
+function closeVerifyPopup() {
+    const overlay = document.getElementById('verify-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+// ─── MAIN MONNIFY PAYMENT HANDLER (using your working pattern) ───
+function handleConfirmPay() {
     const fee = document.getElementById('riderFee').value;
     if (!fee || parseFloat(fee) <= 0) {
-        e.preventDefault();
         alert('Please select a shipping option first.');
+        return;
     }
-});
+
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    if (paymentMethod === 'wallet' || paymentMethod === 'korapay') {
+        document.getElementById('riderForm').submit();
+        return;
+    }
+
+    if (paymentMethod === 'monnify') {
+        if (typeof window.MonnifySDK === 'undefined') {
+            showMsg('Monnify is still loading — please wait a moment and try again.', 'danger');
+            return;
+        }
+        launchMonnify();
+    }
+}
+
+function launchMonnify() {
+    setBusy('Initializing payment…');
+    hideMsg();
+
+    var form = document.getElementById('riderForm');
+    var formData = new FormData(form);
+    formData.set('payment_method', 'monnify');
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+    })
+    .then(function(res) {
+        if (!res.ok) {
+            return res.text().then(function(text) {
+                console.error('[Monnify init] raw error response:', text);
+                throw new Error('Server error ' + res.status + ': ' + text.substring(0, 200));
+            });
+        }
+        return res.json();
+    })
+    .then(function(data) {
+        setIdle();
+        console.log('[Monnify init] response:', data);
+
+        if (!data.paymentReference) {
+            showMsg('Server did not return a payment reference. Check your backend logs.', 'danger');
+            return;
+        }
+
+        window.MonnifySDK.initialize({
+            amount:             data.amount,
+            currency:           'NGN',
+            reference:          data.paymentReference,
+            customerFullName:   data.customerName,
+            customerEmail:      data.email,
+            apiKey:             data.apiKey,
+            contractCode:       data.contractCode,
+            paymentDescription: 'Delivery Booking Payment',
+            isTestMode:         {{ app()->environment('production') ? 'false' : 'true' }},
+
+            onLoadStart:    function() { console.log('[Monnify] loading...'); },
+            onLoadComplete: function() { console.log('[Monnify] ready'); },
+
+            onComplete: function(response) {
+                console.log('[Monnify] onComplete:', response);
+                var ref = (response && response.paymentReference)
+                    ? response.paymentReference
+                    : data.paymentReference;
+                verifyBookingPayment(ref, data.bookingId);
+            },
+
+            onClose: function(closeData) {
+                console.log('[Monnify] onClose:', closeData);
+                if (closeData && closeData.paymentStatus === 'USER_CANCELLED') {
+                    showMsg('Payment was cancelled.', 'warning');
+                    return;
+                }
+                if (closeData && closeData.paymentReference) {
+                    verifyBookingPayment(closeData.paymentReference, data.bookingId);
+                }
+            },
+        });
+    })
+    .catch(function(err) {
+        setIdle();
+        showMsg(err.message || 'Could not initialize payment. Please try again.', 'danger');
+        console.error('[Monnify init] error:', err);
+    });
+}
+// ─── Verify payment (matching your working pattern) ──────────────
+function verifyBookingPayment(reference, bookingId) {
+    showVerifyPopup();
+    console.log('[Monnify verify] ref:', reference);
+
+    fetch('{{ route("rider.monnify.verify") }}', {
+        method:  'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept':       'application/json',
+        },
+        body: JSON.stringify({ reference: reference, booking_id: bookingId }),
+    })
+    .then(function(res) {
+        return res.json().then(function(body) {
+            console.log('[Monnify verify] response:', body);
+            if (!res.ok) throw new Error(body.message || ('Error ' + res.status));
+            return body;
+        });
+    })
+    .then(function(data) {
+        if (data.success) {
+            showVerifySuccess(data.message, bookingId);
+        } else {
+            showVerifyError(data.message || 'Payment was not successful.');
+        }
+    })
+    .catch(function(err) {
+        showVerifyError(err.message || 'Verification failed. Contact support if you were charged.');
+        console.error('[Monnify verify]', err);
+    });
+}
+
+// ── Theme toggle functionality ───────────────────────────────────
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        updateToggleIcons('light');
+    } else {
+        document.body.classList.remove('light-mode');
+        updateToggleIcons('dark');
+    }
+}
+
+function updateToggleIcons(theme) {
+    const sunIcon = document.querySelector('.sun-icon');
+    const moonIcon = document.querySelector('.moon-icon');
+    const toggleText = document.querySelector('.theme-toggle-btn span');
+    
+    if (sunIcon && moonIcon) {
+        if (theme === 'light') {
+            sunIcon.style.display = 'block';
+            moonIcon.style.display = 'none';
+            if (toggleText) toggleText.textContent = 'Dark Mode';
+        } else {
+            sunIcon.style.display = 'none';
+            moonIcon.style.display = 'block';
+            if (toggleText) toggleText.textContent = 'Light Mode';
+        }
+    }
+}
+
+function toggleTheme() {
+    if (document.body.classList.contains('light-mode')) {
+        document.body.classList.remove('light-mode');
+        localStorage.setItem('theme', 'dark');
+        updateToggleIcons('dark');
+    } else {
+        document.body.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+        updateToggleIcons('light');
+    }
+}
+
+// ── DOMContentLoaded ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof google !== 'undefined') {
         initAutocomplete();
     }
+    
+    initTheme();
+    
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    const monnifyOption = document.getElementById('opt-monnify');
+    if (monnifyOption && !monnifyOption.classList.contains('pay-option')) {
+        monnifyOption.classList.add('pay-option');
+        monnifyOption.style.cursor = 'pointer';
+    }
 });
-
 </script>

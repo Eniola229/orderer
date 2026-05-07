@@ -42,7 +42,7 @@ class WithdrawalController extends Controller
         $request->merge(['account_name' => $accountName]);
 
         $request->validate([
-            'amount'                => ['required', 'numeric', 'min:100', "max:{$wallet->balance}"],
+            'amount'                => ['required', 'numeric', 'min:1000', "max:{$wallet->balance}"],
             'account_name'          => ['required', 'string', 'max:200'],
             'bank_country'          => ['required', 'string'],
             'dollar_capable'        => ['required', 'in:yes,no'],

@@ -14,6 +14,8 @@ use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\TikTokEventService;
+use App\Services\MonnifyService;
+
 
 class BuyNowController extends Controller
 {
@@ -26,6 +28,7 @@ class BuyNowController extends Controller
         protected BrevoMailService  $brevo,
         protected ShipbubbleService $shipbubble,
         protected TikTokEventService $tikTok,
+        protected MonnifyService $monnify,
     ) {}
 
     // ─── STEP 1 ─────────────────────────────────────────────────────────────────
@@ -142,7 +145,7 @@ class BuyNowController extends Controller
             'shipping_city'         => ['required', 'string', 'max:100'],
             'shipping_state'        => ['required', 'string', 'max:100'],
             'shipping_country'      => ['required', 'string', 'max:30'],
-            'payment_method'        => ['required', 'in:wallet,korapay'],
+            'payment_method' => ['required', 'in:wallet,korapay,monnify'],
             'shipping_service_code' => ['required', 'string'],
             'shipping_carrier'      => ['required', 'string'],
             'shipping_service_name' => ['required', 'string'],
@@ -278,19 +281,16 @@ class BuyNowController extends Controller
                 return redirect()->route('buyer.orders.show', $order->id)
                     ->with('success', "Order #{$order->order_number} placed successfully!");
 
-            } else {
-                // MODIFIED: Use buy-now specific reference and callback
+             } elseif ($request->payment_method === 'korapay') {
                 $reference = $this->korapay->generateReference('BNO');
                 $order->update(['payment_reference' => $reference]);
                 $this->korapay->createTransaction($user, $total, 'order_payment', $reference);
 
                 DB::commit();
-                
-                // Store order ID in session for callback verification
+
                 session(['buy_now_order_id' => $order->id]);
                 session()->forget(self::SESSION_KEY);
 
-                // 🔥 TikTok — Buy Now order placed, going to Korapay
                 $this->tikTok->placeAnOrder($order, $request, $user);
 
                 $checkoutData = $this->korapay->initializeCheckout(
@@ -298,12 +298,40 @@ class BuyNowController extends Controller
                     $user->full_name,
                     $total,
                     $reference,
-                    route('buy-now.callback'), // USE BUY NOW CALLBACK
+                    route('buy-now.callback'),
                     '',
                     ['order_id' => $order->id, 'type' => 'order_payment']
                 );
 
                 return redirect($checkoutData['checkout_url']);
+
+            } else {
+                // Monnify
+                $reference = $this->monnify->generateReference('BNO');
+                $order->update(['payment_reference' => $reference]);
+                $this->monnify->createTransaction($user, $total, 'order_payment', $reference);
+
+                DB::commit();
+
+                session(['buy_now_order_id' => $order->id]);
+                session()->forget(self::SESSION_KEY);
+
+                $this->tikTok->placeAnOrder($order, $request, $user);
+
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success'          => true,
+                        'paymentReference' => $reference,
+                        'amount'           => $total,
+                        'customerName'     => $user->full_name,
+                        'email'            => $user->email,
+                        'apiKey'           => config('services.monnify.api_key'),
+                        'contractCode'     => config('services.monnify.contract_code'),
+                        'orderId'          => $order->id,
+                    ]);
+                }
+
+                return back()->with('error', 'Please use the Monnify payment button.');
             }
 
         } catch (\Exception $e) {
@@ -313,6 +341,87 @@ class BuyNowController extends Controller
         }
     }
 
+
+    public function monnifyVerify(Request $request)
+    {
+        $request->validate([
+            'reference' => ['required', 'string'],
+            'order_id'  => ['required'],
+        ]);
+
+        $txn = \App\Models\MonnifyTransaction::where('reference', $request->reference)->first()
+            ?? \App\Models\MonnifyTransaction::where('monnify_reference', $request->reference)->first();
+
+        if (!$txn) {
+            return response()->json(['success' => false, 'message' => 'Transaction not found.'], 404);
+        }
+
+        if ($txn->status === 'success') {
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Payment already confirmed.',
+                'redirect_url' => route('buyer.orders.show', $request->order_id),
+            ]);
+        }
+
+        try {
+            $data = $this->monnify->verifyTransaction($txn->reference);
+
+            if (($data['paymentStatus'] ?? '') === 'PAID') {
+                $user    = auth('web')->user();
+                $order   = Order::findOrFail($request->order_id);
+
+                $txn->update([
+                    'status'            => 'success',
+                    'monnify_reference' => $data['transactionReference'] ?? null,
+                    'gateway_response'  => $data,
+                ]);
+
+                $order->update(['payment_status' => 'paid']);
+
+                // Handle flash sale quantity
+                foreach ($order->items as $orderItem) {
+                    $product  = $orderItem->orderable;
+                    $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                        ->where('is_active', true)
+                        ->where('starts_at', '<=', now())
+                        ->where('ends_at', '>=', now())
+                        ->first();
+                    if ($flashSale) {
+                        $flashSale->increment('quantity_sold', $orderItem->quantity);
+                    }
+                }
+
+                $this->walletService->holdEscrow($order);
+
+                $product = $order->items->first()->orderable;
+                $this->bookShipment($order, $user, $order->package_weight ?? 0.5, $order->subtotal, $product);
+                $this->sendOrderEmails($user, $order);
+
+                session()->forget(['buy_now_order_id', self::SESSION_KEY]);
+
+                return response()->json([
+                    'success'      => true,
+                    'message'      => "Payment confirmed! Order #{$order->order_number} is being processed.",
+                    'redirect_url' => route('buyer.orders.show', $order->id),
+                ]);
+            }
+
+            $txn->update(['status' => 'failed', 'gateway_response' => $data]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment status: ' . ($data['paymentStatus'] ?? 'unknown'),
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('BuyNow Monnify verify error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not verify payment. Contact support if you were charged.',
+            ], 500);
+        }
+    }
     // ─── NEW: BUY NOW KORAPAY CALLBACK ─────────────────────────────────────────
     public function callback(Request $request)
     {

@@ -103,11 +103,8 @@
                             <span class="badge bg-danger nxl-h-badge">{{ $buyerNotifCount }}</span>
                         @endif
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-notifications-menu">
-                        <div class="d-flex justify-content-between align-items-center notifications-head">
-                            <h6 class="fw-bold text-dark mb-0">Notifications</h6>
-                        </div>
-                        @php
+                    <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-notifications-menu">    
+                         @php
                             $buyerNotifs = \App\Models\Notification::where('notifiable_type', 'App\Models\User')
                                 ->where('notifiable_id', auth('web')->id())
                                 ->whereNull('read_at')
@@ -115,6 +112,17 @@
                                 ->take(5)
                                 ->get();
                         @endphp
+                        <div class="d-flex justify-content-between align-items-center notifications-head">
+                            <h6 class="fw-bold text-dark mb-0">Notifications</h6>
+                            @if($buyerNotifCount > 0)
+                            <form method="POST" action="{{ route('buyer.notifications.read') }}" class="d-inline" id="markAllReadForm">
+                                @csrf
+                                <a href="#" class="fs-12 text-muted" onclick="event.preventDefault(); document.getElementById('markAllReadForm').submit();">
+                                    Mark all read
+                                </a>
+                            </form>
+                            @endif
+                        </div>  
                         @forelse($buyerNotifs as $notif)
                         <div class="notifications-item">
                             <div class="avatar-text avatar-md rounded bg-primary text-white me-3 border">

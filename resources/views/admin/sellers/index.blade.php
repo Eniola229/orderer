@@ -41,7 +41,7 @@
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Joined</th>
                         <th class="fs-11 text-uppercase text-muted fw-semibold">Actions</th>
-                    </tr>
+                    </td>
                 </thead>
                 <tbody>
                     @foreach($sellers as $seller)

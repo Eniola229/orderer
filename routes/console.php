@@ -20,6 +20,10 @@ Schedule::call(function () {
 // Check order status 
 Schedule::command('orders-sync:sync-shipping-status')->everyFifteenMinutes();
 
+//Check delivery booking 
+Schedule::command('bookings:check-pending')->everyFiveMinutes();
+Schedule::command('monnify:check-pending-bookings')->everyFiveMinutes();
+
 // For ads
 Schedule::command('ads:charge')->dailyAt('13:05');
 
@@ -28,3 +32,4 @@ Schedule::command('korapay:check-pending-orders')
          ->everyFiveMinutes()
          ->withoutOverlapping()
          ->onOneServer();
+Schedule::command('monnify:check-pending-orders')->everyFiveMinutes();
