@@ -129,23 +129,50 @@ class SendNewsletterJob implements ShouldQueue
     private function buildRecipientList(string $audience): \Illuminate\Support\Collection
     {
         return match ($audience) {
-            Newsletter::AUDIENCE_BUYERS  => User::where('is_active', true)
-                                                ->get(['id', 'first_name', 'last_name', 'email']),
+            Newsletter::AUDIENCE_BUYERS => User::where('is_active', true)
+                ->get(['id', 'first_name', 'last_name', 'email']),
 
             Newsletter::AUDIENCE_SELLERS => Seller::where('is_active', true)
-                                                  ->where('is_approved', true)
-                                                  ->get(['id', 'first_name', 'last_name', 'email']),
+                ->where('is_approved', true)
+                ->get(['id', 'first_name', 'last_name', 'email']),
 
             Newsletter::AUDIENCE_GUESTS => NewsletterSubscriber::all(['id', 'email'])
                 ->map(fn($s) => (object)[
                     'email'     => $s->email,
-                    'full_name' => ',i am from Orderer', 
+                    'full_name' => '.',
                 ]),
-            default => User::where('is_active', true)->get(['id', 'first_name', 'last_name', 'email'])
-                            ->merge(
-                                Seller::where('is_active', true)->where('is_approved', true)
-                                      ->get(['id', 'first_name', 'last_name', 'email'])
-                            ),
+
+            // Buyers registered in the last 30 days
+            'new_buyers' => User::where('is_active', true)
+                ->where('created_at', '>=', now()->subDays(30))
+                ->get(['id', 'first_name', 'last_name', 'email']),
+
+            // Buyers who have never placed an order
+            'buyers_no_orders' => User::where('is_active', true)
+                ->whereDoesntHave('orders')
+                ->get(['id', 'first_name', 'last_name', 'email']),
+
+            // Buyers who have placed at least one order
+            'buyers_with_orders' => User::where('is_active', true)
+                ->whereHas('orders')
+                ->get(['id', 'first_name', 'last_name', 'email']),
+
+            // Sellers who have no products, services, or properties listed
+            'sellers_no_listings' => Seller::where('is_active', true)
+                ->where('is_approved', true)
+                ->whereDoesntHave('products')
+                ->whereDoesntHave('services')
+                ->whereDoesntHave('properties')
+                ->get(['id', 'first_name', 'last_name', 'email']),
+
+            // Default: all buyers + all sellers
+            default => User::where('is_active', true)
+                ->get(['id', 'first_name', 'last_name', 'email'])
+                ->merge(
+                    Seller::where('is_active', true)
+                        ->where('is_approved', true)
+                        ->get(['id', 'first_name', 'last_name', 'email'])
+                ),
         };
     }
 

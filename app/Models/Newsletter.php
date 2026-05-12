@@ -29,10 +29,14 @@ class Newsletter extends Model
     ];
 
     // ── Audience constants ────────────────────────────────────
-    const AUDIENCE_BUYERS    = 'buyers';
-    const AUDIENCE_SELLERS   = 'sellers';
-    const AUDIENCE_BOTH      = 'both';
-    const AUDIENCE_GUESTS    = 'guests';  
+    const AUDIENCE_BUYERS              = 'buyers';
+    const AUDIENCE_SELLERS             = 'sellers';
+    const AUDIENCE_BOTH                = 'both';
+    const AUDIENCE_GUESTS              = 'guests';
+    const AUDIENCE_NEW_BUYERS          = 'new_buyers';
+    const AUDIENCE_BUYERS_NO_ORDERS    = 'buyers_no_orders';
+    const AUDIENCE_BUYERS_WITH_ORDERS  = 'buyers_with_orders';
+    const AUDIENCE_SELLERS_NO_LISTINGS = 'sellers_no_listings'; 
 
     // ── Status constants ──────────────────────────────────────
     const STATUS_DRAFT   = 'draft';
@@ -62,13 +66,16 @@ class Newsletter extends Model
     public function getAudienceLabelAttribute(): string
     {
         return match ($this->audience) {
-            self::AUDIENCE_BUYERS  => 'Buyers only',
-            self::AUDIENCE_SELLERS => 'Sellers only',
-            self::AUDIENCE_GUESTS  => 'Subscribers only',
-            default                => 'Buyers & Sellers',
+            self::AUDIENCE_BUYERS              => 'Buyers only',
+            self::AUDIENCE_SELLERS             => 'Sellers only',
+            self::AUDIENCE_GUESTS              => 'Subscribers only',
+            self::AUDIENCE_NEW_BUYERS          => 'New Buyers (last 30 days)',
+            self::AUDIENCE_BUYERS_NO_ORDERS    => 'Buyers – No Orders Yet',
+            self::AUDIENCE_BUYERS_WITH_ORDERS  => 'Buyers – Have Ordered',
+            self::AUDIENCE_SELLERS_NO_LISTINGS => 'Sellers – No Listings Yet',
+            default                            => 'Buyers & Sellers',
         };
     }
-
     public function isDraft(): bool
     {
         return $this->status === self::STATUS_DRAFT;

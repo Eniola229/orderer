@@ -72,7 +72,7 @@ class StorefrontController extends Controller
             ->get();
 
         $currentCategory = null;
-        $brands = Brand::where('is_active', true)->take(10)->get();
+        $brands = Brand::where('is_active', true)->take(5)->get();
 
         $query = Product::where('status', 'approved')
             ->with(['images', 'seller', 'category']);

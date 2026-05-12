@@ -134,7 +134,43 @@
     </div>
 </div>
 
-<div class="row mt-3">
+{{-- Quick Action Row Card --}}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{{ route('seller.products.create') }}" class="text-decoration-none">
+                            <div class="d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 border bg-light-hover transition" style="background-color: #f8f9fa;">
+                                <i class="feather-plus-circle text-primary" style="font-size: 24px;"></i>
+                                <span class="fw-semibold text-dark">Add a Product</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('seller.services.create') }}" class="text-decoration-none">
+                            <div class="d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 border bg-light-hover transition" style="background-color: #f8f9fa;">
+                                <i class="feather-tool text-success" style="font-size: 24px;"></i>
+                                <span class="fw-semibold text-dark">List a Service</span>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('seller.houses.create') }}" class="text-decoration-none">
+                            <div class="d-flex align-items-center justify-content-center gap-2 py-3 rounded-3 border bg-light-hover transition" style="background-color: #f8f9fa;">
+                                <i class="feather-home text-warning" style="font-size: 24px;"></i>
+                                <span class="fw-semibold text-dark">List a Property</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
 
     {{-- Recent Orders --}}
     <div class="col-lg-7">
@@ -282,5 +318,20 @@
 
     </div>
 </div>
+<style>
+    .bg-light-hover {
+    transition: all 0.3s ease;
+    background-color: #f8f9fa !important;
+}
 
+.bg-light-hover:hover {
+    background-color: #e9ecef !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.transition {
+    transition: all 0.3s ease;
+}
+</style>
 @endsection

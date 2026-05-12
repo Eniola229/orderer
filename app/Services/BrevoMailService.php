@@ -163,6 +163,20 @@ class BrevoMailService
         );
     }
 
+    public function sendFreeShippingAnnouncement($user, $rule): bool
+    {
+        $subject = $rule->ends_at
+            ? "🚚 Free Shipping is here — ends " . $rule->ends_at->format('M d, Y') . "!"
+            : "🚚 Free Shipping on your next order — Orderer";
+
+        return $this->send(
+            $user->email,
+            $user->full_name ?? $user->first_name,
+            $subject,
+            $this->freeShippingAnnouncementHtml($user, $rule)
+        );
+    }
+
     public function sendLoginNotification($user, string $ip, string $userAgent, string $guard = 'buyer'): bool
     {
         $name     = $user->first_name;
@@ -201,10 +215,6 @@ class BrevoMailService
                             <tr>
                                 <td style='padding:8px 0;color:#6c757d;'>Time:</td>
                                 <td style='padding:8px 0;font-weight:bold;'>{$time}</td>
-                            </tr>
-                            <tr>
-                                <td style='padding:8px 0;color:#6c757d;'>IP Address:</td>
-                                <td style='padding:8px 0;font-weight:bold;'>{$ip}</td>
                             </tr>
                             <tr>
                                 <td style='padding:8px 0;color:#6c757d;'>Browser:</td>
@@ -781,6 +791,142 @@ protected function orderStatusUpdateHtml($user, $order, $sellerItems, string $st
         <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
             &copy; " . date('Y') . " Orderer. All rights reserved.
         </div>
+    </div>";
+}
+
+protected function freeShippingAnnouncementHtml($user, $rule): string
+{
+    // ── Build the "what's covered" block ─────────────────────
+    $scopeNote = match($rule->product_scope) {
+        'specific_products' => 'This offer applies to <strong>selected products</strong>.',
+        'specific_sellers'  => 'This offer applies to items from <strong>selected sellers</strong>.',
+        default             => 'This offer applies to <strong>all products</strong> on Orderer.',
+    };
+
+    // ── Minimum order note ────────────────────────────────────
+    $minOrderNote = $rule->minimum_order_amount
+        ? "<p style='margin:0;font-size:14px;'>
+               Minimum order of
+               <strong>₦" . number_format($rule->minimum_order_amount, 2) . "</strong>
+               required.
+           </p>"
+        : "<p style='margin:0;font-size:14px;'>No minimum order required.</p>";
+
+    // ── Discount cap note ─────────────────────────────────────
+    $discountNote = $rule->max_discount_amount
+        ? "Up to <strong>₦" . number_format($rule->max_discount_amount, 2) . "</strong> shipping waived."
+        : "Your <strong>full shipping fee</strong> is on us.";
+
+    // ── Validity block ────────────────────────────────────────
+    $validityBlock = '';
+    if ($rule->starts_at || $rule->ends_at) {
+        $from = $rule->starts_at ? $rule->starts_at->format('M d, Y') : 'Now';
+        $to   = $rule->ends_at   ? $rule->ends_at->format('M d, Y')   : 'Until further notice';
+        $validityBlock = "
+        <tr>
+            <td style='padding:8px 0;color:#6c757d;font-size:14px;'>Valid:</td>
+            <td style='padding:8px 0;font-size:14px;font-weight:bold;'>{$from} → {$to}</td>
+        </tr>";
+    }
+
+    // // ── Urgency banner (only if ends within 3 days) ───────────
+    // $urgencyBanner = '';
+    // if ($rule->ends_at && $rule->ends_at->diffInDays(now()) <= 3 && $rule->ends_at->isFuture()) {
+    //     $daysLeft = max(1, (int) $rule->ends_at->diffInDays(now()));
+    //     $urgencyBanner = "
+    //     <div style='background:#FADBD8;border-left:4px solid #E74C3C;padding:12px 16px;
+    //                 border-radius:6px;margin:16px 0;font-size:14px;color:#922B21;'>
+    //         ⏰ <strong>Hurry!</strong> This offer expires in {$daysLeft} day(s).
+    //     </div>";
+    // }
+
+    return "
+    <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+
+        <!-- Header -->
+        <div style='background:#2ECC71;padding:36px 30px;text-align:center;'>
+            <p style='color:rgba(255,255,255,0.85);margin:0 0 6px 0;font-size:14px;letter-spacing:1px;
+                      text-transform:uppercase;'>Special Offer</p>
+            <h1 style='color:#fff;margin:0;font-size:32px;'>🚚 Free Shipping!</h1>
+            <p style='color:rgba(255,255,255,0.9);margin:10px 0 0 0;font-size:16px;'>
+                {$discountNote}
+            </p>
+        </div>
+
+        <!-- Body -->
+        <div style='padding:30px;background:#fff;'>
+            <p>Hi <strong>{$user->first_name}</strong>,</p>
+            <p>
+                Great news — we're offering free shipping on your next order on Orderer.
+                Don't miss this chance to save on delivery costs!
+            </p>
+
+            {$urgencyBanner}
+
+            <!-- Offer details card -->
+            <div style='background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0;'>
+                <h3 style='margin:0 0 14px 0;font-size:15px;color:#212529;'>Offer Details</h3>
+                <table style='width:100%;'>
+                    <tr>
+                        <td style='padding:8px 0;color:#6c757d;font-size:14px;'>Offer:</td>
+                        <td style='padding:8px 0;font-size:14px;font-weight:bold;color:#2ECC71;'>
+                            {$discountNote}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style='padding:8px 0;color:#6c757d;font-size:14px;'>Covers:</td>
+                        <td style='padding:8px 0;font-size:14px;'>{$scopeNote}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding:8px 0;color:#6c757d;font-size:14px;'>Minimum:</td>
+                        <td style='padding:8px 0;'>{$minOrderNote}</td>
+                    </tr>
+                    {$validityBlock}
+                </table>
+            </div>
+
+            <!-- How it works -->
+            <div style='margin:24px 0;'>
+                <h3 style='font-size:15px;margin:0 0 12px 0;'>How it works</h3>
+                <table style='width:100%;'>
+                    <tr>
+                        <td style='width:32px;vertical-align:top;padding-top:2px;font-size:18px;'>🛒</td>
+                        <td style='font-size:14px;padding-bottom:10px;'>Add your items to cart as normal.</td>
+                    </tr>
+                    <tr>
+                        <td style='width:32px;vertical-align:top;padding-top:2px;font-size:18px;'>📦</td>
+                        <td style='font-size:14px;padding-bottom:10px;'>Proceed to checkout and enter your delivery address.</td>
+                    </tr>
+                    <tr>
+                        <td style='width:32px;vertical-align:top;padding-top:2px;font-size:18px;'>✅</td>
+                        <td style='font-size:14px;'>The shipping discount is applied automatically — no coupon needed.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- CTA -->
+            <div style='text-align:center;margin:32px 0 20px;'>
+                <a href='" . route('shop.index') . "'
+                   style='background:#2ECC71;color:#fff;padding:15px 36px;
+                          text-decoration:none;border-radius:6px;font-weight:bold;
+                          font-size:16px;display:inline-block;'>
+                    Shop Now — Free Shipping
+                </a>
+            </div>
+
+            <p style='color:#888;font-size:13px;text-align:center;'>
+                The discount is applied automatically at checkout — no code needed.<br>
+                Questions? Email us at
+                <a href='mailto:support@ordererweb.com' style='color:#2ECC71;'>support@ordererweb.com</a>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+            &copy; " . date('Y') . " Orderer. All rights reserved.<br>
+            <a href='" . route('home') . "' style='color:#aaa;'>Visit Orderer</a>
+        </div>
+
     </div>";
 }
 }

@@ -16,14 +16,14 @@ function adminOrderStatusBadge(string $status): string {
         'processing' => 'bg-primary text-white',
         'shipped'    => 'bg-primary text-white',
         'delivered'  => 'bg-success text-white',
-        'completed'  => 'bg-success text-white',
+        'completed'  => 'bg-success text-white', 
         'cancelled'  => 'bg-danger text-white',
         'disputed'   => 'bg-danger text-white',
         'paid'       => 'bg-success text-white',
         'failed'     => 'bg-danger text-white', 
         'refunded'   => 'bg-secondary text-white',
         'held'       => 'bg-warning text-dark',
-        'released'   => 'bg-success text-white',
+        'released'   => 'bg-success text-white', 
         default      => 'bg-secondary text-white',
     };
 }
@@ -307,13 +307,37 @@ function adminOrderStatusBadge(string $status): string {
                     <span class="text-muted">Subtotal</span>
                     <span class="fw-semibold">₦{{ number_format($order->subtotal, 2) }}</span>
                 </div>
+                @if($order->free_shipping_discount > 0 || $order->shipping_fee == 0)
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">
+                        Shipping Discount
+                        @if($order->freeShippingRule)
+                        <small class="text-success">({{ $order->freeShippingRule->name }})</small>
+                        @endif
+                    </span>
+                    <span class="fw-semibold text-success">
+                        @if($order->shipping_fee == 0)
+                            FREE
+                        @elseif($order->free_shipping_discount >= $order->shipping_fee)
+                            FREE
+                        @else
+                            -₦{{ number_format($order->free_shipping_discount, 2) }}
+                        @endif
+                    </span>
+                </div>
+                @endif
+
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Shipping</span>
-                    <span class="fw-semibold">₦{{ number_format($order->shipping_fee, 2) }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Commission</span>
-                    <span class="fw-semibold text-primary">₦{{ number_format($order->commission_total ?? 0, 2) }}</span>
+                    <span class="fw-semibold">
+                        @if($order->shipping_fee == 0)
+                            <span class="text-success">FREE</span>
+                        @elseif($order->free_shipping_discount >= $order->shipping_fee)
+                            <span class="text-success">FREE</span>
+                        @else
+                            ₦{{ number_format($order->shipping_fee, 2) }}
+                        @endif
+                    </span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between mb-3">

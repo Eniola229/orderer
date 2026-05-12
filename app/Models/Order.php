@@ -30,7 +30,9 @@ class Order extends Model
         // Flags
         'is_multi_seller',
         // Misc
-        'notes', 'delivered_at', 'completed_at',
+        'notes', 'delivered_at', 'completed_at', 
+        'free_shipping_discount',
+        'free_shipping_rule_id',
     ];
 
     protected $casts = [
@@ -74,5 +76,10 @@ class Order extends Model
             return "{$this->shipping_carrier} — {$this->shipping_service_name}";
         }
         return 'Standard Shipping';
+    }
+
+    public function freeShippingRule()
+    {
+        return $this->belongsTo(\App\Models\FreeShippingRule::class, 'free_shipping_rule_id');
     }
 }

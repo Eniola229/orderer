@@ -166,6 +166,17 @@ function sellerOrderStatusBadge(string $status): string {
                     <span class="text-muted">Subtotal</span>
                     <span class="fw-semibold">₦{{ number_format($order->subtotal, 2) }}</span>
                 </div>
+                @if($order->free_shipping_discount > 0)
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">
+                        Shipping Discount
+                        @if($order->freeShippingRule)
+                        <small class="text-success">({{ $order->freeShippingRule->name }})</small>
+                        @endif
+                    </span>
+                    <span class="fw-semibold text-success">−₦{{ number_format($order->free_shipping_discount, 2) }}</span>
+                </div>
+                @endif
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Shipping fee</span>
                     <span class="fw-semibold">₦{{ number_format($order->shipping_fee, 2) }}</span>

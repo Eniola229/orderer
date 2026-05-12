@@ -83,8 +83,90 @@
             padding-top: 20px !important;
         }
     }
-</style>
 
+
+    /* Sell on Orderer Section Responsive Styles */
+    .sell-on-orderer-section {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sell-content .badge {
+        display: inline-block;
+        animation: fadeInUp 0.6s ease;
+    }
+
+    .sell-features div[class*="col-"] {
+        animation: fadeInUp 0.6s ease;
+        animation-fill-mode: both;
+    }
+
+    .sell-features div[class*="col-"]:nth-child(1) { animation-delay: 0.1s; }
+    .sell-features div[class*="col-"]:nth-child(2) { animation-delay: 0.2s; }
+    .sell-features div[class*="col-"]:nth-child(3) { animation-delay: 0.3s; }
+    .sell-features div[class*="col-"]:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .sell-on-orderer-section {
+            padding: 40px 0 !important;
+        }
+        
+        .sell-content {
+            text-align: center !important;
+        }
+        
+        .sell-features .row {
+            justify-content: center;
+        }
+        
+        .sell-features .col-sm-6 {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .sell-image {
+            margin-top: 30px;
+        }
+        
+        /* Simplified banner version */
+        .sell-card {
+            margin: 0 15px;
+        }
+        
+        .sell-card h3 {
+            font-size: 22px;
+        }
+        
+        .sell-card p {
+            font-size: 14px;
+        }
+        
+        .sell-card .btn {
+            padding: 10px 25px;
+            font-size: 14px;
+        }
+    }
+
+    /* Tablet Styles */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .sell-on-orderer-section {
+            padding: 50px 0 !important;
+        }
+    }
+</style>
+ 
 @if(isset($heroBannerAds) && $heroBannerAds->count())
 
 <section class="welcome_area" style="position:relative;overflow:hidden;min-height:520px;">
@@ -244,6 +326,17 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="container" style="margin-top: -30px; margin-bottom: 20px;">
+    <a href="{{ route('seller.register') }}" style="display: flex; align-items: center; justify-content: space-between; background: #2ECC71; border-radius: 12px; padding: 10px 20px; text-decoration: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa fa-rocket" style="color: white;"></i>
+            <span style="color: white; font-weight: 500;">Sell on Orderer</span>
+            <span style="color: rgba(255,255,255,0.9); font-size: 13px;">Millions of Customers • Easy setup</span>
+        </div>
+        <span style="background: white; color: #2ECC71; padding: 4px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;">Join Now →</span>
+    </a>
 </div>
 
 {{-- Flash Sales --}}

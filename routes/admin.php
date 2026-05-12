@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\LogController;
-use App\Http\Controllers\Admin\AdController; 
+use App\Http\Controllers\Admin\AdController;  
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\HouseController;
@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\FlashSaleController;
 use App\Http\Controllers\Admin\DeliveryBookingController;
 use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Admin\MarketerController;
+use App\Http\Controllers\Admin\FreeShippingController;
   
 Route::prefix('20050619/admin')->name('admin.')->group(function () { 
 
@@ -169,6 +170,15 @@ Route::prefix('20050619/admin')->name('admin.')->group(function () {
             Route::delete('/{newsletter}',         [NewsletterController::class, 'destroy'])->name('destroy');
         });
 
+        Route::prefix('free-shipping')->name('free-shipping.')->group(function () {
+            Route::get('/',                          [FreeShippingController::class, 'index'])   ->name('index');
+            Route::get('/create',                    [FreeShippingController::class, 'create'])  ->name('create');
+            Route::post('/',                         [FreeShippingController::class, 'store'])   ->name('store');
+            Route::get('/{freeShipping}/edit',       [FreeShippingController::class, 'edit'])    ->name('edit');
+            Route::put('/{freeShipping}',            [FreeShippingController::class, 'update'])  ->name('update');
+            Route::put('/{freeShipping}/toggle',     [FreeShippingController::class, 'toggle'])  ->name('toggle');
+            Route::delete('/{freeShipping}',         [FreeShippingController::class, 'destroy']) ->name('destroy');
+        });
         Route::get('/marketers',                    [MarketerController::class, 'index'])->name('marketers.index');
         Route::get('/marketers/create',             [MarketerController::class, 'create'])->name('marketers.create');
         Route::post('/marketers',                   [MarketerController::class, 'store'])->name('marketers.store');

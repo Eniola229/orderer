@@ -15,7 +15,7 @@ class OrderItem extends Model
         'item_name', 'item_image', 'unit_price', 'quantity',
         'total_price', 'commission_rate', 'commission_amount',
         'seller_earnings', 'status',
-        // Tracking fields
+        // Tracking fields 
         'shipbubble_shipment_id', 'courier_id', 'tracking_number',
         'tracking_url', 'shipping_status', 'estimated_delivery_date', 'delivered_at', 'selected_options',
     ];

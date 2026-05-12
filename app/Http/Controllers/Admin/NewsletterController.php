@@ -17,7 +17,7 @@ class NewsletterController extends Controller
         $this->authorise();
 
         $newsletters = Newsletter::with('creator')
-            ->latest()
+            ->latest() 
             ->paginate(20);
 
         return view('admin.newsletter.index', compact('newsletters'));
@@ -85,13 +85,13 @@ class NewsletterController extends Controller
         $data = $request->validate([
             'subject'  => 'required|string|max:255',
             'body'     => 'required|string',
-            'audience' => 'required|in:buyers,sellers,both,guests',
+            'audience' => 'required|in:buyers,sellers,both,guests,new_buyers,buyers_no_orders,buyers_with_orders,sellers_no_listings',
         ]);
 
         $newsletter = Newsletter::create([
             ...$data,
             'status'     => Newsletter::STATUS_DRAFT,
-            'created_by' => Auth::guard('admin')->id(),
+            'created_by' => Auth::guard('admin')->id(), 
         ]);
 
         return redirect()
@@ -127,7 +127,7 @@ class NewsletterController extends Controller
         $data = $request->validate([
             'subject'  => 'required|string|max:255',
             'body'     => 'required|string',
-            'audience' => 'required|in:buyers,sellers,both',
+            'audience' => 'required|in:buyers,sellers,both,guests,new_buyers,buyers_no_orders,buyers_with_orders,sellers_no_listings',
         ]);
 
         $newsletter->update($data);

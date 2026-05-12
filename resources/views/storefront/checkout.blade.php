@@ -21,7 +21,7 @@
     .rate-card {
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 1px solid #dee2e6;
+        border: 1px solid #dee2e6; 
     }
     .rate-card:hover {
         border-color: #2ECC71 !important;
@@ -100,6 +100,67 @@
     background: #fff !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     transform: translateX(2px);
+}
+/* Shipping price styling with strikethrough */
+.shipping-price-wrapper {
+    text-align: right;
+}
+
+.shipping-original-price {
+    display: block;
+    font-size: 12px;
+    color: #999;
+    text-decoration: line-through;
+    text-decoration-color: #dc3545;
+    text-decoration-thickness: 2px;
+    margin-bottom: 2px;
+}
+
+.shipping-discounted-price {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.shipping-save-badge {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.shipping-free-badge {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.shipping-price-normal {
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Courier card price container */
+.rate-card .price-container {
+    text-align: right;
+}
+
+/* Ensure strikethrough works across all browsers */
+del, .strikethrough {
+    text-decoration: line-through;
+    text-decoration-color: #dc3545;
+    text-decoration-thickness: 2px;
+    color: #999;
 }
 </style>
 <div class="checkout_area section-padding-80">
@@ -729,11 +790,11 @@ function fetchShippingRates() {
 
         // ── Recalc total shipping ────────────────────────────────
         function recalcShipping() {
-            let totalShipping  = 0;
-            const allRateData  = {};
-            let   firstCarrier = '';
-            let   firstService = '';
-            let   firstCode    = '';
+            let totalShipping = 0;
+            const allRateData = {};
+            let firstCarrier = '';
+            let firstService = '';
+            let firstCode = '';
 
             data.seller_rates.forEach(group => {
                 const checked = document.querySelector(
@@ -747,7 +808,7 @@ function fetchShippingRates() {
                 if (!firstCarrier) {
                     firstCarrier = checked.dataset.carrier;
                     firstService = checked.dataset.service;
-                    firstCode    = checked.value;
+                    firstCode = checked.value;
                 }
             });
 
@@ -755,16 +816,95 @@ function fetchShippingRates() {
                 document.getElementById('displaySubtotal').dataset.value || 0
             );
 
-            document.getElementById('selectedShippingFee').value  = totalShipping.toFixed(2);
-            document.getElementById('selectedCarrier').value      = firstCarrier;
-            document.getElementById('selectedServiceName').value  = firstService;
-            document.getElementById('selectedServiceCode').value  = firstCode;
-            document.getElementById('shippingRateData').value     = JSON.stringify(allRateData);
+            // --- FREE SHIPPING CALCULATION ---
+            const freeRule = data.free_shipping_rule;
+            let discount = 0;
+            let finalFee = totalShipping;
+            let isFullyFree = false;
 
-            document.getElementById('displayShippingFee').textContent =
-                '₦' + totalShipping.toFixed(2);
-            document.getElementById('displayTotal').textContent =
-                '₦' + (subtotal + totalShipping).toFixed(2);
+            if (freeRule) {
+                const maxDisc = freeRule.max_discount || totalShipping;
+                discount = Math.min(totalShipping, maxDisc);
+                finalFee = totalShipping - discount;
+                isFullyFree = finalFee <= 0;
+                
+                if (finalFee <= 0) {
+                    finalFee = 0;
+                    isFullyFree = true;
+                }
+            }
+
+            // Store the actual fee to be paid (after discount)
+            document.getElementById('selectedShippingFee').value = finalFee.toFixed(2);
+            document.getElementById('selectedCarrier').value = firstCarrier;
+            document.getElementById('selectedServiceName').value = firstService;
+            document.getElementById('selectedServiceCode').value = firstCode;
+            document.getElementById('shippingRateData').value = JSON.stringify(allRateData);
+
+            // --- UPDATE EACH COURIER CARD WITH PROPER CSS ---
+            document.querySelectorAll('.rate-card').forEach(card => {
+                const priceSpan = card.querySelector('.h5.mb-0.text-success');
+                const radio = card.querySelector('.seller-rate-radio');
+                
+                if (radio && priceSpan) {
+                    const originalPrice = parseFloat(radio.dataset.price);
+                    
+                    // Calculate proportional discount for this courier
+                    const proportion = originalPrice / totalShipping;
+                    const discountedPrice = originalPrice - (discount * proportion);
+                    const isThisCourierFree = discountedPrice <= 0;
+                    
+                    if (isFullyFree || isThisCourierFree) {
+                        // FULLY FREE
+                        priceSpan.innerHTML = `
+                            <div class="shipping-price-wrapper">
+                                <span class="shipping-original-price">₦${originalPrice.toFixed(2)}</span>
+                                <span class="shipping-discounted-price">FREE</span>
+                                <span class="shipping-free-badge">🎉 FREE Shipping</span>
+                            </div>
+                        `;
+                    } else if (discount > 0 && discountedPrice < originalPrice) {
+                        // PARTIAL DISCOUNT - with strikethrough
+                        const savedAmount = (originalPrice - discountedPrice).toFixed(2);
+                        priceSpan.innerHTML = `
+                            <div class="shipping-price-wrapper">
+                                <span class="shipping-original-price">₦${originalPrice.toFixed(2)}</span>
+                                <span class="shipping-discounted-price">₦${discountedPrice.toFixed(2)}</span>
+                                <span class="shipping-save-badge">Save ₦${savedAmount}</span>
+                            </div>
+                        `;
+                    } else {
+                        // NO DISCOUNT
+                        priceSpan.innerHTML = `<span class="shipping-price-normal">₦${originalPrice.toFixed(2)}</span>`;
+                    }
+                }
+            });
+
+            // --- UPDATE ORDER SUMMARY WITH PROPER CSS ---
+            if (isFullyFree) {
+                document.getElementById('displayShippingFee').innerHTML = `
+                    <div class="shipping-price-wrapper">
+                        <span class="shipping-original-price">₦${totalShipping.toFixed(2)}</span>
+                        <span class="shipping-discounted-price">FREE Shipping</span>
+                        <span class="shipping-free-badge">${freeRule?.name || 'Free Shipping'}</span>
+                    </div>
+                `;
+            } else if (discount > 0) {
+                const savedAmount = (totalShipping - finalFee).toFixed(2);
+                document.getElementById('displayShippingFee').innerHTML = `
+                    <div class="shipping-price-wrapper">
+                        <span class="shipping-original-price">₦${totalShipping.toFixed(2)}</span>
+                        <span class="shipping-discounted-price">₦${finalFee.toFixed(2)}</span>
+                        <span class="shipping-save-badge">Save ₦${savedAmount}</span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('displayShippingFee').innerHTML = `<span class="shipping-price-normal">₦${totalShipping.toFixed(2)}</span>`;
+            }
+
+            // --- UPDATE TOTAL ---
+            const grandTotal = subtotal + finalFee;
+            document.getElementById('displayTotal').innerHTML = `<span class="h5 mb-0">₦${grandTotal.toFixed(2)}</span>`;
         }
 
         // Attach change listeners to rate radios

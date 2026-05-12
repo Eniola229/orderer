@@ -83,10 +83,20 @@ class Seller extends Authenticatable
         return $this->hasMany(Product::class);
     }
 
-        public function brand()
-        {
-            return $this->hasOne(Brand::class);  // One seller has one brand
-        }
+    public function services()
+    {
+        return $this->hasMany(ServiceListing::class);
+    }
+
+    public function properties()
+    {
+        return $this->hasMany(HouseListing::class);
+    }
+
+    public function brand()
+    {
+        return $this->hasOne(Brand::class);  // One seller has one brand
+    }
 
     public function orders()
     {

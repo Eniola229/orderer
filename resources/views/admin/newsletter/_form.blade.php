@@ -9,19 +9,23 @@
            placeholder="e.g. Exciting news from Orderer 🎉"
            required />
     @error('subject')
-        <div class="invalid-feedback">{{ $message }}</div>
+        <div class="invalid-feedback">{{ $message }}</div> 
     @enderror
 </div>
 
 <div class="mb-3">
     <label class="form-label fw-semibold">Audience <span class="text-danger">*</span></label>
-    <div class="d-flex gap-4 mt-1">
-         @foreach([
-            'buyers'  => 'Buyers only',
-            'sellers' => 'Sellers only',
-            'both'    => 'Buyers & Sellers',
-            'guests'  => 'Subscribers only',
-        ] as $val => $label)
+    <div class="d-flex flex-wrap gap-3 mt-1">
+            @foreach([
+                'buyers'              => 'Buyers only',
+                'sellers'             => 'Sellers only',
+                'both'                => 'Buyers & Sellers',
+                'guests'              => 'Subscribers only',
+                'new_buyers'          => 'New Buyers (last 30 days)',
+                'buyers_no_orders'    => 'Buyers – No Orders Yet',
+                'buyers_with_orders'  => 'Buyers – Have Ordered',
+                'sellers_no_listings' => 'Sellers – No Listings Yet',
+            ] as $val => $label)
         <div class="form-check">
             <input class="form-check-input" type="radio" name="audience"
                    id="aud_{{ $val }}" value="{{ $val }}"

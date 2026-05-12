@@ -4,7 +4,7 @@
 @section('breadcrumb')
     <li class="breadcrumb-item active">Overview</li>
 @endsection
- 
+  
 @section('content')
 
 {{-- ── Pending alert strip ─────────────────────────────────────── --}}

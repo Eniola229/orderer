@@ -12,7 +12,7 @@
         </div>
  
         <div class="navbar-content">
-            <ul class="nxl-navbar">
+            <ul class="nxl-navbar"> 
 
                 <li class="nxl-item nxl-caption">
                     <label>Main</label>
@@ -110,6 +110,15 @@
                         </li>
                     </ul>
                 </li>
+
+                @if(auth('admin')->user()->canManageFinance())
+                <li class="nxl-item {{ request()->routeIs('admin.free-shipping.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.free-shipping.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-truck"></i></span>
+                        <span class="nxl-mtext">Free Shipping</span>
+                    </a>
+                </li>
+                @endif
 
                 <li class="nxl-item {{ request()->routeIs('admin.delivery-bookings.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.delivery-bookings.index') }}" class="nxl-link">

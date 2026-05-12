@@ -13,8 +13,9 @@ use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Services\TikTokEventService;
+use App\Services\TikTokEventService; 
 use App\Services\MonnifyService;
+use App\Services\FreeShippingService;
 
 
 class CheckoutController extends Controller
@@ -26,6 +27,7 @@ class CheckoutController extends Controller
         protected ShipbubbleService $shipbubble,
         protected TikTokEventService  $tikTok,
         protected MonnifyService $monnify,
+        protected FreeShippingService  $freeShipping,
     ) {} 
 
     public function index()
@@ -122,7 +124,28 @@ class CheckoutController extends Controller
         }
         if ($totalWeight <= 0) $totalWeight = 0.5;
 
-        $shippingFee   = (float) $request->shipping_fee;
+        $quotedShippingFee = (float) $request->shipping_fee;
+
+        // Check free shipping eligibility
+        $freeShippingDiscount = 0.0;
+        $freeShippingRuleId   = null;
+        if (auth('web')->check()) {
+            $cartProductIds = $cartItems->pluck('product_id')->filter()->toArray();
+            $cartSellerIds  = $cartItems->pluck('product.seller_id')->filter()->toArray();
+
+            $fsResult = $this->freeShipping->resolve(
+                $user,
+                $quotedShippingFee,
+                $subtotal,
+                $cartProductIds,
+                $cartSellerIds
+            );
+            $freeShippingDiscount = $fsResult['discount'];
+            $freeShippingRuleId   = $fsResult['rule']?->id;
+        }
+
+        $shippingFee = max(0, $quotedShippingFee - $freeShippingDiscount);
+        $total       = $subtotal + $shippingFee;
         $total         = $subtotal + $shippingFee;
         $isMultiSeller = collect($items)->pluck('product.seller_id')->unique()->count() > 1;
 
@@ -156,6 +179,8 @@ class CheckoutController extends Controller
                 'declared_value'        => $subtotal,
                 'is_multi_seller'       => $isMultiSeller,
                 'shipping_rate_data'    => json_decode($request->shipping_rate_data ?? '{}', true),
+                'free_shipping_discount' => $freeShippingDiscount,
+                'free_shipping_rule_id'  => $freeShippingRuleId,
             ]);
 
             foreach ($items as $item) {
@@ -562,6 +587,33 @@ class CheckoutController extends Controller
         }
 
         session(['shipbubble_request_tokens' => $requestTokensMap]);
+
+        // Resolve free shipping for the authenticated user
+        $freeShippingResult = ['rule' => null, 'discount' => 0.0];
+        if (auth('web')->check()) {
+            $cartProductIds = $cartItems->pluck('product_id')->filter()->toArray();
+            $cartSellerIds  = $cartItems->pluck('product.seller_id')->filter()->toArray();
+            $totalSubtotal  = $cartItems->sum(fn($i) => $i->price * $i->quantity);
+
+            // We pass 0 for shipping fee here; discount is confirmed at place() time
+            $freeShippingResult = $this->freeShipping->resolve(
+                auth('web')->user(),
+                0,              // fee resolved per-selection on frontend
+                $totalSubtotal,
+                $cartProductIds,
+                $cartSellerIds
+            );
+        }
+
+        return response()->json([
+            'success'             => true,
+            'multi_seller'        => count($sellerGroups) > 1,
+            'seller_rates'        => $allSellerRates,
+            'free_shipping_rule'  => $freeShippingResult['rule'] ? [
+                'name'             => $freeShippingResult['rule']->name,
+                'max_discount'     => $freeShippingResult['rule']->max_discount_amount,
+            ] : null,
+        ]);
 
         return response()->json([
             'success'      => true,

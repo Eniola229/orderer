@@ -12,9 +12,10 @@ use App\Services\KorapayService;
 use App\Services\BrevoMailService;
 use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB; 
 use App\Services\TikTokEventService;
 use App\Services\MonnifyService;
+use App\Services\FreeShippingService;
 
 
 class BuyNowController extends Controller
@@ -29,6 +30,7 @@ class BuyNowController extends Controller
         protected ShipbubbleService $shipbubble,
         protected TikTokEventService $tikTok,
         protected MonnifyService $monnify,
+        protected FreeShippingService  $freeShipping,
     ) {}
 
     // ─── STEP 1 ─────────────────────────────────────────────────────────────────
@@ -176,7 +178,21 @@ class BuyNowController extends Controller
         $itemTotal       = $unitPrice * $quantity;
         $weight          = max(($product->weight_kg ?? 0.5) * $quantity, 0.5);
 
-        $shippingFee = (float) $request->shipping_fee;
+        $quotedShippingFee    = (float) $request->shipping_fee;
+        $freeShippingDiscount = 0.0;
+        $freeShippingRuleId   = null;
+
+        $fsResult = $this->freeShipping->resolve(
+            $user,
+            $quotedShippingFee,
+            $itemTotal,
+            [$product->id],
+            [$product->seller_id],
+        );
+        $freeShippingDiscount = $fsResult['discount'];
+        $freeShippingRuleId   = $fsResult['rule']?->id;
+
+        $shippingFee = max(0, $quotedShippingFee - $freeShippingDiscount);
         $subtotal    = $itemTotal;
         $total       = $subtotal + $shippingFee;
 
@@ -210,6 +226,8 @@ class BuyNowController extends Controller
                 'declared_value'        => $subtotal,
                 'is_multi_seller'       => false,
                 'shipping_rate_data'    => json_decode($request->shipping_rate_data ?? '{}', true),
+                'free_shipping_discount' => $freeShippingDiscount,
+                'free_shipping_rule_id'  => $freeShippingRuleId,
             ]);
 
             $commissionRate = $product->category->commission_rate ?? 10;
@@ -602,16 +620,29 @@ class BuyNowController extends Controller
                 ]]);
             }
  
+            $subtotal = $sessionItem['price'] * $sessionItem['quantity'];
+            $freeShippingResult = $this->freeShipping->resolve(
+                auth('web')->user(),
+                0,
+                $subtotal,
+                [$product->id],
+                [$product->seller_id],
+            );
+
             return response()->json([
-                'success'      => true,
-                'multi_seller' => false,
-                'seller_rates' => [[
+                'success'            => true,
+                'multi_seller'       => false,
+                'seller_rates'       => [[
                     'seller_id'   => (string) $product->seller_id,
                     'seller_name' => $seller->business_name ?? 'Seller',
                     'subtotal'    => $subtotal,
                     'weight'      => $weight,
                     'couriers'    => $rateData['couriers'] ?? [],
                 ]],
+                'free_shipping_rule' => $freeShippingResult['rule'] ? [
+                    'name'         => $freeShippingResult['rule']->name,
+                    'max_discount' => $freeShippingResult['rule']->max_discount_amount,
+                ] : null,
             ]);
  
         } catch (\Exception $e) {

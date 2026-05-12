@@ -12,7 +12,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('subject');
             $table->longText('body');           // HTML body
-            $table->enum('audience', ['buyers', 'sellers', 'both'])->default('both');
+            $table->string('audience')->default('both');
             $table->enum('status', ['draft', 'queued', 'sending', 'sent', 'failed'])->default('draft');
             $table->unsignedInteger('total_recipients')->default(0);
             $table->unsignedInteger('sent_count')->default(0);
