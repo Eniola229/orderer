@@ -34,32 +34,20 @@ class WithdrawalController extends Controller
         $seller = auth('seller')->user();
         $wallet = $this->wallet->getOrCreate($seller);
 
-        // Resolve account_name from whichever payout type was used
-        $accountName = $request->payout_type === 'mobile_money'
-            ? $request->momo_account_name
-            : $request->account_name;
-
-        $request->merge(['account_name' => $accountName]);
-
         $request->validate([
-            'amount'                => ['required', 'numeric', 'min:1000', "max:{$wallet->balance}"],
-            'account_name'          => ['required', 'string', 'max:200'],
-            'bank_country'          => ['required', 'string'],
-            'dollar_capable'        => ['required', 'in:yes,no'],
-            'payout_type'           => ['required', 'in:bank_account,mobile_money'],
-            'bank_name'             => ['required_if:payout_type,bank_account', 'nullable', 'string', 'max:200'],
-            'account_number'        => ['required_if:payout_type,bank_account', 'nullable', 'string', 'max:30'],
-            'bank_code'             => ['nullable', 'string', 'max:20'],
-            'mobile_money_operator' => ['required_if:payout_type,mobile_money', 'nullable', 'string', 'max:50'],
-            'mobile_number'         => ['required_if:payout_type,mobile_money', 'nullable', 'string', 'max:20'],
-            'note'                  => ['nullable', 'string', 'max:500'],
+            'amount'         => ['required', 'numeric', 'min:1000', "max:{$wallet->balance}"],
+            'bank_code'      => ['required', 'string', 'max:20'],
+            'bank_name'      => ['required', 'string', 'max:200'],
+            'account_number' => ['required', 'string', 'max:10'],
+            'account_name'   => ['required', 'string', 'max:200'],
+            'note'           => ['nullable', 'string', 'max:500'],
         ]);
 
         if ($wallet->balance < $request->amount) {
             return back()->with('error', 'Insufficient wallet balance.');
         }
 
-        // Check no pending withdrawal
+        // Block duplicate pending requests
         $pending = WithdrawalRequest::where('seller_id', $seller->id)
             ->whereIn('status', ['pending', 'processing'])
             ->exists();
@@ -68,42 +56,21 @@ class WithdrawalController extends Controller
             return back()->with('error', 'You already have a pending withdrawal request. Please wait for it to be processed.');
         }
 
-        // Derive the destination currency from the country code
-        // This is what Korapay will pay out in (converted from your USD balance)
-        $currencyMap = [
-            'NG'    => 'NGN',
-            'GH'    => 'GHS',
-            'KE'    => 'KES',
-            'ZA'    => 'ZAR',
-            'US'    => 'USD',
-            'GB'    => 'GBP',
-            'OTHER' => 'USD', // fallback — admin should verify
-        ];
-
-        $currency = $currencyMap[$request->bank_country] ?? 'USD';
-
-        // If they said the account CAN receive USD, override to USD regardless of country
-        if ($request->dollar_capable === 'yes') {
-            $currency = 'USD';
-        }
-
         WithdrawalRequest::create([
-            'seller_id'             => $seller->id,
-            'amount'                => $request->amount,
-            'bank_name'             => $request->bank_name,
-            'account_name'          => $request->account_name,
-            'account_number'        => $request->account_number,
-            'bank_code'             => $request->bank_code,
-            'country_code'          => $request->bank_country,
-            'currency'              => $currency,
-            'payout_type'           => $request->payout_type,
-            'mobile_money_operator' => $request->mobile_money_operator,
-            'mobile_number'         => $request->mobile_number,
-            'note'                  => $request->note,
-            'status'                => 'pending',
+            'seller_id'      => $seller->id,
+            'amount'         => $request->amount,
+            'bank_name'      => $request->bank_name,
+            'account_name'   => $request->account_name,
+            'account_number' => $request->account_number,
+            'bank_code'      => $request->bank_code,
+            'country_code'   => 'NG',
+            'currency'       => 'NGN',
+            'payout_type'    => 'bank_account',
+            'note'           => $request->note,
+            'status'         => 'pending',
         ]);
 
-        // Debit wallet immediately — holds the amount while request is pending
+        // Debit wallet immediately to hold funds while request is pending
         $this->wallet->debit(
             $seller,
             (float) $request->amount,
@@ -112,86 +79,101 @@ class WithdrawalController extends Controller
         );
 
         return redirect()->route('seller.withdrawals.index')
-            ->with('success', "Withdrawal request of ₦{$request->amount} submitted. We will process within 2-3 hours.");
+            ->with('success', "Withdrawal request of ₦" . number_format($request->amount, 2) . " submitted. We will process within 2–3 hours.");
     }
 
     /**
-     * Return bank list for a given country code.
-     * Called via AJAX when seller selects their country.
+     * Return Nigerian bank list via Monnify.
+     * Called via AJAX on page load.
      */
     public function getBanks(Request $request)
     {
-        $request->validate(['country' => ['required', 'string', 'size:2']]);
-        
+        // We only support Nigeria — ignore any country param
         try {
-            $korapay = app(\App\Services\KorapayService::class);
-            
-            // Debug: Check if service is instantiated
-            \Log::info('Korapay service instantiated', [
-                'class' => get_class($korapay)
-            ]);
-            
-            $banks = $korapay->getBanks($request->country);
-            
-            // Debug: Check what banks are returned
-            \Log::info('Banks retrieved', [
-                'count' => count($banks),
-                'sample' => array_slice($banks, 0, 2)
-            ]);
-            
+            $monnify = app(\App\Services\MonnifyService::class);
+            $raw     = $monnify->getBanks();
+
+            // Monnify returns: [{ name, code, ussdTemplate, baseUssdCode, transferUssdTemplate }, ...]
+            $banks = collect($raw)->map(fn($b) => [
+                'name' => $b['name'],
+                'code' => $b['code'],
+            ])->sortBy('name')->values()->all();
+
             return response()->json(['status' => 'ok', 'banks' => $banks]);
+
         } catch (\Exception $e) {
-            \Log::error('Error in getBanks: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            \Log::error('Monnify getBanks error: ' . $e->getMessage());
             return response()->json([
-                'status' => 'error', 
-                'message' => 'Unable to fetch banks: ' . $e->getMessage()
+                'status'  => 'error',
+                'message' => 'Unable to fetch banks. Please refresh and try again.',
             ], 422);
         }
     }
 
     /**
-     * Resolve a bank account number against Korapay.
-     * Returns confirmed account_name and bank details.
+     * Resolve a Nigerian bank account number via Monnify.
+     * Returns confirmed account_name.
      */
     public function resolveAccount(Request $request)
     {
         $request->validate([
             'bank_code'      => ['required', 'string'],
-            'account_number' => ['required', 'string'],
-            'country'        => ['required', 'string', 'size:2'],
+            'account_number' => ['required', 'string', 'min:10', 'max:11'],
         ]);
 
-        $currencyMap = ['NG' => 'NGN', 'KE' => 'KES', 'ZA' => 'ZAR', 'GH' => 'GHS'];
-        $currency    = $currencyMap[$request->country] ?? null;
-
-        if (!$currency) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Account verification is not supported for this country.',
-            ], 422);
-        }
-
         try {
-            $korapay = app(\App\Services\KorapayService::class);
-            $result  = $korapay->resolveBankAccount(
+            $monnify = app(\App\Services\MonnifyService::class);
+
+            $result = $monnify->resolveBankAccount(
                 $request->bank_code,
-                $request->account_number,
-                $currency
+                $request->account_number
             );
+
+            \Log::info('Monnify resolveAccount result', [
+                'bank_code'      => $request->bank_code,
+                'account_number' => $request->account_number,
+                'result'         => $result,
+            ]);
+
+            // Monnify responseBody keys: accountName, accountNumber, bankCode, bankName
+            // Guard against empty/null responseBody
+            if (empty($result) || empty($result['accountName'])) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Account not found. Check the account number and selected bank.',
+                ], 422);
+            }
 
             return response()->json([
                 'status'       => 'ok',
-                'account_name' => $result['account_name'],
-                'bank_name'    => $result['bank_name'],
-                'bank_code'    => $result['bank_code'],
+                'account_name' => $result['accountName'],
+                'bank_name'    => $result['bankName'] ?? '',
+                'bank_code'    => $result['bankCode'] ?? $request->bank_code,
             ]);
+
         } catch (\Exception $e) {
+            \Log::error('Monnify resolveAccount error', [
+                'bank_code'      => $request->bank_code,
+                'account_number' => $request->account_number,
+                'error'          => $e->getMessage(),
+            ]);
+
+            // Monnify sends back responseMessage in the exception — pick it out cleanly
+            $raw = $e->getMessage();
+
+            $msg = match(true) {
+                str_contains($raw, 'Invalid account')           => 'Account not found. Check the account number and selected bank.',
+                str_contains($raw, 'Account not found')         => 'Account not found. Check the account number and selected bank.',
+                str_contains($raw, 'Invalid bank')              => 'Invalid bank selected. Please try again.',
+                str_contains($raw, 'Required request parameter')=> 'Verification failed — please check bank and account number.',
+                str_contains($raw, 'authentication')            => 'Service temporarily unavailable. Please try again shortly.',
+                str_contains($raw, '401')                       => 'Service temporarily unavailable. Please try again shortly.',
+                default                                         => 'Verification failed. Please try again.',
+            };
+
             return response()->json([
                 'status'  => 'error',
-                'message' => $e->getMessage(), // now clean e.g. "Invalid account."
+                'message' => $msg,
             ], 422);
         }
     }

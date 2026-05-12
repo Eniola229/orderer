@@ -31,10 +31,6 @@ class MonnifyService
         return 'monnify_access_token_' . md5($this->apiKey);
     }
 
-    /**
-     * Fetch a fresh token from Monnify, cache it, and return it.
-     * Always clears any existing cached token first.
-     */
     public function refreshAccessToken(): string
     {
         Cache::forget($this->cacheKey());
@@ -51,14 +47,13 @@ class MonnifyService
         }
 
         $body      = $response->json();
-        $token     = $body['responseBody']['accessToken']  ?? null;
-        $expiresIn = $body['responseBody']['expiresIn']    ?? 3600;
+        $token     = $body['responseBody']['accessToken'] ?? null;
+        $expiresIn = $body['responseBody']['expiresIn']   ?? 3600;
 
         if (!$token) {
             throw new \Exception('Monnify auth response missing accessToken: ' . $response->body());
         }
 
-        // Cache for (expiresIn - 5 min) seconds, minimum 60s
         $ttl = max(60, (int) $expiresIn - 300);
         Cache::put($this->cacheKey(), $token, $ttl);
 
@@ -67,17 +62,11 @@ class MonnifyService
         return $token;
     }
 
-    /**
-     * Return a valid access token, fetching a fresh one if none is cached.
-     */
     public function getAccessToken(): string
     {
         return Cache::get($this->cacheKey()) ?? $this->refreshAccessToken();
     }
 
-    /**
-     * Return pre-built HTTP headers with a valid Bearer token.
-     */
     protected function authHeaders(): array
     {
         return [
@@ -86,32 +75,22 @@ class MonnifyService
         ];
     }
 
-    /**
-     * Central HTTP helper that automatically retries once on 401
-     * by refreshing the token and re-sending the request.
-     *
-     * Usage:
-     *   $response = $this->request('get', '/api/v2/...', ['query' => [...]);
-     *   $response = $this->request('post', '/api/v1/...', ['json' => [...]]);
-     */
     protected function request(string $method, string $endpoint, array $options = []): \Illuminate\Http\Client\Response
     {
         $send = function () use ($method, $endpoint, $options) {
             $http = Http::withHeaders($this->authHeaders());
-
-            $url = $this->baseUrl . $endpoint;
+            $url  = $this->baseUrl . $endpoint;
 
             return match (strtolower($method)) {
-                'get'  => $http->get($url, $options['query'] ?? []),
-                'post' => $http->post($url, $options['json'] ?? []),
-                'put'  => $http->put($url, $options['json'] ?? []),
+                'get'   => $http->get($url, $options['query'] ?? []),
+                'post'  => $http->post($url, $options['json'] ?? []),
+                'put'   => $http->put($url, $options['json'] ?? []),
                 default => throw new \Exception("Unsupported HTTP method: {$method}"),
             };
         };
 
         $response = $send();
 
-        // Token was rejected — refresh once and retry
         if ($response->status() === 401) {
             \Log::warning('Monnify 401 — refreshing token and retrying', ['endpoint' => $endpoint]);
             $this->refreshAccessToken();
@@ -119,6 +98,27 @@ class MonnifyService
         }
 
         return $response;
+    }
+
+    // -------------------------------------------------------------------------
+    // Helper: extract a clean error message from any Monnify response
+    // -------------------------------------------------------------------------
+
+    protected function extractErrorMessage(\Illuminate\Http\Client\Response $response, string $fallback): string
+    {
+        $body = $response->json();
+
+        // Monnify error shape: { requestSuccessful: false, responseMessage: "...", responseCode: "..." }
+        if (!empty($body['responseMessage'])) {
+            return $body['responseMessage'];
+        }
+
+        // Sometimes nested under responseBody
+        if (!empty($body['responseBody']['responseMessage'])) {
+            return $body['responseBody']['responseMessage'];
+        }
+
+        return $fallback;
     }
 
     // -------------------------------------------------------------------------
@@ -186,24 +186,57 @@ class MonnifyService
     }
 
     // -------------------------------------------------------------------------
-    // Disbursements (Payouts)
+    // Disbursements — Account Resolution
     // -------------------------------------------------------------------------
 
+    /**
+     * Resolve a Nigerian bank account number.
+     *
+     * Monnify returns responseBody: { accountName, accountNumber, bankCode, bankName }
+     * On failure it returns requestSuccessful: false with responseMessage set.
+     *
+     * @throws \Exception with a clean human-readable message
+     */
     public function resolveBankAccount(string $bankCode, string $accountNumber): array
     {
-        $response = $this->request('post', '/api/v1/disbursements/account/validate', [
-            'json' => [
+        $response = $this->request('get', '/api/v1/disbursements/account/validate', [
+            'query' => [
                 'accountNumber' => $accountNumber,
                 'bankCode'      => $bankCode,
             ],
         ]);
 
+        // \Log::info('Monnify resolveBankAccount raw response', [
+        //     'status' => $response->status(),
+        //     'body'   => $response->body(),
+        // ]);
+
+        // Non-HTTP-success (4xx / 5xx)
         if (!$response->successful()) {
-            throw new \Exception('Monnify bank resolve failed: ' . $response->body());
+            $msg = $this->extractErrorMessage($response, 'Bank account resolve failed.');
+            throw new \Exception($msg);
         }
 
-        return $response->json('responseBody');
+        $body = $response->json();
+
+        // Monnify can return 200 with requestSuccessful: false (e.g. invalid account)
+        if (isset($body['requestSuccessful']) && $body['requestSuccessful'] === false) {
+            $msg = $body['responseMessage'] ?? 'Invalid account.';
+            throw new \Exception($msg);
+        }
+
+        $responseBody = $body['responseBody'] ?? null;
+
+        if (empty($responseBody) || empty($responseBody['accountName'])) {
+            throw new \Exception('Account not found. Check the account number and bank.');
+        }
+
+        return $responseBody;
     }
+
+    // -------------------------------------------------------------------------
+    // Disbursements — Payouts
+    // -------------------------------------------------------------------------
 
     public function disbursePayout(
         string $reference,
@@ -248,16 +281,13 @@ class MonnifyService
         ]);
 
         if ($response->clientError()) {
-            $errorData    = $response->json();
-            $errorMessage = $errorData['responseMessage'] ?? 'Validation error';
-            $errorCode    = $errorData['responseCode']    ?? '';
-            throw new \Exception("Monnify validation error [{$errorCode}]: {$errorMessage}");
+            $msg = $this->extractErrorMessage($response, 'Validation error');
+            throw new \Exception("Monnify validation error: {$msg}");
         }
 
         if ($response->serverError()) {
             throw new \Exception(
-                'Monnify server error — call verifyPayout() to confirm status before marking failed: '
-                . $response->body()
+                'Monnify server error — verify payout before marking failed: ' . $response->body()
             );
         }
 
@@ -311,7 +341,7 @@ class MonnifyService
     }
 
     // -------------------------------------------------------------------------
-    // Utility / Misc
+    // Utility
     // -------------------------------------------------------------------------
 
     public function getBanks(): array

@@ -9,7 +9,7 @@
 @section('content')
 
 <div class="row">
- 
+
     {{-- Left --}}
     <div class="col-lg-8">
 
@@ -28,12 +28,6 @@
                         <i class="feather-dollar-sign text-success" style="font-size:24px;"></i>
                     </div>
                 </div>
-                <p class="text-muted fs-13 mt-2">
-                    Supported countries for direct bank payout: <strong>NGN</strong>.
-                    If your country isn't listed, you can still withdraw using a USD-enabled account such as
-                    <strong>Grey, Geegpay, Cleva, or Chipper Cash</strong> — select <em>United States (USD)</em>
-                    as the country and choose <em>Yes — it accepts USD</em>.
-                </p>
             </div>
         </div>
 
@@ -46,163 +40,95 @@
                 </div>
                 <div class="card-body">
 
-                {{-- Amount --}}
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Amount (NGN) <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text">₦</span>
-                        <input type="number" name="amount"
-                               class="form-control @error('amount') is-invalid @enderror"
-                               value="{{ old('amount') }}" step="0.01" min="10"
-                               {{-- Fix: Only add max if wallet balance exists and is greater than 0 --}}
-                               @if(isset($wallet) && $wallet->balance > 0)
-                               max="{{ $wallet->balance }}"
-                               @endif
-                               placeholder="Minimum ₦1000.00" required>
-                        @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    {{-- Show wallet balance info --}}
-                    @if(isset($wallet) && $wallet->balance > 0)
-                    <small class="text-muted">Available balance: ₦{{ number_format($wallet->balance, 2) }}</small>
-                    @else
-                    <small class="text-danger">No funds available to withdraw</small>
-                    @endif
-                </div>
-
-                    {{-- Payout type --}}
+                    {{-- Amount --}}
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Payout Method <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-4 mt-1">
-                            <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
-                                <input type="radio" name="payout_type" value="bank_account"
-                                       {{ old('payout_type', 'bank_account') === 'bank_account' ? 'checked' : '' }}
-                                       id="type_bank">
-                                Bank Account
-                            </label>
-                            <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
-                                <input type="radio" name="payout_type" value="mobile_money"
-                                       {{ old('payout_type') === 'mobile_money' ? 'checked' : '' }}
-                                       id="type_momo">
-                                Mobile Money
-                            </label>
+                        <label class="form-label fw-bold">Amount (NGN) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">₦</span>
+                            <input type="number" name="amount"
+                                   class="form-control @error('amount') is-invalid @enderror"
+                                   value="{{ old('amount') }}" step="0.01" min="1000"
+                                   @if(isset($wallet) && $wallet->balance > 0)
+                                   max="{{ $wallet->balance }}"
+                                   @endif
+                                   placeholder="Minimum ₦1,000.00" required>
+                            @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        @if(isset($wallet) && $wallet->balance > 0)
+                            <small class="text-muted">Available balance: ₦{{ number_format($wallet->balance, 2) }}</small>
+                        @else
+                            <small class="text-danger">No funds available to withdraw</small>
+                        @endif
+                    </div>
+
+                    {{-- Bank + Account Number --}}
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Bank <span class="text-danger">*</span></label>
+
+                            {{-- Hidden inputs the backend reads --}}
+                            <input type="hidden" name="bank_code"     id="bank_code"    value="{{ old('bank_code') }}">
+                            <input type="hidden" name="bank_name"     id="bank_name"    value="{{ old('bank_name') }}">
+                            <input type="hidden" name="bank_country"  value="NG">
+                            <input type="hidden" name="currency"      value="NGN">
+                            <input type="hidden" name="payout_type"   value="bank_account">
+                            <input type="hidden" name="dollar_capable" value="no">
+
+                            {{-- Custom searchable bank picker --}}
+                            <div id="bank-picker" class="bank-picker">
+                                <button type="button" id="bank-trigger" class="bank-trigger" disabled>
+                                    <span id="bank-trigger-label" class="bank-trigger-label text-muted">
+                                        <span class="spinner-border spinner-border-sm me-1"></span> Loading banks…
+                                    </span>
+                                    <i class="feather-chevron-down bank-trigger-icon"></i>
+                                </button>
+
+                                <div id="bank-dropdown" class="bank-dropdown" hidden>
+                                    <div class="bank-search-wrap">
+                                        <i class="feather-search bank-search-icon"></i>
+                                        <input type="text" id="bank-search" class="bank-search-input"
+                                               placeholder="Search bank…" autocomplete="off" spellcheck="false">
+                                    </div>
+                                    <ul id="bank-list" class="bank-list" role="listbox"></ul>
+                                    <p id="bank-empty" class="bank-empty" hidden>No banks match your search.</p>
+                                </div>
+                            </div>
+
+                            @error('bank_code')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Account Number <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" name="account_number" id="account_number"
+                                       class="form-control @error('account_number') is-invalid @enderror"
+                                       value="{{ old('account_number') }}"
+                                       placeholder="10-digit account number"
+                                       maxlength="10"
+                                       autocomplete="off" required>
+                                <span class="input-group-text" id="resolve_spinner" style="display:none;">
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </span>
+                            </div>
+                            <div id="resolve_error" class="text-danger fs-12 mt-1" style="display:none;"></div>
+                            @error('account_number')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
-                    {{-- Bank account fields --}}
-                    <div id="bank_fields">
-
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Bank Country <span class="text-danger">*</span></label>
-                                <select name="bank_country" id="bank_country" class="form-select" required>
-                                    <option value="">— Select country —</option>
-                                    <option value="NG" {{ old('bank_country') === 'NG' ? 'selected' : '' }}>Nigeria (NGN)</option>
-                                    <option value="GH" {{ old('bank_country') === 'GH' ? 'selected' : '' }}>Ghana (GHS)</option>
-                                    <option value="KE" {{ old('bank_country') === 'KE' ? 'selected' : '' }}>Kenya (KES)</option>
-                                    <option value="ZA" {{ old('bank_country') === 'ZA' ? 'selected' : '' }}>South Africa (ZAR)</option>
-                                    <option value="US" {{ old('bank_country') === 'US' ? 'selected' : '' }}>United States (NGN)</option>
-                                    <option value="GB" {{ old('bank_country') === 'GB' ? 'selected' : '' }}>United Kingdom (GBP)</option>
-                                </select>
-                                <input type="hidden" name="currency" id="currency" value="{{ old('currency', '') }}">
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Account Number <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="text" name="account_number" id="account_number"
-                                           class="form-control @error('account_number') is-invalid @enderror"
-                                           value="{{ old('account_number') }}" placeholder="Account number"
-                                           autocomplete="off">
-                                    <span class="input-group-text" id="resolve_spinner" style="display:none;">
-                                        <span class="spinner-border spinner-border-sm"></span>
-                                    </span>
-                                </div>
-                                <div id="resolve_error" class="text-danger fs-12 mt-1" style="display:none;"></div>
-                                @error('account_number')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
-                            </div>
+                    {{-- Account Name (auto-filled) --}}
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Account Name</label>
+                        <div class="input-group">
+                            <input type="text" id="account_name_display"
+                                   class="form-control @error('account_name') is-invalid @enderror"
+                                   value="{{ old('account_name') }}"
+                                   placeholder="Auto-filled after verification"
+                                   readonly>
+                            <span class="input-group-text" id="verify_badge" style="display:none;">
+                                <i class="feather-check-circle text-success"></i>
+                            </span>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Bank <span class="text-danger">*</span></label>
-                                <select name="bank_code" id="bank_code" class="form-select" disabled>
-                                    <option value="">— Select country first —</option>
-                                </select>
-                                <input type="hidden" name="bank_name" id="bank_name" value="{{ old('bank_name') }}">
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Account Name</label>
-                                <div class="input-group">
-                                    <input type="text" id="account_name_display"
-                                           class="form-control @error('account_name') is-invalid @enderror"
-                                           value="{{ old('account_name') }}"
-                                           placeholder="Auto-filled after verification"
-                                           readonly>
-                                    <span class="input-group-text" id="verify_badge" style="display:none;">
-                                        <i class="feather-check-circle text-success"></i>
-                                    </span>
-                                </div>
-                                <input type="hidden" name="account_name" id="account_name" value="{{ old('account_name') }}">
-                                @error('account_name')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Can this account receive USD? <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-4 mt-1">
-                                <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
-                                    <input type="radio" name="dollar_capable" value="yes"
-                                           {{ old('dollar_capable', 'no') === 'yes' ? 'checked' : '' }}>
-                                    Yes — it accepts USD
-                                </label>
-                                <label class="d-flex align-items-center gap-2 fs-13 fw-normal cursor-pointer">
-                                    <input type="radio" name="dollar_capable" value="no"
-                                           {{ old('dollar_capable', 'no') === 'no' ? 'checked' : '' }}>
-                                    No — only (NGN)
-                                </label>
-                            </div>
-                            @error('dollar_capable')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
-                        </div>
-
-                    </div>
-                    
-                    {{-- Mobile money fields --}}
-                    <div id="momo_fields" style="display:none;">
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Mobile Number <span class="text-danger">*</span></label>
-                                <input type="text" name="mobile_number"
-                                       class="form-control @error('mobile_number') is-invalid @enderror"
-                                       value="{{ old('mobile_number') }}" placeholder="e.g. 254712345678">
-                                @error('mobile_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Account Name <span class="text-danger">*</span></label>
-                                <input type="text" name="momo_account_name"
-                                       class="form-control @error('momo_account_name') is-invalid @enderror"
-                                       value="{{ old('momo_account_name') }}" placeholder="Name on account">
-                                @error('momo_account_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Mobile Operator Slug <span class="text-danger">*</span></label>
-                                <input type="text" name="mobile_money_operator"
-                                       class="form-control @error('mobile_money_operator') is-invalid @enderror"
-                                       value="{{ old('mobile_money_operator') }}"
-                                       placeholder="e.g. safaricom-ke, mtn-gh">
-                                <div class="form-text">Use the operator slug from your country.</div>
-                                @error('mobile_money_operator')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-md-6 mb-4">
-                                <label class="form-label fw-bold">Country <span class="text-danger">*</span></label>
-                                <select name="mobile_money_country" id="mobile_money_country" class="form-select">
-                                    <option value="">— Select country —</option>
-                                    <option value="KE" {{ old('mobile_money_country') === 'KE' ? 'selected' : '' }}>Kenya (KES)</option>
-                                    <option value="GH" {{ old('mobile_money_country', 'GH') === 'GH' ? 'selected' : '' }}>Ghana (GHS)</option>
-                                </select>
-                                <input type="hidden" name="mobile_money_currency" id="mobile_money_currency">
-                            </div>
-                        </div>
+                        <input type="hidden" name="account_name" id="account_name" value="{{ old('account_name') }}">
+                        @error('account_name')<div class="text-danger fs-12 mt-1">{{ $message }}</div>@enderror
                     </div>
 
                     {{-- Note --}}
@@ -228,7 +154,7 @@
             <div class="card-body">
                 <div class="alert alert-warning mb-3">
                     <i class="feather-info me-2"></i>
-                    All withdrawals are processed in <strong>NGN</strong>. Processing takes 1–3 business days.
+                    All withdrawals are processed in <strong>NGN</strong>. Processing takes 1–3 business hours.
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" form="withdrawalForm" class="btn btn-primary">
@@ -250,11 +176,11 @@
                 <ul class="list-unstyled fs-13 text-muted">
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Minimum withdrawal is <strong>₦100.00</strong>
+                        Minimum withdrawal is <strong>₦1,000.00</strong>
                     </li>
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Ensure account can receive NGN transfers
+                        Nigerian bank accounts only
                     </li>
                     <li class="mb-2">
                         <i class="feather-check-circle text-success me-2"></i>
@@ -262,7 +188,7 @@
                     </li>
                     <li class="mb-0">
                         <i class="feather-check-circle text-success me-2"></i>
-                        Processing takes within 2-3 hours
+                        Processing takes within 2–3 hours
                     </li>
                 </ul>
             </div>
@@ -272,225 +198,438 @@
 </div>
 
 @push('scripts')
-<script>
-// Currency mapping
-const currencyMap = {
-    'NG': 'NGN',
-    'GH': 'GHS',
-    'KE': 'KES',
-    'ZA': 'ZAR',
-    'US': 'NGN',
-    'GB': 'GBP'
-};
+<style>
+/* ── Searchable Bank Picker ────────────────────────────────────────────── */
+.bank-picker {
+    position: relative;
+}
 
-const bankCountryEl  = document.getElementById('bank_country');
-const bankCodeEl     = document.getElementById('bank_code');
-const bankNameEl     = document.getElementById('bank_name');
+/* Trigger button mimics .form-select */
+.bank-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-size: .875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color, #212529);
+    background-color: var(--bs-body-bg, #fff);
+    background-clip: padding-box;
+    border: 1px solid var(--bs-border-color, #ced4da);
+    border-radius: .375rem;
+    cursor: pointer;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    text-align: left;
+    gap: .5rem;
+}
+.bank-trigger:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 .25rem rgba(13,110,253,.25);
+}
+.bank-trigger:disabled {
+    background-color: var(--bs-secondary-bg, #e9ecef);
+    opacity: 1;
+    cursor: not-allowed;
+}
+.bank-trigger.is-invalid {
+    border-color: #dc3545;
+}
+.bank-trigger-label {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: .875rem;
+}
+.bank-trigger-label.selected {
+    color: var(--bs-body-color, #212529);
+}
+.bank-trigger-icon {
+    flex-shrink: 0;
+    color: #6c757d;
+    transition: transform .2s ease;
+    font-size: .8rem;
+}
+.bank-picker.open .bank-trigger-icon {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.bank-dropdown {
+    position: absolute;
+    z-index: 1055;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #ced4da);
+    border-radius: .375rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    overflow: hidden;
+    animation: bankDropIn .15s ease;
+}
+@keyframes bankDropIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Search input inside dropdown */
+.bank-search-wrap {
+    position: relative;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid var(--bs-border-color, #e9ecef);
+}
+.bank-search-icon {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: .8rem;
+    pointer-events: none;
+}
+.bank-search-input {
+    width: 100%;
+    padding: .3rem .5rem .3rem 1.9rem;
+    font-size: .825rem;
+    border: 1px solid var(--bs-border-color, #ced4da);
+    border-radius: .25rem;
+    outline: none;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    color: var(--bs-body-color, #212529);
+}
+.bank-search-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+    background: #fff;
+}
+
+/* Bank list */
+.bank-list {
+    list-style: none;
+    margin: 0;
+    padding: .25rem 0;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+.bank-list::-webkit-scrollbar { width: 4px; }
+.bank-list::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 2px; }
+
+.bank-item {
+    padding: .45rem 1rem;
+    font-size: .845rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    transition: background .1s;
+    color: var(--bs-body-color, #212529);
+}
+.bank-item:hover,
+.bank-item.focused {
+    background: var(--bs-tertiary-bg, #f0f4ff);
+    color: #0d6efd;
+}
+.bank-item.selected-item {
+    font-weight: 600;
+    color: #0d6efd;
+}
+.bank-item .bank-check {
+    margin-left: auto;
+    font-size: .75rem;
+    color: #0d6efd;
+    display: none;
+}
+.bank-item.selected-item .bank-check {
+    display: inline;
+}
+
+/* highlight matched text */
+.bank-item mark {
+    background: #fff3cd;
+    padding: 0;
+    border-radius: 2px;
+    font-weight: 600;
+}
+
+.bank-empty {
+    padding: .75rem 1rem;
+    font-size: .825rem;
+    color: #6c757d;
+    margin: 0;
+    text-align: center;
+}
+</style>
+
+<script>
+// ── DOM refs ──────────────────────────────────────────────────────────────
+const bankCodeHidden = document.getElementById('bank_code');
+const bankNameHidden = document.getElementById('bank_name');
 const accountNumEl   = document.getElementById('account_number');
-const accountNameEl  = document.getElementById('account_name');
 const resolveSpinner = document.getElementById('resolve_spinner');
 const resolveError   = document.getElementById('resolve_error');
 const verifyBadge    = document.getElementById('verify_badge');
-const currencyHidden = document.getElementById('currency');
 
+// Bank picker elements
+const picker       = document.getElementById('bank-picker');
+const trigger      = document.getElementById('bank-trigger');
+const triggerLabel = document.getElementById('bank-trigger-label');
+const dropdown     = document.getElementById('bank-dropdown');
+const searchInput  = document.getElementById('bank-search');
+const bankList     = document.getElementById('bank-list');
+const bankEmpty    = document.getElementById('bank-empty');
+
+let allBanks     = [];   // [{ code, name }, …]
+let selectedCode = '{{ old('bank_code') }}';
+let selectedName = '{{ old('bank_name') }}';
+let focusedIndex = -1;
 let resolveTimer = null;
 
-// ── Step 0: Set currency when country changes ──────────────────────────────
-bankCountryEl.addEventListener('change', function () {
-    const country = this.value;
-    if (country && currencyMap[country]) {
-        currencyHidden.value = currencyMap[country];
-    } else {
-        currencyHidden.value = '';
-    }
-    
-    // Clear account verification when country changes
-    document.getElementById('account_name_display').value = '';
-    document.getElementById('account_name').value = '';
-    verifyBadge.style.display = 'none';
-    resolveError.style.display = 'none';
-    
-    // Load banks
-    loadBanks(country);
-});
+// ── Render list ───────────────────────────────────────────────────────────
+function renderBankList(query = '') {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+        ? allBanks.filter(b => b.name.toLowerCase().includes(q))
+        : allBanks;
 
-// ── Step 1: country selected → load banks ──────────────────────────────────
-async function loadBanks(country) {
-    if (!country || ['US', 'GB'].includes(country)) {
-        bankCodeEl.innerHTML = '<option value="">— Manual entry for this country —</option>';
-        bankCodeEl.disabled = true;
+    bankList.innerHTML = '';
+    focusedIndex = -1;
+
+    if (!filtered.length) {
+        bankEmpty.hidden = false;
         return;
     }
-    
+    bankEmpty.hidden = true;
+
+    filtered.forEach((bank, idx) => {
+        const li = document.createElement('li');
+        li.className = 'bank-item' +
+            (bank.code === selectedCode ? ' selected-item' : '');
+        li.setAttribute('role', 'option');
+        li.dataset.code = bank.code;
+        li.dataset.name = bank.name;
+        li.dataset.idx  = idx;
+
+        // Highlight matched characters
+        let label = bank.name;
+        if (q) {
+            const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            label = bank.name.replace(re, '<mark>$1</mark>');
+        }
+
+        li.innerHTML = `${label}<i class="feather-check bank-check"></i>`;
+        li.addEventListener('click', () => selectBank(bank.code, bank.name));
+        li.addEventListener('mouseenter', () => setFocused(idx));
+        bankList.appendChild(li);
+    });
+}
+
+function setFocused(idx) {
+    const items = bankList.querySelectorAll('.bank-item');
+    items.forEach(el => el.classList.remove('focused'));
+    focusedIndex = idx;
+    if (items[idx]) {
+        items[idx].classList.add('focused');
+        items[idx].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// ── Select a bank ─────────────────────────────────────────────────────────
+function selectBank(code, name) {
+    selectedCode = code;
+    selectedName = name;
+
+    bankCodeHidden.value = code;
+    bankNameHidden.value = name;
+
+    triggerLabel.textContent = name;
+    triggerLabel.classList.add('selected');
+    triggerLabel.classList.remove('text-muted');
+
+    closeDropdown();
+    clearAccountVerification();
+
+    if (accountNumEl.value.length === 10) {
+        triggerResolve();
+    }
+}
+
+// ── Open / close ──────────────────────────────────────────────────────────
+function openDropdown() {
+    if (trigger.disabled) return;
+    dropdown.hidden = false;
+    picker.classList.add('open');
+    searchInput.value = '';
+    renderBankList('');
+    searchInput.focus();
+
+    // Scroll selected item into view
+    const sel = bankList.querySelector('.selected-item');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+
+function closeDropdown() {
+    dropdown.hidden = true;
+    picker.classList.remove('open');
+}
+
+trigger.addEventListener('click', () => {
+    dropdown.hidden ? openDropdown() : closeDropdown();
+});
+
+// Close on outside click
+document.addEventListener('click', e => {
+    if (!picker.contains(e.target)) closeDropdown();
+});
+
+// ── Keyboard navigation ───────────────────────────────────────────────────
+searchInput.addEventListener('keydown', e => {
+    const items = [...bankList.querySelectorAll('.bank-item')];
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocused(Math.min(focusedIndex + 1, items.length - 1));
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocused(Math.max(focusedIndex - 1, 0));
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (focusedIndex >= 0 && items[focusedIndex]) {
+            selectBank(items[focusedIndex].dataset.code, items[focusedIndex].dataset.name);
+        }
+    } else if (e.key === 'Escape') {
+        closeDropdown();
+        trigger.focus();
+    }
+});
+
+searchInput.addEventListener('input', () => renderBankList(searchInput.value));
+
+// ── Load Nigerian banks on page load ──────────────────────────────────────
+(async function loadBanks() {
     try {
         const res = await fetch('{{ route("seller.withdrawals.banks") }}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type':     'application/json',
+                'X-CSRF-TOKEN':     '{{ csrf_token() }}',
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+                'Accept':           'application/json',
             },
-            body: JSON.stringify({ country: country })
+            body: JSON.stringify({ country: 'NG' }),
         });
-        
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        
+
         if (data.status === 'ok' && data.banks && data.banks.length) {
-            bankCodeEl.innerHTML = '<option value="">— Select bank —</option>' +
-                data.banks.map(b =>
-                    `<option value="${b.code}" data-name="${b.name}">${b.name}</option>`
-                ).join('');
-            bankCodeEl.disabled = false;
+            allBanks = data.banks;
+            trigger.disabled = false;
+
+            // Restore old value after validation error
+            if (selectedCode) {
+                const old = allBanks.find(b => b.code === selectedCode);
+                if (old) {
+                    triggerLabel.textContent = old.name;
+                    triggerLabel.classList.add('selected');
+                    triggerLabel.classList.remove('text-muted');
+                    bankNameHidden.value = old.name;
+                }
+            } else {
+                triggerLabel.innerHTML = '— Select bank —';
+                triggerLabel.classList.add('text-muted');
+            }
         } else {
-            bankCodeEl.innerHTML = '<option value="">— No banks found —</option>';
-            bankCodeEl.disabled = true;
+            triggerLabel.textContent = '— No banks found —';
         }
     } catch (e) {
         console.error('Error loading banks:', e);
-        bankCodeEl.innerHTML = '<option value="">— Failed to load banks —</option>';
-        bankCodeEl.disabled = true;
+        triggerLabel.textContent = '— Failed to load. Refresh page —';
     }
-}
+})();
 
-// ── Step 2: bank selected → store bank name ────────────────────────────────
-bankCodeEl.addEventListener('change', function () {
-    const selected = this.options[this.selectedIndex];
-    bankNameEl.value = selected?.dataset?.name ?? '';
-
-    if (accountNumEl.value.length >= 8) {
-        triggerResolve();
-    }
-});
-
-// ── Step 3: account number entered → resolve after typing stops ────────────
+// ── Account number → resolve ──────────────────────────────────────────────
 accountNumEl.addEventListener('input', function () {
     clearTimeout(resolveTimer);
-    document.getElementById('account_name_display').value = '';
-    document.getElementById('account_name').value = '';
-    verifyBadge.style.display = 'none';
-    resolveError.style.display = 'none';
+    clearAccountVerification();
 
-    const country = bankCountryEl.value;
-    const bank    = bankCodeEl.value;
-
-    if (!['NG', 'KE', 'ZA', 'GH'].includes(country)) return;
-    if (!bank) return;
-    if (this.value.length < 8) return;
+    if (!bankCodeHidden.value) return;
+    if (this.value.length < 10) return;
 
     resolveTimer = setTimeout(triggerResolve, 800);
 });
 
+function clearAccountVerification() {
+    document.getElementById('account_name_display').value = '';
+    document.getElementById('account_name').value = '';
+    verifyBadge.style.display  = 'none';
+    resolveError.style.display = 'none';
+}
+
 async function triggerResolve() {
-    const country   = bankCountryEl.value;
-    const bankCode  = bankCodeEl.value;
+    const bankCode  = bankCodeHidden.value;
     const accountNo = accountNumEl.value;
+
+    if (!bankCode || accountNo.length < 10) return;
 
     resolveSpinner.style.display = '';
     resolveError.style.display   = 'none';
-    accountNameEl.value          = '';
 
     try {
-        const res  = await fetch('{{ route('seller.withdrawals.resolve-account') }}', {
-            method:  'POST',
+        const res = await fetch('{{ route('seller.withdrawals.resolve-account') }}', {
+            method: 'POST',
             headers: {
                 'Content-Type':     'application/json',
                 'X-CSRF-TOKEN':     '{{ csrf_token() }}',
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify({
-                bank_code:      bankCode,
-                account_number: accountNo,
-                country:        country,
-            }),
+            body: JSON.stringify({ bank_code: bankCode, account_number: accountNo }),
         });
 
         const data = await res.json();
 
         if (data.status === 'ok') {
             document.getElementById('account_name_display').value = data.account_name;
-            document.getElementById('account_name').value = data.account_name;
-            verifyBadge.style.display = '';
+            document.getElementById('account_name').value         = data.account_name;
+            verifyBadge.style.display  = '';
             resolveError.style.display = 'none';
         } else {
             const msg = data.message === 'Invalid account.'
                 ? 'Account not found. Please check the account number and selected bank.'
                 : (data.message ?? 'Could not verify account. Try again.');
-            resolveError.textContent = msg;
+            resolveError.textContent   = msg;
             resolveError.style.display = '';
         }
     } catch (e) {
-        resolveError.textContent = 'Verification failed. Please try again.';
+        resolveError.textContent   = 'Verification failed. Please try again.';
         resolveError.style.display = '';
     } finally {
         resolveSpinner.style.display = 'none';
     }
 }
 
-// ── Payout type toggle ─────────────────────────────────────────────────────
-const bankFields = document.getElementById('bank_fields');
-const momoFields = document.getElementById('momo_fields');
-const mobileMoneyCountry = document.getElementById('mobile_money_country');
-const mobileMoneyCurrency = document.getElementById('mobile_money_currency');
-
-function togglePayoutType() {
-    const isMomo = document.getElementById('type_momo').checked;
-    bankFields.style.display = isMomo ? 'none' : 'block';
-    momoFields.style.display = isMomo ? 'block' : 'none';
-    
-    // Remove required from bank fields when hidden
-    const bankRequired = document.querySelectorAll('#bank_fields input, #bank_fields select');
-    bankRequired.forEach(field => {
-        if (field.hasAttribute('required')) {
-            field.removeAttribute('required');
-        }
-    });
-}
-
-// Mobile money country currency update
-if (mobileMoneyCountry) {
-    mobileMoneyCountry.addEventListener('change', function() {
-        const country = this.value;
-        if (country && currencyMap[country]) {
-            mobileMoneyCurrency.value = currencyMap[country];
-        } else {
-            mobileMoneyCurrency.value = '';
-        }
-    });
-    
-    // Trigger on load
-    if (mobileMoneyCountry.value) {
-        mobileMoneyCurrency.value = currencyMap[mobileMoneyCountry.value] || '';
+// ── Form submit guard ─────────────────────────────────────────────────────
+document.getElementById('withdrawalForm').addEventListener('submit', function (e) {
+    if (!bankCodeHidden.value) {
+        e.preventDefault();
+        trigger.classList.add('is-invalid');
+        trigger.focus();
+        return false;
     }
-}
-
-document.getElementById('type_bank').addEventListener('change', togglePayoutType);
-document.getElementById('type_momo').addEventListener('change', togglePayoutType);
-togglePayoutType();
-
-// Set initial currency on page load
-if (bankCountryEl.value && currencyMap[bankCountryEl.value]) {
-    currencyHidden.value = currencyMap[bankCountryEl.value];
-}
-
-document.getElementById('withdrawalForm').addEventListener('submit', function(e) {
-    const country  = bankCountryEl.value;
-    const isMomo   = document.getElementById('type_momo').checked;
     const acctName = document.getElementById('account_name').value;
-
-    if (!isMomo && ['NG', 'KE', 'ZA', 'GH'].includes(country)) {
-        if (!acctName) {
-            e.preventDefault();
-            resolveError.textContent = 'Please wait for account verification to complete before submitting.';
-            resolveError.style.display = '';
-            document.getElementById('account_number').focus();
-            return false;
-        }
+    if (!acctName) {
+        e.preventDefault();
+        resolveError.textContent   = 'Please wait for account verification to complete before submitting.';
+        resolveError.style.display = '';
+        accountNumEl.focus();
+        return false;
     }
+    trigger.classList.remove('is-invalid');
 });
 </script>
 @endpush

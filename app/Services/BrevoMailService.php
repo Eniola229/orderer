@@ -618,7 +618,7 @@ class BrevoMailService
                     </table>
                 </div>
                 
-                <p>The funds should reflect in your account within <strong>1-3 business days</strong> depending on your bank.</p>
+                <p>The funds should reflect in your account within <strong>1-3 hours</strong> depending on your bank.</p>
                 
                 <div style='text-align:center;margin:30px 0;'>
                     <a href='" . route('seller.withdrawals.index') . "' style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
