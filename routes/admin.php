@@ -95,6 +95,8 @@ Route::prefix('20050619/admin')->name('admin.')->group(function () {
         Route::put('/withdrawals/{wd}/approve', [WithdrawalController::class, 'approve'])->name('withdrawals.approve');
         Route::put('/withdrawals/{wd}/reject', [WithdrawalController::class, 'reject'])->name('withdrawals.reject');
         Route::put('/withdrawals/{wd}/change-status', [WithdrawalController::class, 'changeStatus'])->name('withdrawals.change-status');
+        Route::put('withdrawals/{wd}/authorize-otp', [WithdrawalController::class, 'authorizeOtp'])
+            ->name('withdrawals.authorize-otp');
 
         // ==================== Categories & Brands ====================
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
