@@ -30,13 +30,16 @@
             </div>
         </div>
 
-        {{-- Results count --}}
+        {{-- Results count + sort indicator --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="mb-0 text-muted" style="font-size:14px;">
                 @if(request('search'))
                     Results for <strong>"{{ request('search') }}"</strong> —
                 @endif
                 <strong>{{ $brands->total() }}</strong> brand{{ $brands->total() !== 1 ? 's' : '' }} found
+                <span style="margin-left:10px;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">
+                    <i class="fa fa-sort-amount-desc" style="margin-right:3px;"></i> Top Rated First
+                </span>
             </p>
             @if(request('search'))
             <a href="{{ route('brands.index') }}" class="btn btn-sm" style="background:#f5f5f5;border-radius:8px;font-size:13px;color:#666;">
@@ -82,10 +85,18 @@
 
         {{-- Brand cards --}}
         <div class="row">
-            @forelse($brands as $brand)
+            @forelse($brands as $index => $brand)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <a href="{{ route('brands.show', $brand->slug) }}" class="text-decoration-none">
-                    <div class="brand-card" style="border:1px solid #eee;border-radius:14px;overflow:hidden;transition:all .25s;background:#fff;">
+                    <div class="brand-card" style="border:1px solid #eee;border-radius:14px;overflow:hidden;transition:all .25s;background:#fff;position:relative;">
+
+                        {{-- Top-rated crown for top 3 brands --}}
+                        @if(!request('search') && $index < 3)
+                        <div style="position:absolute;top:8px;right:8px;z-index:2;background:{{ $index === 0 ? '#FFD700' : ($index === 1 ? '#C0C0C0' : '#CD7F32') }};color:{{ $index === 0 ? '#7a5800' : ($index === 1 ? '#4a4a4a' : '#6b3a00') }};padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+                            <i class="fa fa-trophy" style="font-size:9px;"></i>
+                            #{{ $index + 1 }} Rated
+                        </div>
+                        @endif
 
                         {{-- Card image / logo area --}}
                         <div style="background:#f8fdf9;padding:28px 20px;text-align:center;position:relative;border-bottom:1px solid #f0f0f0;">
@@ -114,11 +125,13 @@
                             </h6>
 
                             {{-- Star rating --}}
-                            <div style="display:flex;align-items:center;gap:5px;margin-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
                                 <span style="color:#F39C12;font-size:12px;letter-spacing:1px;">
                                     @for($i=1;$i<=5;$i++){{ $i<=round($brand->average_rating)?'★':'☆' }}@endfor
                                 </span>
-                                <span style="color:#aaa;font-size:11px;">({{ $brand->total_reviews }})</span>
+                                <span style="color:#aaa;font-size:11px;">
+                                    {{ number_format($brand->average_rating, 1) }} ({{ $brand->total_reviews }} reviews)
+                                </span>
                             </div>
 
                             {{-- Seller name --}}

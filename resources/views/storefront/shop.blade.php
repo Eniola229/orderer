@@ -271,6 +271,169 @@
                     @endif
                     {{-- END SPONSORED PRODUCTS --}}
 
+                    {{-- ── Best Sellers & Top Rated (tabbed) ───────────────────────── --}}
+                    @if(isset($bestSellers) && $bestSellers->count() || isset($topRatedProducts) && $topRatedProducts->count())
+                    <section style="background:#f4fdf8;padding:48px 0;margin-bottom:40px;">
+                        <div class="container">
+
+                            {{-- Section header with tabs --}}
+                            <div class="row align-items-center mb-0">
+                                <div class="col-12">
+                                    <div class="ord-section-tabs">
+                                        @if(isset($bestSellers) && $bestSellers->count())
+                                        <button class="tab-btn active" onclick="switchTab('best-sellers', this)">
+                                            <i class="fa fa-fire" style="color:#FF6B00;margin-right:6px;"></i> Best Sellers
+                                        </button>
+                                        @endif
+                                        @if(isset($topRatedProducts) && $topRatedProducts->count())
+                                        <button class="tab-btn {{ !isset($bestSellers) || !$bestSellers->count() ? 'active' : '' }}" onclick="switchTab('top-rated', this)">
+                                            <i class="fa fa-star" style="color:#F39C12;margin-right:6px;"></i> Top Rated
+                                        </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Best Sellers panel --}}
+                            @if(isset($bestSellers) && $bestSellers->count())
+                            <div id="tab-best-sellers" class="ord-tab-panel active">
+                                <div class="row">
+                                    @foreach($bestSellers as $product)
+                                    @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
+                                    <div class="col-12 col-sm-6 col-lg-4 mb-4">
+                                        <div class="single-product-wrapper" style="position:relative;">
+                                            {{-- Best seller rank badge --}}
+                                            @php $loop_index = $loop->index + 1; @endphp
+                                            @if($loop_index <= 3)
+                                            <div style="position:absolute;top:8px;left:8px;z-index:3;width:26px;height:26px;background:{{ $loop_index === 1 ? '#FFD700' : ($loop_index === 2 ? '#C0C0C0' : '#CD7F32') }};color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                                                #{{ $loop_index }}
+                                            </div>
+                                            @endif
+
+                                            <div class="product-img">
+                                                <a href="{{ route('product.show', $product->slug) }}">
+                                                    <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
+                                                    @if($img && $product->images->skip(1)->first())
+                                                    <img class="hover-img" src="{{ $product->images->skip(1)->first()->image_url }}" alt="">
+                                                    @endif
+                                                </a>
+                                                @if($product->sale_price)
+                                                <div class="product-badge offer-badge">
+                                                    <span>-{{ round((($product->price - $product->sale_price) / $product->price) * 100) }}%</span>
+                                                </div>
+                                                @endif
+                                                @if($product->seller->is_verified_business)
+                                                <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                                    <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                                </div>
+                                                @endif
+                                                <div class="product-favourite">
+                                                    <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
+                                                </div>
+                                            </div>
+                                            <div class="product-description">
+                                                <span>{{ Str::limit($product->seller->business_name ?? '', 10) }}</span>
+                                                <a href="{{ route('product.show', $product->slug) }}">
+                                                    <h6>{{ Str::limit($product->name, 35) }}</h6>
+                                                </a>
+                                                @if($product->total_sold)
+                                                <p style="font-size:12px;color:#888;margin:4px 0;">
+                                                    <i class="fa fa-shopping-bag" style="color:#FF6B00;font-size:11px;"></i>
+                                                    {{ number_format($product->total_sold) }} sold
+                                                </p>
+                                                @endif
+                                                <p class="product-price">
+                                                    @if($product->sale_price)
+                                                        <span class="old-price">₦{{ number_format($product->price, 2) }}</span>
+                                                        ₦{{ number_format($product->sale_price, 2) }}
+                                                    @else
+                                                        ₦{{ number_format($product->price, 2) }}
+                                                    @endif
+                                                </p>
+                                                <div class="hover-content">
+                                                    <div class="add-to-cart-btn">
+                                                        <a href="#" class="btn essence-btn add-to-cart"
+                                                           data-product="{{ $product->id }}">Add to Cart</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+
+                            {{-- Top Rated panel --}}
+                            @if(isset($topRatedProducts) && $topRatedProducts->count())
+                            <div id="tab-top-rated" class="ord-tab-panel {{ !isset($bestSellers) || !$bestSellers->count() ? 'active' : '' }}">
+                                <div class="row">
+                                    @foreach($topRatedProducts as $product)
+                                    @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
+                                    <div class="col-12 col-sm-6 col-lg-4 mb-4">
+                                        <div class="single-product-wrapper">
+                                            <div class="product-img">
+                                                <a href="{{ route('product.show', $product->slug) }}">
+                                                    <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
+                                                    @if($img && $product->images->skip(1)->first())
+                                                    <img class="hover-img" src="{{ $product->images->skip(1)->first()->image_url }}" alt="">
+                                                    @endif
+                                                </a>
+                                                @if($product->sale_price)
+                                                <div class="product-badge offer-badge">
+                                                    <span>-{{ round((($product->price - $product->sale_price) / $product->price) * 100) }}%</span>
+                                                </div>
+                                                @endif
+                                                @if($product->seller->is_verified_business)
+                                                <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
+                                                    <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                                </div>
+                                                @endif
+                                                <div class="product-favourite">
+                                                    <a href="#" class="favme fa fa-heart" data-product="{{ $product->id }}"></a>
+                                                </div>
+                                            </div>
+                                            <div class="product-description">
+                                                <span>{{ Str::limit($product->seller->business_name ?? '', 10) }}</span>
+                                                <a href="{{ route('product.show', $product->slug) }}">
+                                                    <h6>{{ Str::limit($product->name, 35) }}</h6>
+                                                </a>
+                                                <div style="display:flex;align-items:center;gap:6px;margin:4px 0;">
+                                                    <span style="color:#F39C12;font-size:12px;letter-spacing:1px;">
+                                                        @for($s = 1; $s <= 5; $s++)
+                                                            {{ $s <= round($product->average_rating) ? '★' : '☆' }}
+                                                        @endfor
+                                                    </span>
+                                                    <span style="font-size:11px;color:#888;">
+                                                        ({{ number_format($product->total_reviews) }})
+                                                    </span>
+                                                </div>
+                                                <p class="product-price">
+                                                    @if($product->sale_price)
+                                                        <span class="old-price">₦{{ number_format($product->price, 2) }}</span>
+                                                        ₦{{ number_format($product->sale_price, 2) }}
+                                                    @else
+                                                        ₦{{ number_format($product->price, 2) }}
+                                                    @endif
+                                                </p>
+                                                <div class="hover-content">
+                                                    <div class="add-to-cart-btn">
+                                                        <a href="#" class="btn essence-btn add-to-cart"
+                                                           data-product="{{ $product->id }}">Add to Cart</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+
+                        </div>
+                    </section>
+                    @endif
+                    {{-- END BEST SELLERS & TOP RATED --}}
 
                     {{-- Regular product grid --}}
                     <div class="row">
@@ -367,12 +530,50 @@
 
 @include('layouts.storefront.footer')
 
+<style>
+    .ord-section-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .ord-section-tabs .tab-btn {
+        background: none;
+        border: none;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+    .ord-section-tabs .tab-btn.active {
+        color: #2ECC71;
+        border-bottom-color: #2ECC71;
+    }
+    .ord-tab-panel { display: none; }
+    .ord-tab-panel.active { display: block; }
+</style>
+
 <script src="{{ asset('js/jquery/jquery-2.2.4.min.js') }}"></script>
 <script src="{{ asset('js/popper.min.js') }}"></script>
 <script src="{{ asset('js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('js/plugins.js') }}"></script>
 <script src="{{ asset('js/classy-nav.min.js') }}"></script>
 <script src="{{ asset('js/active.js') }}"></script>
+<script>
+function switchTab(tabId, btn) {
+    // Deactivate all tabs and panels
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.ord-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    // Activate clicked
+    btn.classList.add('active');
+    var panel = document.getElementById('tab-' + tabId);
+    if (panel) panel.classList.add('active');
+}
+</script>
 <script>
 document.querySelectorAll('.add-to-cart').forEach(function(btn) {
     btn.addEventListener('click', function(e) {

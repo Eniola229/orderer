@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Category;
+use App\Models\Category; 
 use App\Models\Brand;
 use App\Models\FlashSale;
 use App\Models\Wishlist;
@@ -36,6 +36,22 @@ class StorefrontController extends Controller
             ->take(8)
             ->get();
 
+        // ── Best Sellers ──────────────────────────────────────────
+        $bestSellers = Product::where('status', 'approved')
+            ->with(['images', 'seller'])
+            ->orderBy('total_sold', 'desc')
+            ->take(8)
+            ->get();
+
+        // ── Top Rated ─────────────────────────────────────────────
+        $topRatedProducts = Product::where('status', 'approved')
+            ->where('total_reviews', '>=', 1)   // only products with at least one review
+            ->with(['images', 'seller'])
+            ->orderBy('average_rating', 'desc')
+            ->orderBy('total_reviews', 'desc')  // break ties by review count
+            ->take(8)
+            ->get();
+
         $flashSales = FlashSale::where('is_active', true)
             ->where('starts_at', '<=', now())
             ->where('ends_at', '>=', now())
@@ -43,8 +59,11 @@ class StorefrontController extends Controller
             ->take(4)
             ->get();
 
+        // ── Brands sorted by rating (highest first) ───────────────
         $brands = Brand::where('is_active', true)
             ->whereNotNull('logo')
+            ->orderBy('average_rating', 'desc')
+            ->orderBy('total_reviews', 'desc')
             ->take(6)
             ->get();
 
@@ -59,6 +78,7 @@ class StorefrontController extends Controller
 
         return view('storefront.home', compact(
             'categories', 'featuredProducts', 'newArrivals',
+            'bestSellers', 'topRatedProducts',
             'flashSales', 'brands',
             'heroBannerAds', 'topListingAds'
         ));
@@ -74,10 +94,11 @@ class StorefrontController extends Controller
         $currentCategory = null;
         $brands = Brand::where('is_active', true)->take(5)->get();
 
+        // Base query for products (for paginated results)
         $query = Product::where('status', 'approved')
             ->with(['images', 'seller', 'category']);
 
-        // Filters
+        // Apply filters to main query
         if ($request->min_price) $query->where('price', '>=', $request->min_price);
         if ($request->max_price) $query->where('price', '<=', $request->max_price);
         if ($request->condition) $query->whereIn('condition', (array) $request->condition);
@@ -89,7 +110,7 @@ class StorefrontController extends Controller
             });
         }
 
-        // Sort
+        // Sort main query
         switch ($request->sort) {
             case 'price_asc':  $query->orderBy('price', 'asc');  break;
             case 'price_desc': $query->orderBy('price', 'desc'); break;
@@ -100,10 +121,49 @@ class StorefrontController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        // ── Best Sellers & Top Rated with filters applied ───────────
+        // Create a separate query with the SAME filters
+        $bestSellersQuery = Product::where('status', 'approved')
+            ->with(['images', 'seller']);
+        
+        // Apply same filters to Best Sellers
+        if ($request->min_price) $bestSellersQuery->where('price', '>=', $request->min_price);
+        if ($request->max_price) $bestSellersQuery->where('price', '<=', $request->max_price);
+        if ($request->condition) $bestSellersQuery->whereIn('condition', (array) $request->condition);
+        if ($request->q) {
+            $q = $request->q;
+            $bestSellersQuery->where(function($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%");
+            });
+        }
+        
+        $bestSellers = $bestSellersQuery->orderBy('total_sold', 'desc')->take(8)->get();
+
+        // Apply same filters to Top Rated
+        $topRatedQuery = Product::where('status', 'approved')
+            ->where('total_reviews', '>=', 1)
+            ->with(['images', 'seller']);
+        
+        if ($request->min_price) $topRatedQuery->where('price', '>=', $request->min_price);
+        if ($request->max_price) $topRatedQuery->where('price', '<=', $request->max_price);
+        if ($request->condition) $topRatedQuery->whereIn('condition', (array) $request->condition);
+        if ($request->q) {
+            $q = $request->q;
+            $topRatedQuery->where(function($sub) use ($q) {
+                $sub->where('name', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%");
+            });
+        }
+        
+        $topRatedProducts = $topRatedQuery->orderBy('average_rating', 'desc')
+            ->orderBy('total_reviews', 'desc')
+            ->take(8)
+            ->get();
+        // ────────────────────────────────────────────────────────────
+
         // ── Ads ──────────────────────────────────────────────────
-        // Search results banner (shows on shop/search pages)
         $searchBannerAds = AdHelper::forSlot('search_results', 1);
-        // Top listing sponsored products
         $topListingAds   = AdHelper::topListings(4);
 
         foreach ($searchBannerAds as $ad) {
@@ -115,16 +175,18 @@ class StorefrontController extends Controller
 
         return view('storefront.shop', compact(
             'products', 'allCategories', 'currentCategory', 'brands',
-            'searchBannerAds', 'topListingAds'
+            'searchBannerAds', 'topListingAds',
+            'bestSellers', 'topRatedProducts'
         ));
     }
 
-    public function shopCategory(Request $request, string $categorySlug)
+     public function shopCategory(Request $request, string $categorySlug)
     {
         $allCategories   = Category::where('is_active', true)->withCount('products')->with('subcategories')->get();
         $currentCategory = Category::where('slug', $categorySlug)->where('is_active', true)->firstOrFail();
         $brands          = Brand::where('is_active', true)->take(10)->get();
 
+        // Base query for products
         $query = Product::where('status', 'approved')
             ->where('category_id', $currentCategory->id)
             ->with(['images', 'seller', 'category']);
@@ -143,6 +205,32 @@ class StorefrontController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        // ── Best Sellers & Top Rated with filters applied ───────────
+        $bestSellersQuery = Product::where('status', 'approved')
+            ->where('category_id', $currentCategory->id)
+            ->with(['images', 'seller']);
+        
+        if ($request->min_price) $bestSellersQuery->where('price', '>=', $request->min_price);
+        if ($request->max_price) $bestSellersQuery->where('price', '<=', $request->max_price);
+        if ($request->condition) $bestSellersQuery->whereIn('condition', (array) $request->condition);
+        
+        $bestSellers = $bestSellersQuery->orderBy('total_sold', 'desc')->take(8)->get();
+
+        $topRatedQuery = Product::where('status', 'approved')
+            ->where('category_id', $currentCategory->id)
+            ->where('total_reviews', '>=', 1)
+            ->with(['images', 'seller']);
+        
+        if ($request->min_price) $topRatedQuery->where('price', '>=', $request->min_price);
+        if ($request->max_price) $topRatedQuery->where('price', '<=', $request->max_price);
+        if ($request->condition) $topRatedQuery->whereIn('condition', (array) $request->condition);
+        
+        $topRatedProducts = $topRatedQuery->orderBy('average_rating', 'desc')
+            ->orderBy('total_reviews', 'desc')
+            ->take(8)
+            ->get();
+        // ────────────────────────────────────────────────────────────
+
         // ── Ads ──────────────────────────────────────────────────
         $categoryBannerAds = AdHelper::forSlot('category_page', 1);
         $topListingAds     = AdHelper::topListings(4, $currentCategory->id);
@@ -156,7 +244,8 @@ class StorefrontController extends Controller
 
         return view('storefront.shop', compact(
             'products', 'allCategories', 'currentCategory', 'brands',
-            'categoryBannerAds', 'topListingAds'
+            'categoryBannerAds', 'topListingAds',
+            'bestSellers', 'topRatedProducts'
         ));
     }
 
@@ -223,6 +312,10 @@ class StorefrontController extends Controller
         if (request('search')) {
             $query->where('name', 'like', '%' . request('search') . '%');
         }
+
+        // Sort by rating first, then by total orders/reviews as a tiebreaker
+        $query->orderBy('average_rating', 'desc')
+              ->orderBy('total_reviews', 'desc');
 
         $brands = $query->paginate(20);
 
