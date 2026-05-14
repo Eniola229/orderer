@@ -154,7 +154,7 @@
             <div class="card-body">
                 <div class="alert alert-warning mb-3">
                     <i class="feather-info me-2"></i>
-                    All withdrawals are processed in <strong>NGN</strong>. Processing takes 1–3 business hours.
+                    All withdrawals are processed in <strong>NGN</strong>. Processing takes 1–3 hours.
                 </div>
                 <div class="d-grid gap-2">
                     <button type="submit" form="withdrawalForm" class="btn btn-primary">
