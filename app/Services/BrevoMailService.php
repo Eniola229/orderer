@@ -830,7 +830,7 @@ protected function freeShippingAnnouncementHtml($user, $rule): string
     }
 
     // // ── Urgency banner (only if ends within 3 days) ───────────
-    // $urgencyBanner = '';
+    $urgencyBanner = '';
     // if ($rule->ends_at && $rule->ends_at->diffInDays(now()) <= 3 && $rule->ends_at->isFuture()) {
     //     $daysLeft = max(1, (int) $rule->ends_at->diffInDays(now()));
     //     $urgencyBanner = "
