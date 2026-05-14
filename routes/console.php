@@ -6,30 +6,43 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Log;
 
 
-// Check price drop alerts — run every 6 hours
-Schedule::command('alerts:price-drops')->everySixHours();
-
+// Check price drop alerts
+Schedule::command('alerts:price-drops')
+    ->everySixHours()
+    ->withoutOverlapping();
 
 // Clean up expired flash sales
 Schedule::call(function () {
     \App\Models\FlashSale::where('ends_at', '<', now())
         ->where('is_active', true)
         ->update(['is_active' => false]);
-})->hourly();
- 
-// Check order status 
-Schedule::command('orders-sync:sync-shipping-status')->everyFifteenMinutes();
+})->hourly()
+  ->withoutOverlapping();
 
-//Check delivery booking 
-Schedule::command('bookings:check-pending')->everyFiveMinutes();
-Schedule::command('monnify:check-pending-bookings')->everyFiveMinutes();
+// Check order status
+Schedule::command('orders-sync:sync-shipping-status')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping();
+
+// Check delivery booking
+Schedule::command('bookings:check-pending')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('monnify:check-pending-bookings')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
 
 // For ads
-Schedule::command('ads:charge')->dailyAt('13:05');
+Schedule::command('ads:charge')
+    ->dailyAt('13:05')
+    ->withoutOverlapping();
 
-//For Order Payment Status
+// For Order Payment Status
 Schedule::command('korapay:check-pending-orders')
-         ->everyFiveMinutes()
-         ->withoutOverlapping()
-         ->onOneServer();
-Schedule::command('monnify:check-pending-orders')->everyFiveMinutes();
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('monnify:check-pending-orders')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();

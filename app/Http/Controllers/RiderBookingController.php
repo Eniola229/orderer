@@ -138,7 +138,7 @@ class RiderBookingController extends Controller
             'carrier'          => ['required', 'string'],
             'service_name'     => ['required', 'string'],
             'fee'              => ['required', 'numeric', 'min:0'],
-            'payment_method'   => ['required', 'in:wallet,korapay,monnify'],  // ← added monnify
+            'payment_method'   => ['required', 'in:wallet,korapay,monnify'],
         ]);
 
         $fee         = (float) $request->fee;
