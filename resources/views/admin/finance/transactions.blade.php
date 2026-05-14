@@ -40,7 +40,7 @@
         <div class="card">
             <div class="card-body">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">In Escrow</p>
-                <h2 class="fw-bold mb-0 text-warning">${{ number_format($stats['in_escrow'], 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-warning">₦{{ number_format($stats['in_escrow'], 2) }}</h2>
                 <small class="text-muted">Held pending delivery</small>
             </div>
         </div>
@@ -49,7 +49,7 @@
         <div class="card">
             <div class="card-body">
                 <p class="text-muted fs-12 fw-semibold text-uppercase mb-1">Total Released</p>
-                <h2 class="fw-bold mb-0 text-primary">${{ number_format($stats['total_released'], 2) }}</h2>
+                <h2 class="fw-bold mb-0 text-primary">₦{{ number_format($stats['total_released'], 2) }}</h2>
                 <small class="text-muted">Paid out to sellers</small>
             </div>
         </div>
@@ -206,7 +206,7 @@
                         <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
                             {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                           
-                        <td class="fw-semibold">${{ number_format($txn->balance_after, 2) }}  
+                        <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}  
                         <td>
                             <span class="badge" style="
                                 background-color: {{ $statusColor }};
