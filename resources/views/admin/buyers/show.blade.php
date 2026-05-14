@@ -144,7 +144,7 @@
                                         #{{ $order->order_number }}
                                     </a>
                                 </td>
-                                <td class="fw-bold">${{ number_format($order->total, 2) }}</td>
+                                <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                                 <td>
                                     <span class="badge orderer-badge badge-{{ $order->status }}">
                                         {{ ucfirst($order->status) }}
@@ -199,7 +199,7 @@
                                     </span>
                                 </td>
                                 <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                    {{ $isCredit ? '+' : '-' }}${{ number_format($txn->amount, 2) }}
+                                    {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
                                 </td>
                                 <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td class="text-muted fs-12">{{ Str::limit($txn->description, 40) }}</td>
