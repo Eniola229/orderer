@@ -116,7 +116,7 @@
 
     <h2 id="orders">5. Order Management</h2>
     <h3>5.1 Processing Time</h3>
-    <p>You must state your processing time (the time from order placement to dispatch) on each listing. You are obligated to ship within the stated processing time. Repeated late dispatch will result in warnings and may lead to account suspension.</p>
+    <p>You may state your processing time (the time from order placement to dispatch) on each listing. You are obligated to ship within the stated processing time (Once the Delivery company comes to pick up the package). Repeated late dispatch will result in warnings and may lead to account suspension.</p>
 
     <h3>5.2 Shipping</h3>
     <p>You may select a shipping method, providing valid tracking information, and ensuring items are packaged securely to prevent transit damage. Orderer partners with Shipbubble for shipping rate calculation and label generation, but you are not required to use this service exclusively.</p>
