@@ -119,7 +119,7 @@
     <p>You must state your processing time (the time from order placement to dispatch) on each listing. You are obligated to ship within the stated processing time. Repeated late dispatch will result in warnings and may lead to account suspension.</p>
 
     <h3>5.2 Shipping</h3>
-    <p>You are responsible for selecting a reliable shipping method, providing valid tracking information, and ensuring items are packaged securely to prevent transit damage. Orderer partners with Shipbubble for shipping rate calculation and label generation, but you are not required to use this service exclusively.</p>
+    <p>You may select a shipping method, providing valid tracking information, and ensuring items are packaged securely to prevent transit damage. Orderer partners with Shipbubble for shipping rate calculation and label generation, but you are not required to use this service exclusively.</p>
 
     <h3>5.3 Order Cancellation</h3>
     <p>You may cancel an order before it is shipped. Cancellations after the stated processing time has elapsed without shipment will be recorded against your seller performance score. High cancellation rates may result in account restrictions.</p>
@@ -159,7 +159,7 @@
     <h3>7.2 Withdrawal</h3>
     <p>You may request a withdrawal of your available wallet balance at any time, subject to:</p>
     <ul>
-        <li>Minimum withdrawal: ₦100;</li>
+        <li>Minimum withdrawal: ₦1000;</li>
         <li>You must have a verified bank account on file;</li>
         <li>No more than one pending withdrawal request at a time;</li>
         <li>Orderer processes approved withdrawals within 1–3 hours.</li>
