@@ -139,14 +139,14 @@
         </thead>
         <tbody>
             <tr><td>Electronics</td><td>8%</td></tr>
-            <tr><td>Fashion &amp; Apparel</td><td>10%</td></tr>
+            <tr><td>Fashion &amp; Apparel</td><td>8%</td></tr>
             <tr><td>Home &amp; Kitchen</td><td>8%</td></tr>
-            <tr><td>Health &amp; Beauty</td><td>10%</td></tr>
+            <tr><td>Health &amp; Beauty</td><td>8%</td></tr>
             <tr><td>Books &amp; Media</td><td>7%</td></tr>
             <tr><td>Sports &amp; Outdoors</td><td>8%</td></tr>
             <tr><td>Services</td><td>12%</td></tr>
             <tr><td>Real Estate / Properties</td><td>5%</td></tr>
-            <tr><td>All Other Categories</td><td>10%</td></tr>
+            <tr><td>All Other Categories</td><td>6%</td></tr>
         </tbody>
     </table>
 
@@ -154,7 +154,7 @@
 
     <h2 id="payments">7. Payments and Withdrawals</h2>
     <h3>7.1 Earnings</h3>
-    <p>Your earnings (sale price minus Orderer's commission) are credited to your Seller Wallet in Nigerian Naira (₦) when escrow is released — either upon buyer confirmation of delivery or 7 days after shipping.</p>
+    <p>Your earnings (sale price minus Orderer's commission) are credited to your Seller Wallet in Nigerian Naira (₦) when escrow is released — either upon buyer confirmation of delivery or 3 days after delivery.</p>
 
     <h3>7.2 Withdrawal</h3>
     <p>You may request a withdrawal of your available wallet balance at any time, subject to:</p>
@@ -162,7 +162,7 @@
         <li>Minimum withdrawal: ₦100;</li>
         <li>You must have a verified bank account on file;</li>
         <li>No more than one pending withdrawal request at a time;</li>
-        <li>Orderer processes approved withdrawals within 1–3 business days.</li>
+        <li>Orderer processes approved withdrawals within 1–3 hours.</li>
     </ul>
     <p>Orderer reserves the right to hold withdrawals for up to 14 days for new sellers or where fraud is suspected.</p>
 
