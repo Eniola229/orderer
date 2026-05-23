@@ -32,17 +32,17 @@
         @if($sellers->count())
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <td>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Email</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Products</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Joined</th>
-                        <th class="fs-11 text-uppercase text-muted fw-semibold">Actions</th>
-                    </td>
-                </thead>
+            <thead class="table-light">
+                <tr>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Seller</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Email</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Products</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Joined</th>
+                    <th class="fs-11 text-uppercase text-muted fw-semibold">Actions</th>
+                </tr>
+            </thead>
                 <tbody>
                     @foreach($sellers as $seller)
                     <tr>

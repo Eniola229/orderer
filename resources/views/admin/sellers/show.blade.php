@@ -388,6 +388,110 @@
             </div>
         </div>
 
+                {{-- Referrals --}}
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                    <i class="feather-users me-2"></i> Referrals
+                </h5>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary">{{ $referralStats['total'] }} total</span>
+                    <span class="badge bg-success">₦{{ number_format($referralStats['earned'], 2) }} earned</span>
+                    @if($referralStats['pending'] > 0)
+                        <span class="badge bg-warning text-dark">₦{{ number_format($referralStats['pending'], 2) }} pending</span>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Referral code row --}}
+            <div class="px-3 pt-3 pb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted fw-semibold text-uppercase" style="white-space:nowrap;">Referral Code:</small>
+                    <code class="fs-13 text-primary fw-bold">{{ $seller->referral_code ?? '—' }}</code>
+                    @if($seller->referral_code)
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            onclick="adminCopyRef('{{ $seller->referral_code }}')"
+                            title="Copy referral link">
+                        <i class="feather-copy"></i>
+                    </button>
+                    @endif
+                    @if($seller->referred_by)
+                    <span class="ms-3 text-muted fs-12">
+                        <i class="feather-corner-down-right me-1"></i>
+                        Referred by code: <code>{{ $seller->referred_by }}</code>
+                    </span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                @if($sellerReferrals->count())
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Referred Seller</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Business</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Joined</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Earnings</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($sellerReferrals as $ref)
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:28px;height:28px;border-radius:50%;background:#2ECC71;
+                                                    display:flex;align-items:center;justify-content:center;
+                                                    color:#fff;font-weight:700;font-size:11px;flex-shrink:0;">
+                                            {{ strtoupper(substr($ref->referred->first_name ?? 'S', 0, 1)) }}
+                                        </div>
+                                        <span class="fw-semibold fs-13">
+                                            {{ $ref->referred->full_name ?? 'Unknown' }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="text-muted fs-13">
+                                    {{ $ref->referred->business_name ?? '—' }}
+                                </td>
+                                <td class="text-muted fs-12">
+                                    {{ $ref->created_at->format('M d, Y') }}
+                                </td>
+                                <td>
+                                    @foreach($ref->earnings as $earning)
+                                        <span class="fw-bold text-success d-block">
+                                            ₦{{ number_format($earning->amount, 2) }}
+                                        </span>
+                                    @endforeach
+                                    @if($ref->earnings->isEmpty()) <span class="text-muted">—</span> @endif
+                                </td>
+                                <td>
+                                    @foreach($ref->earnings as $earning)
+                                        <span class="badge orderer-badge badge-{{ $earning->status === 'credited' ? 'approved' : 'pending' }}">
+                                            {{ ucfirst($earning->status) }}
+                                        </span>
+                                    @endforeach
+                                    @if($ref->earnings->isEmpty())
+                                        <span class="badge orderer-badge badge-pending">Pending</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-4 text-muted">
+                    <i class="feather-users d-block mb-2" style="font-size:28px;"></i>
+                    <p class="mb-0 fs-13">This seller hasn't referred anyone yet.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+
         {{-- Brand --}}
         @php
             $brand = $seller->brand;
@@ -554,6 +658,15 @@
             closeSuspendModal();
         }
     });
+
+    function adminCopyRef(code) {
+    const link = 'https://ordererweb.com/seller/register?ref=' + code;
+    navigator.clipboard.writeText(link).then(() => {
+        alert('Referral link copied: ' + link);
+    }).catch(() => {
+        prompt('Copy this referral link:', link);
+    });
+}
 </script>
 
 @endsection

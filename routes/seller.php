@@ -11,7 +11,7 @@ use App\Http\Controllers\Seller\HouseController;
 use App\Http\Controllers\Seller\ProfileController;
 use App\Http\Controllers\Seller\OrderController          as SellerOrderController;
 use App\Http\Controllers\Seller\WalletController         as SellerWalletController;
-use App\Http\Controllers\Seller\WithdrawalController;
+use App\Http\Controllers\Seller\WithdrawalController; 
 use App\Http\Controllers\Seller\AdController             as SellerAdController;
 use App\Http\Controllers\Seller\BrandController;
 use App\Http\Controllers\Seller\SupportController        as SellerSupportController;
@@ -127,6 +127,10 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::post('/flash-sales',                  [SellerFlashSaleController::class, 'store'])->name('flash-sales.store');
         Route::put('/flash-sales/{flashSale}/toggle',[SellerFlashSaleController::class, 'toggle'])->name('flash-sales.toggle');
         Route::delete('/flash-sales/{flashSale}',    [SellerFlashSaleController::class, 'destroy'])->name('flash-sales.destroy');
+
+
+        // Referrals
+        Route::get('/referrals', [\App\Http\Controllers\Seller\ReferralController::class, 'index'])->name('referrals.index');
 
     });
 });

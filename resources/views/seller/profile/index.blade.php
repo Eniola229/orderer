@@ -3,7 +3,7 @@
 @section('page_title', 'My Profile')
 @section('breadcrumb')
     <li class="breadcrumb-item active">Profile</li>
-@endsection
+@endsection 
 
 @section('content')
 
@@ -244,6 +244,57 @@
                 </div>
             </div>
 
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="feather-users me-2"></i>Referral Code
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted fs-13 mb-3">
+                        Share your referral link to invite other sellers.
+                    </p>
+
+                    {{-- Code --}}
+                    <label class="form-label fw-bold fs-13">Your Code</label>
+                    <div class="input-group mb-3">
+                        <input type="text"
+                               class="form-control form-control-sm fw-bold text-primary"
+                               id="refCode"
+                               value="{{ auth('seller')->user()->referral_code }}"
+                               readonly>
+                        <button class="btn btn-outline-primary btn-sm"
+                                type="button"
+                                onclick="copyToClipboard('refCode', this)"
+                                title="Copy code">
+                            <i class="feather-copy"></i>
+                        </button>
+                    </div>
+
+                    {{-- Full link --}}
+                    <label class="form-label fw-bold fs-13">Your Referral Link</label>
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control form-control-sm text-muted"
+                               id="refLink"
+                               value="https://ordererweb.com/seller/register?ref={{ auth('seller')->user()->referral_code }}"
+                               readonly>
+                        <button class="btn btn-outline-primary btn-sm"
+                                type="button"
+                                onclick="copyToClipboard('refLink', this)"
+                                title="Copy link">
+                            <i class="feather-copy"></i>
+                        </button>
+                    </div>
+
+                    <div id="copyFeedback" class="mt-2" style="display:none;">
+                        <small class="text-success">
+                            <i class="feather-check-circle me-1"></i> Copied to clipboard!
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Profile Tips</h5>
@@ -352,6 +403,29 @@ async function validateProfileAddress() {
         btn.disabled = false;
         btn.innerHTML = '<i class="feather-check me-1"></i> Validate Address';
     }
+}
+
+function copyToClipboard(inputId, btn) {
+    const input = document.getElementById(inputId);
+    navigator.clipboard.writeText(input.value).then(() => {
+        // Swap icon to a checkmark briefly
+        const icon = btn.querySelector('i');
+        icon.classList.replace('feather-copy', 'feather-check');
+        btn.classList.replace('btn-outline-primary', 'btn-success');
+
+        const feedback = document.getElementById('copyFeedback');
+        feedback.style.display = 'block';
+
+        setTimeout(() => {
+            icon.classList.replace('feather-check', 'feather-copy');
+            btn.classList.replace('btn-success', 'btn-outline-primary');
+            feedback.style.display = 'none';
+        }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        input.select();
+        document.execCommand('copy');
+    });
 }
 </script>
 @endpush

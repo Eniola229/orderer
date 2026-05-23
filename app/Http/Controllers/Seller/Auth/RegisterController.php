@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketer;
+use App\Models\Referral;
 use App\Models\Seller;
 use App\Models\SellerDocument;
 use App\Services\BrevoMailService;
@@ -47,21 +48,22 @@ class RegisterController extends Controller
         $isVerified = $request->is_verified_business == '1';
 
         // ── Slug ──────────────────────────────────────────────────────────────
-        $slug = Str::slug($request->business_name);
+        $slug         = Str::slug($request->business_name);
         $originalSlug = $slug;
-        $count = 1;
+        $count        = 1;
         while (Seller::where('business_slug', $slug)->exists()) {
             $slug = $originalSlug . '-' . $count++;
         }
 
         // ── Referral / Marketer code resolution ───────────────────────────────
-        $referredBy  = null;
-        $marketerId  = null;
+        $referredBy   = null;
+        $marketerId   = null;
+        $referrer     = null;   // seller referrer — kept for Referral record after creation
         $referralCode = $request->referral_code;
 
         if ($referralCode) {
             if (str_starts_with(strtoupper($referralCode), 'OR-MRT-')) {
-                // It's a marketer code
+                // ── Marketer code — no Referral record, just tag the marketer ──
                 $marketer = Marketer::where('marketing_code', strtoupper($referralCode))
                                     ->where('is_active', true)
                                     ->first();
@@ -69,7 +71,7 @@ class RegisterController extends Controller
                     $marketerId = $marketer->id;
                 }
             } else {
-                // It's a seller referral code
+                // ── Seller referral code ───────────────────────────────────────
                 $referrer = Seller::where('referral_code', $referralCode)->first();
                 if ($referrer) {
                     $referredBy = $referrer->id;
@@ -94,8 +96,19 @@ class RegisterController extends Controller
             'is_approved'          => !$isVerified,
             'referral_code'        => strtoupper(Str::random(8)),
             'referred_by'          => $referredBy,
-            'marketer_id'          => $marketerId,   // ← NEW
+            'marketer_id'          => $marketerId,
         ]);
+
+        // ── Create Referral record (seller referrer only, not marketer) ────────
+        if ($referrer) {
+            Referral::create([
+                'referrer_type' => 'App\Models\Seller',
+                'referrer_id'   => $referrer->id,
+                'referred_type' => 'App\Models\Seller',
+                'referred_id'   => $seller->id,
+                 'referral_code' => $referralCode, 
+            ]);
+        }
 
         // ── Document upload ───────────────────────────────────────────────────
         if ($isVerified && $request->hasFile('document_file')) {

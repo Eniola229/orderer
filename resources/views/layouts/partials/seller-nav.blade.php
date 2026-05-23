@@ -9,7 +9,7 @@
                 <img src="{{ asset('dashboard/assets/images/favicon.png') }}"
                      alt="Orderer"
                      class="logo logo-sm" />
-            </a>
+            </a> 
         </div> 
 
         <div class="navbar-content">
@@ -138,6 +138,13 @@
                     <a href="{{ route('seller.brand.index') }}" class="nxl-link">
                         <span class="nxl-micon"><i class="feather-star"></i></span>
                         <span class="nxl-mtext">My Brand</span>
+                    </a>
+                </li>
+
+                <li class="nxl-item {{ request()->routeIs('seller.referrals.*') ? 'active' : '' }}">
+                    <a href="{{ route('seller.referrals.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-users"></i></span>
+                        <span class="nxl-mtext">Referrals</span>
                     </a>
                 </li>
 

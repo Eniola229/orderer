@@ -21,7 +21,7 @@ class SellerController extends Controller
             $query->where('is_approved', true);
         } elseif ($request->status === 'pending') {
             $query->where('is_approved', false);
-        } elseif ($request->status === 'suspended') {
+        } elseif ($request->status === 'suspended') { 
             $query->where('status', 'suspended');
         }
 
@@ -74,8 +74,28 @@ class SellerController extends Controller
                             ->get();
         }
 
+        // Referrals this seller brought in
+        $sellerReferrals = \App\Models\Referral::where('referrer_type', 'App\Models\Seller')
+            ->where('referrer_id', $seller->id)
+            ->with(['referred', 'earnings'])
+            ->latest()
+            ->get();
+
+        $referralStats = [
+            'total'   => $sellerReferrals->count(),
+            'earned'  => \App\Models\ReferralEarning::whereHas('referral', function ($q) use ($seller) {
+                            $q->where('referrer_type', 'App\Models\Seller')
+                              ->where('referrer_id', $seller->id);
+                         })->where('status', 'credited')->sum('amount'),
+            'pending' => \App\Models\ReferralEarning::whereHas('referral', function ($q) use ($seller) {
+                            $q->where('referrer_type', 'App\Models\Seller')
+                              ->where('referrer_id', $seller->id);
+                         })->where('status', 'pending')->sum('amount'),
+        ];
+
         return view('admin.sellers.show', compact(
-            'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions'
+            'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions',
+            'sellerReferrals', 'referralStats'
         ));
     } 
     public function approve(Seller $seller)

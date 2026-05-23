@@ -103,4 +103,16 @@ class Seller extends Authenticatable
         return $this->hasManyThrough(Order::class, OrderItem::class, 'seller_id', 'id', 'id', 'order_id');
     }
 
+
+    public function referrals()
+    {
+        return $this->hasMany(\App\Models\Referral::class, 'referrer_id')
+                    ->where('referrer_type', 'App\Models\Seller');
+    }
+
+    public function referredBy()
+    {
+        return $this->belongsTo(\App\Models\Seller::class, 'referred_by');
+    }
+
 }
