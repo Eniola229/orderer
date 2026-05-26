@@ -8,27 +8,82 @@ use Illuminate\Http\Request;
 
 class BuyerController extends Controller
 {
+
     public function index(Request $request)
     {
-        $query = User::query();
+        // ── Active-period (default 12 months, user-adjustable) ────────────────
+        $activeMonths = (int) $request->input('active_months', 12);
+        $activeMonths = in_array($activeMonths, [1, 3, 6, 12, 24]) ? $activeMonths : 12;
+        $activeSince  = now()->subMonths($activeMonths);
+
+        $activePeriodLabel = match ($activeMonths) {
+            1  => '1 month',
+            3  => '3 months',
+            6  => '6 months',
+            12 => '1 year',
+            24 => '2 years',
+            default => "{$activeMonths} months",
+        };
+
+        // ── Paginated list ────────────────────────────────────────────────────
+        $query = \App\Models\User::withCount('orders');
+
+        if ($request->status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($request->status === 'suspended') {
+            $query->where('is_active', false);
+        }
 
         if ($request->search) {
             $s = $request->search;
-            $query->where(function($q) use ($s) {
+            $query->where(fn($q) =>
                 $q->where('first_name', 'like', "%{$s}%")
-                  ->orWhere('last_name', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
-            });
+                  ->orWhere('last_name',  'like', "%{$s}%")
+                  ->orWhere('email',      'like', "%{$s}%")
+            );
         }
 
-        $buyers = $query->withCount('orders')
-                        ->latest()
-                        ->paginate(20)
-                        ->withQueryString();
+        $buyers = $query->latest()->paginate(20)->withQueryString();
 
-        return view('admin.buyers.index', compact('buyers'));
+        // ── Stats ─────────────────────────────────────────────────────────────
+
+        // Buyer IDs who placed at least one order within the active window
+        $activeBuyerIds = \App\Models\Order::where('created_at', '>=', $activeSince)
+                            ->distinct('user_id')
+                            ->pluck('user_id');
+
+        $stats = [
+            'total'               => \App\Models\User::count(),
+
+            'active_buyers'       => $activeBuyerIds->count(),
+            'active_period_label' => $activePeriodLabel,
+
+            // Registered, not suspended, but no order in the chosen window
+            'inactive_buyers'     => \App\Models\User::where('is_active', true)
+                                        ->whereNotIn('id', $activeBuyerIds)
+                                        ->count(),
+
+            // Never placed any order ever
+            'never_ordered'       => \App\Models\User::doesntHave('orders')->count(),
+
+            // Has placed at least one order ever
+            'have_ordered'        => \App\Models\User::has('orders')->count(),
+
+            // Total order count across all users
+            'total_orders'        => \App\Models\Order::count(),
+
+            'suspended'           => \App\Models\User::where('is_active', false)->count(),
+
+            // Email not yet verified
+            'unverified_email'    => \App\Models\User::whereNull('email_verified_at')->count(),
+
+            // Sum of all user wallet balances (polymorphic wallets table)
+            'total_wallet'        => \App\Models\Wallet::where('walletable_type', 'App\Models\User')
+                                        ->sum('balance'),
+        ];
+
+        return view('admin.buyers.index', compact('buyers', 'stats', 'activeMonths'));
     }
-
     public function show(User $user)
     {
         if (!auth('admin')->user()->canModerateBuyer()) abort(403);

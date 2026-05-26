@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Seller;
-use App\Models\SellerDocument;
+use App\Models\SellerDocument; 
 use App\Services\BrevoMailService;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -21,8 +21,8 @@ class SellerController extends Controller
             $query->where('is_approved', true);
         } elseif ($request->status === 'pending') {
             $query->where('is_approved', false);
-        } elseif ($request->status === 'suspended') { 
-            $query->where('status', 'suspended');
+        } elseif ($request->status === 'suspended') {
+            $query->where('is_active', false);
         }
 
         if ($request->search) {
@@ -34,12 +34,46 @@ class SellerController extends Controller
             );
         }
 
-        $sellers = $query->withCount(['products', 'orders' => fn($q) => $q->whereHas('items', fn($r) => $r->where('seller_id', \DB::raw('sellers.id')))])
+        $sellers = $query
+            ->withCount(['products', 'orders' => fn($q) => $q->whereHas('items', fn($r) => $r->where('seller_id', \DB::raw('sellers.id')))])
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.sellers.index', compact('sellers'));
+        // ── Stats ────────────────────────────────────────────────────────────────
+        $stats = [
+            'total'            => Seller::count(),
+            'pending'          => Seller::where('is_approved', false)->count(),
+            'approved'         => Seller::where('is_approved', true)->count(),
+            'verified'         => Seller::where('is_verified_business', true)->count(),
+            'individual'       => Seller::where('is_verified_business', false)->count(),
+            'active'           => Seller::where('is_active', true)->where('is_approved', true)->count(),
+            'suspended'        => Seller::where('is_active', false)->count(),
+
+            // Wallet totals (from wallets table — the canonical balances)
+            'total_wallet'     => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('balance'),
+            'total_ads_bal'    => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('ads_balance'),
+
+            // Orders
+            'total_orders'     => \App\Models\OrderItem::distinct('order_id')->count('order_id'),
+
+            // Sellers currently running active ads
+            'running_ads'      => \App\Models\Ad::where('status', 'active')
+                                    ->where('start_date', '<=', now())
+                                    ->where('end_date', '>=', now())
+                                    ->distinct('seller_id')
+                                    ->count('seller_id'),
+
+            // Sellers with at least one published product / service / property
+            'with_products'    => \App\Models\Product::where('status', 'approved')
+                                    ->distinct('seller_id')->count('seller_id'),
+            'with_services'    => \App\Models\ServiceListing::where('status', 'approved')
+                                    ->distinct('seller_id')->count('seller_id'),
+            'with_properties'  => \App\Models\HouseListing::where('status', 'approved')
+                                    ->distinct('seller_id')->count('seller_id'),
+        ];
+
+        return view('admin.sellers.index', compact('sellers', 'stats'));
     }
 
     public function pending()

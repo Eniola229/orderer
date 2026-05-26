@@ -110,6 +110,13 @@
                         </li>
                     </ul>
                 </li>
+                
+                <li class="nxl-item {{ request()->routeIs('admin.delivery-bookings.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.delivery-bookings.index') }}" class="nxl-link">
+                        <span class="nxl-micon"><i class="feather-truck"></i></span>
+                        <span class="nxl-mtext">Delivery Bookings</span>
+                    </a>
+                </li>
 
                 @if(auth('admin')->user()->canManageFinance())
                 <li class="nxl-item {{ request()->routeIs('admin.free-shipping.*') ? 'active' : '' }}">
@@ -119,13 +126,6 @@
                     </a>
                 </li>
                 @endif
-
-                <li class="nxl-item {{ request()->routeIs('admin.delivery-bookings.*') ? 'active' : '' }}">
-                    <a href="{{ route('admin.delivery-bookings.index') }}" class="nxl-link">
-                        <span class="nxl-micon"><i class="feather-truck"></i></span>
-                        <span class="nxl-mtext">Delivery Bookings</span>
-                    </a>
-                </li>
                 @endif
 
                 {{-- Finance --}}
