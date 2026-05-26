@@ -65,7 +65,7 @@
                     <label class="form-label fw-bold">Payment Method</label>
                     <div class="d-flex flex-column gap-2">
 
-                        <div class="gateway-option active" id="opt-monnify" onclick="selectGateway('monnify')">
+<!--                   <div class="gateway-option" id="opt-monnify" onclick="selectGateway('monnify')">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="gateway-icon" style="background:#1A73E8;">
                                     <i class="feather-zap"></i>
@@ -76,9 +76,9 @@
                                 </div>
                                 <i class="feather-check-circle ms-auto" id="check-monnify" style="color:#0d6efd;font-size:18px;"></i>
                             </div>
-                        </div>
+                        </div> -->
 
-                        <div class="gateway-option" id="opt-korapay" onclick="selectGateway('korapay')">
+                        <div class="gateway-option active" id="opt-korapay" onclick="selectGateway('korapay')">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="gateway-icon" style="background:#6C2BD9;">
                                     <i class="feather-credit-card"></i>
@@ -87,7 +87,7 @@
                                     <div class="fw-semibold" style="font-size:14px;">Korapay</div>
                                     <div class="text-muted" style="font-size:11px;">Card · Bank Transfer</div>
                                 </div>
-                                <i class="feather-circle ms-auto" id="check-korapay" style="color:#adb5bd;font-size:18px;"></i>
+                                <i class="feather-check-circle ms-auto" id="check-korapay" style="color:#adb5bd;font-size:18px;"></i>
                             </div>
                         </div>
 
@@ -275,12 +275,12 @@
 @push('scripts')
 <script>
 // ─── state ────────────────────────────────────────────────────────────────────
-var _gateway = 'monnify';
+var _gateway = 'korapay';
 
 // ─── gateway picker ───────────────────────────────────────────────────────────
 function selectGateway(g) {
     _gateway = g;
-    ['monnify','korapay'].forEach(function(id) {
+    ['korapay'].forEach(function(id) {
         document.getElementById('opt-' + id).classList.remove('active');
         var chk = document.getElementById('check-' + id);
         chk.className = 'feather-circle ms-auto';

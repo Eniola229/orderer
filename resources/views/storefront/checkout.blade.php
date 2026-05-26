@@ -420,7 +420,7 @@ del, .strikethrough {
                                     @endif
                                 </div>
                             </div>
-                            <div class="card payment-method-card mb-3" id="monnifyMethodCard">
+<!--                             <div class="card payment-method-card mb-3" id="monnifyMethodCard">
                                 <div class="card-header bg-transparent border-bottom-0">
                                     <div class="d-flex align-items-center">
                                         <div class="custom-control custom-radio mr-3">
@@ -435,7 +435,7 @@ del, .strikethrough {
                                         Card · Bank Transfer · USSD · Phone Number
                                     </p>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="card payment-method-card mb-3" id="korapayMethodCard">
                                 <div class="card-header bg-transparent border-bottom-0">
                                     <div class="d-flex align-items-center">
