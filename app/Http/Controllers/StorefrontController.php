@@ -343,7 +343,7 @@ class StorefrontController extends Controller
     public function services(Request $request)
     {
         $query = \App\Models\ServiceListing::where('status', 'approved')
-            ->with(['seller', 'category']);
+            ->with(['seller', 'category',]);
 
         // Search
         if ($request->filled('search')) {
@@ -428,7 +428,7 @@ class StorefrontController extends Controller
                             ->firstOrFail();
 
         $service->increment('views');
-
+ 
         return view('storefront.services-show', compact('service'));
     }
 
@@ -436,7 +436,6 @@ class StorefrontController extends Controller
     {
         $query = HouseListing::where('status', 'approved');
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -448,7 +447,6 @@ class StorefrontController extends Controller
             });
         }
 
-        // Filters
         if ($request->filled('listing_type'))  $query->where('listing_type', $request->listing_type);
         if ($request->filled('property_type')) $query->where('property_type', $request->property_type);
         if ($request->filled('min_price'))     $query->where('price', '>=', $request->min_price);
@@ -458,7 +456,6 @@ class StorefrontController extends Controller
         if ($request->filled('city'))          $query->where('city', 'LIKE', "%{$request->city}%");
         if ($request->filled('state'))         $query->where('state', 'LIKE', "%{$request->state}%");
 
-        // Sorting
         switch($request->get('sort', 'latest')) {
             case 'price_asc':  $query->orderBy('price', 'asc');  break;
             case 'price_desc': $query->orderBy('price', 'desc'); break;
@@ -467,8 +464,7 @@ class StorefrontController extends Controller
         }
 
         $perPage = $request->get('per_page', 12);
-        $houses  = $query->paginate($perPage);
-
+        $houses  = $query->with(['seller', 'images'])->paginate($perPage); // ← only change
         return view('storefront.houses', compact('houses'));
     }
 
@@ -488,6 +484,8 @@ class StorefrontController extends Controller
             })
             ->take(3)
             ->get();
+
+        $house->increment('views');
 
         return view('storefront.houses-details', compact('house', 'similarHouses'));
     }

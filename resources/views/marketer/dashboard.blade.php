@@ -406,10 +406,6 @@
     </div>
 
 </div>
-
-@endsection
-
-@push('scripts')
 <script>
 function toggleCustom() {
     const el = document.getElementById('customRange');
@@ -423,15 +419,40 @@ function toggleCustom() {
 
 function copyCode(el) {
     const code = el.textContent.trim();
-    navigator.clipboard.writeText(code).then(() => {
+
+    const flash = () => {
         const original = el.style.color;
+        const originalBg = el.style.background;
         el.style.color = '#fff';
         el.style.background = '#27AE60';
         setTimeout(() => {
             el.style.color = original;
-            el.style.background = '#1a1f2e';
+            el.style.background = originalBg;
         }, 1500);
-    });
+    };
+
+    // Modern clipboard API (HTTPS / localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code).then(flash).catch(() => fallbackCopy(code, flash));
+    } else {
+        fallbackCopy(code, flash);
+    }
+}
+
+function fallbackCopy(text, onSuccess) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        if (onSuccess) onSuccess();
+    } catch (e) {
+        alert('Copy failed — please copy manually: ' + text);
+    }
+    document.body.removeChild(ta);
 }
 </script>
-@endpush
+@endsection

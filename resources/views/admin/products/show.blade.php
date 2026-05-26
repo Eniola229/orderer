@@ -240,6 +240,10 @@
                     <span><code>{{ $product->sku }}</code></span>
                 </div>
                 @endif
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Views</span>
+                    <span><code>{{ $product->views ?? 0 }}</code></span>
+                </div>
             </div>
         </div>
 

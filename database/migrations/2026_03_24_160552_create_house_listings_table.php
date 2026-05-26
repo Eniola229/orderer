@@ -21,6 +21,7 @@ return new class extends Migration
             $table->enum('listing_type', ['sale', 'rent', 'shortlet']);
             $table->decimal('price', 15, 2);
             $table->string('location');
+            $table->string('views')->nullable();
             $table->string('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();

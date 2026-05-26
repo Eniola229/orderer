@@ -121,6 +121,10 @@
                         <label class="text-muted d-block fs-12 mb-1">Revisions</label>
                         <p class="fw-semibold mb-0">{{ $service->revisions ?? 'Not specified' }}</p>
                     </div>
+                  <div class="col-md-6 mb-3">
+                        <label class="text-muted d-block fs-12 mb-1">Views</label>
+                        <p class="fw-semibold mb-0">{{ $service->views ?? 0 }}</p>
+                    </div>
                 </div>
                 @if($service->portfolio_url)
                 <div class="col-md-6 mb-3">

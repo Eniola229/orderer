@@ -111,71 +111,106 @@
     {{-- Right: referral stats + table --}}
     <div class="col-lg-8">
 
-        {{-- Stats --}}
-        <div class="row g-3 mb-4">
-            <div class="col-sm-4">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="fs-28 fw-800 text-dark">{{ $stats['total'] }}</div>
-                    <div class="text-muted fs-13">Total Referrals</div>
-                </div>
+        {{-- Referral Stats --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-bold">Referral Overview</h6>
             </div>
-            <div class="col-sm-4">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="fs-28 fw-800 text-success">{{ $stats['approved'] }}</div>
-                    <div class="text-muted fs-13">Approved</div>
+            <div class="card-body">
+                {{-- Seller stats --}}
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-2" style="letter-spacing:.5px;">Sellers</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800 text-dark">{{ $stats['total'] }}</div>
+                            <div class="text-muted fs-12">Total Referrals</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800 text-success">{{ $stats['approved'] }}</div>
+                            <div class="text-muted fs-12">Approved</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800 text-warning">{{ $stats['pending'] }}</div>
+                            <div class="text-muted fs-12">Pending</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800 text-info">{{ $stats['verified'] }}</div>
+                            <div class="text-muted fs-12">Verified</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800 text-secondary">{{ $stats['unverified'] }}</div>
+                            <div class="text-muted fs-12">Unverified</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="fs-28 fw-800 text-warning">{{ $stats['pending'] }}</div>
-                    <div class="text-muted fs-13">Pending</div>
-                </div>
-            </div>
-            <div class="col-sm-3">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="fs-28 fw-800 text-info">{{ $stats['verified'] }}</div>
-                    <div class="text-muted fs-13">Verified</div>
-                </div>
-            </div>
-            <div class="col-sm-3">
-                <div class="card border-0 shadow-sm text-center p-3">
-                    <div class="fs-28 fw-800 text-secondary">{{ $stats['unverified'] }}</div>
-                    <div class="text-muted fs-13">Unverified</div>
+
+                <hr class="my-3">
+
+                {{-- Listing stats --}}
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-2" style="letter-spacing:.5px;">Listings Uploaded by Referrals</p>
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div class="card border-0 text-center p-3" style="background:#eff6ff;">
+                            <div class="fs-24 fw-800" style="color:#2563eb;">{{ $stats['total_products'] }}</div>
+                            <div class="fs-12 mt-1" style="color:#2563eb;">
+                                <i class="feather-shopping-bag me-1"></i> Products
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card border-0 text-center p-3" style="background:#f5f3ff;">
+                            <div class="fs-24 fw-800" style="color:#7c3aed;">{{ $stats['total_properties'] }}</div>
+                            <div class="fs-12 mt-1" style="color:#7c3aed;">
+                                <i class="feather-home me-1"></i> Properties
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card border-0 text-center p-3" style="background:#fff1f2;">
+                            <div class="fs-24 fw-800" style="color:#e11d48;">{{ $stats['total_services'] }}</div>
+                            <div class="fs-12 mt-1" style="color:#e11d48;">
+                                <i class="feather-tool me-1"></i> Services
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Enhanced Filter Section --}}
+        {{-- Filter Section --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
                 <h6 class="mb-0 fw-bold">Filter Sellers</h6>
             </div>
             <div class="card-body">
                 <form method="GET" action="{{ route('admin.marketers.show', $marketer) }}" class="row g-3">
-                    {{-- Seller Search --}}
                     <div class="col-12">
                         <label class="form-label fs-13 fw-semibold">Search Seller</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text"><i class="feather-search"></i></span>
-                            <input type="text" name="seller_search" class="form-control" 
+                            <input type="text" name="seller_search" class="form-control"
                                    placeholder="Search by name, email, or business name..."
                                    value="{{ $sellerSearch }}">
                         </div>
                     </div>
-                    
-                    {{-- Date Range --}}
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Date From</label>
-                        <input type="date" name="date_from" class="form-control form-control-sm" 
+                        <input type="date" name="date_from" class="form-control form-control-sm"
                                value="{{ $dateFrom }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Date To</label>
-                        <input type="date" name="date_to" class="form-control form-control-sm" 
+                        <input type="date" name="date_to" class="form-control form-control-sm"
                                value="{{ $dateTo }}">
                     </div>
-                    
-                    {{-- Verification Status --}}
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Verification Status</label>
                         <select name="verification_filter" class="form-select form-select-sm">
@@ -185,8 +220,6 @@
                             <option value="rejected" {{ $verificationFilter == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
-                    
-                    {{-- Approval Status --}}
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Approval Status</label>
                         <select name="status_filter" class="form-select form-select-sm">
@@ -195,8 +228,6 @@
                             <option value="pending" {{ $statusFilter == 'pending' ? 'selected' : '' }}>Pending Approval</option>
                         </select>
                     </div>
-                    
-                    {{-- Action Buttons --}}
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary btn-sm">
                             <i class="feather-filter me-1"></i> Apply Filters
@@ -228,7 +259,8 @@
                     <i class="feather-users" style="font-size:36px;color:#d1d5db;"></i>
                     <p class="text-muted mt-3 mb-0">No sellers found with the selected filters.</p>
                     @if($sellerSearch || $dateFrom || $dateTo || ($verificationFilter && $verificationFilter != 'all') || ($statusFilter && $statusFilter != 'all'))
-                        <button class="btn btn-link btn-sm mt-2" onclick="window.location.href='{{ route('admin.marketers.show', $marketer) }}'">
+                        <button class="btn btn-link btn-sm mt-2"
+                                onclick="window.location.href='{{ route('admin.marketers.show', $marketer) }}'">
                             <i class="feather-rotate-ccw me-1"></i> Clear all filters
                         </button>
                     @endif
@@ -244,6 +276,15 @@
                                 <th>Email</th>
                                 <th>Verified?</th>
                                 <th>Status</th>
+                                <th class="text-center">
+                                    <i class="feather-shopping-bag me-1 text-primary"></i>Products
+                                </th>
+                                <th class="text-center">
+                                    <i class="feather-home me-1" style="color:#7c3aed;"></i>Properties
+                                </th>
+                                <th class="text-center">
+                                    <i class="feather-tool me-1 text-danger"></i>Services
+                                </th>
                                 <th>Joined</th>
                                 <th></th>
                             </tr>
@@ -279,6 +320,21 @@
                                         <span class="badge bg-warning-subtle text-warning fw-semibold">Pending</span>
                                     @endif
                                 </td>
+                                <td class="text-center">
+                                    <span class="badge fw-semibold" style="background:#dbeafe;color:#1d4ed8;min-width:32px;">
+                                        {{ $productCounts[$seller->id] ?? 0 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-semibold" style="background:#ede9fe;color:#6d28d9;min-width:32px;">
+                                        {{ $propertyCounts[$seller->id] ?? 0 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-semibold" style="background:#ffe4e6;color:#be123c;min-width:32px;">
+                                        {{ $serviceCounts[$seller->id] ?? 0 }}
+                                    </span>
+                                </td>
                                 <td class="text-muted fs-13">{{ $seller->created_at->format('d M Y') }}</td>
                                 <td>
                                     <a href="{{ route('admin.sellers.show', $seller) }}"
@@ -289,6 +345,29 @@
                             </tr>
                             @endforeach
                         </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="6" class="text-end fw-semibold fs-13 text-muted">
+                                    Totals (filtered view):
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-bold" style="background:#dbeafe;color:#1d4ed8;">
+                                        {{ $sellers->sum(fn($s) => $productCounts[$s->id] ?? 0) }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-bold" style="background:#ede9fe;color:#6d28d9;">
+                                        {{ $sellers->sum(fn($s) => $propertyCounts[$s->id] ?? 0) }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-bold" style="background:#ffe4e6;color:#be123c;">
+                                        {{ $sellers->sum(fn($s) => $serviceCounts[$s->id] ?? 0) }}
+                                    </span>
+                                </td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
                 @endif

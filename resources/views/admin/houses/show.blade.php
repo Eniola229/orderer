@@ -229,6 +229,10 @@
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Views</span>
+                    <span>{{ $house->views ?? 0 }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Created</span>
                     <span>{{ $house->created_at->format('M d, Y H:i') }}</span>
                 </div>
