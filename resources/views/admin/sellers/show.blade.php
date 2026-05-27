@@ -27,7 +27,7 @@
                 <p class="text-muted fs-13"><i class="feather-phone me-1"></i> {{ $seller->phone ?? 'Not provided' }}</p>
                 <p class="text-muted fs-13"><i class="feather-map-pin me-1"></i> {{ $seller->business_address ?? 'Not provided' }}</p>
                 <p class="text-muted fs-13"><i class="feather-file-text me-1"></i> {{ $seller->business_description ?? 'No description' }}</p>
-                
+
                 <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
                     @if($seller->verification_status === 'rejected')
                         <span class="badge orderer-badge badge-rejected">
@@ -38,19 +38,19 @@
                             {{ $seller->is_approved ? 'Approved' : 'Pending' }}
                         </span>
                     @endif
-                    
+
                     @if($seller->is_verified_business)
                         <span class="badge orderer-badge badge-verified">
                             <i class="feather-check-circle me-1"></i> Verified Business
                         </span>
                     @endif
-                    
+
                     @if($seller->document && $seller->document->status === 'rejected')
                         <span class="badge orderer-badge badge-document-rejected">
                             <i class="feather-file-text me-1"></i> Document Rejected
                         </span>
                     @endif
-                    
+
                     @if($seller->is_active == 0)
                         <span class="badge orderer-badge badge-suspended">
                             <i class="feather-alert-circle me-1"></i> Suspended
@@ -71,7 +71,7 @@
                         <strong>Document Rejection Reason:</strong> {{ $seller->document->rejection_reason }}
                     </div>
                 @endif
-                
+
                 <div class="border rounded p-3 text-start">
                     <div class="d-flex justify-content-between mb-2">
                         <small class="text-muted">Total Orders</small>
@@ -112,8 +112,20 @@
                     </div>
                     <div class="col-6">
                         <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block">Services</small>
+                            <strong class="h5 mb-0">{{ $seller->services->count() }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block">Properties</small>
+                            <strong class="h5 mb-0">{{ $seller->properties->count() }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded text-center">
                             <small class="text-muted d-block">Total Sales</small>
-                            <strong class="h5 mb-0">{{ number_format($totalEarnings ?? 0, 2) }}</strong>
+                            <strong class="h5 mb-0">₦{{ number_format($totalEarnings ?? 0, 2) }}</strong>
                         </div>
                     </div>
                     <div class="col-6">
@@ -228,7 +240,7 @@
         </div>
         @endif
 
-    </div>
+    </div>{{-- /col-lg-4 --}}
 
     <div class="col-lg-8">
 
@@ -247,7 +259,7 @@
                             {{ ucfirst(str_replace('_', ' ', $doc->document_type)) }}
                         </p>
                         @if($doc->status)
-                        <small class="text-muted">Status: 
+                        <small class="text-muted">Status:
                             <span class="badge {{ $doc->status === 'approved' ? 'bg-success' : ($doc->status === 'rejected' ? 'bg-danger' : 'bg-warning') }}">
                                 {{ ucfirst($doc->status) }}
                             </span>
@@ -264,48 +276,251 @@
         </div>
         @endif
 
-        {{-- Products --}}
+        {{-- ── Listings Tabs: Products / Services / Properties ─────────────── --}}
         <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">
-                    Products ({{ $seller->products->count() }})
-                </h5>
-                <a href="{{ route('admin.products.index', ['search' => $seller->business_name]) }}"
-                   class="btn btn-sm btn-outline-primary">All Products</a>
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs border-0 px-3 pt-2" id="listingsTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-products">
+                            <i class="feather-box me-1"></i>
+                            Products
+                            <span class="badge bg-secondary ms-1">{{ $seller->products->count() }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-services">
+                            <i class="feather-briefcase me-1"></i>
+                            Services
+                            <span class="badge bg-secondary ms-1">{{ $seller->services->count() }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-properties">
+                            <i class="feather-home me-1"></i>
+                            Properties
+                            <span class="badge bg-secondary ms-1">{{ $seller->properties->count() }}</span>
+                        </button>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body p-0">
-                @if($seller->products->count())
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                             <tr>
-                                <th class="fs-11 text-uppercase text-muted fw-semibold">Product</th>
-                                <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
-                                <th class="fs-11 text-uppercase text-muted fw-semibold">Stock</th>
-                                <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
-                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($seller->products->take(6) as $product)
-                              <tr>
-                                <td class="fw-semibold fs-13">{{ Str::limit($product->name, 40) }}</td>
-                                <td class="fw-bold">₦{{ number_format($product->price, 2) }}</td>
-                                <td>{{ $product->stock }}</td>
-                                <td>
-                                    <span class="badge orderer-badge badge-{{ $product->status }}">
-                                        {{ ucfirst($product->status) }}
-                                    </span>
-                                </td>
-                              </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+
+            <div class="tab-content">
+
+                {{-- Products tab --}}
+                <div class="tab-pane fade show active" id="tab-products">
+                    <div class="card-header d-flex align-items-center justify-content-between border-top-0 rounded-0" style="border-top: 1px solid #dee2e6;">
+                        <span class="fs-13 text-muted">{{ $seller->products->count() }} product(s) total</span>
+                        <a href="{{ route('admin.products.index', ['search' => $seller->business_name]) }}"
+                           class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    @if($seller->products->count())
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Product</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Stock</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($seller->products->take(8) as $product)
+                                <tr>
+                                    <td class="fw-semibold fs-13">
+                                        <a href="{{ route('admin.products.show', $product->id) }}"
+                                           class="text-dark listing-title-link">
+                                            {{ Str::limit($product->name, 45) }}
+                                        </a>
+                                    </td>
+                                    <td class="fw-bold">₦{{ number_format($product->price, 2) }}</td>
+                                    <td>{{ $product->stock }}</td>
+                                    <td>
+                                        <span class="badge orderer-badge badge-{{ $product->status }}">
+                                            {{ ucfirst($product->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('admin.products.show', $product->id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="feather-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($seller->products->count() > 8)
+                    <div class="p-3 text-center text-muted fs-12 border-top">
+                        Showing 8 of {{ $seller->products->count() }} —
+                        <a href="{{ route('admin.products.index', ['search' => $seller->business_name]) }}">view all</a>
+                    </div>
+                    @endif
+                    @else
+                    <div class="text-center py-4 text-muted">
+                        <i class="feather-box d-block mb-2" style="font-size:28px;"></i>
+                        <p class="mb-0 fs-13">No products listed yet.</p>
+                    </div>
+                    @endif
                 </div>
-                @else
-                <div class="text-center py-4 text-muted">No products yet.</div>
-                @endif
-            </div>
-        </div>
+
+                {{-- Services tab --}}
+                <div class="tab-pane fade" id="tab-services">
+                    <div class="card-header d-flex align-items-center justify-content-between" style="border-top: 1px solid #dee2e6;">
+                        <span class="fs-13 text-muted">{{ $seller->services->count() }} service(s) total</span>
+                    </div>
+                    @if($seller->services->count())
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Service</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Pricing</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Delivery</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Rating</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($seller->services->take(8) as $service)
+                                <tr>
+                                    <td class="fw-semibold fs-13">
+                                        <a href="{{ route('admin.services.show', $service->id) }}"
+                                           class="text-dark listing-title-link">
+                                            {{ Str::limit($service->title, 45) }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border fs-11">
+                                            {{ ucfirst($service->pricing_type) }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold">
+                                        @if($service->price)
+                                            ₦{{ number_format($service->price, 2) }}
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-muted fs-12">{{ $service->delivery_time ?? '—' }}</td>
+                                    <td>
+                                        <span class="text-warning">★</span>
+                                        {{ number_format($service->average_rating ?? 0, 1) }}
+                                        <small class="text-muted">({{ $service->total_reviews ?? 0 }})</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge orderer-badge badge-{{ $service->status }}">
+                                            {{ ucfirst($service->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('admin.services.show', $service->id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="feather-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($seller->services->count() > 8)
+                    <div class="p-3 text-center text-muted fs-12 border-top">
+                        Showing 8 of {{ $seller->services->count() }}
+                    </div>
+                    @endif
+                    @else
+                    <div class="text-center py-4 text-muted">
+                        <i class="feather-briefcase d-block mb-2" style="font-size:28px;"></i>
+                        <p class="mb-0 fs-13">No services listed yet.</p>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Properties tab --}}
+                <div class="tab-pane fade" id="tab-properties">
+                    <div class="card-header d-flex align-items-center justify-content-between" style="border-top: 1px solid #dee2e6;">
+                        <span class="fs-13 text-muted">{{ $seller->properties->count() }} propert{{ $seller->properties->count() === 1 ? 'y' : 'ies' }} total</span>
+                    </div>
+                    @if($seller->properties->count())
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Title</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Listing</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Price</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Location</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Beds / Baths</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($seller->properties->take(8) as $property)
+                                <tr>
+                                    <td class="fw-semibold fs-13">
+                                        <a href="{{ route('admin.houses.show', $property->id) }}"
+                                           class="text-dark listing-title-link">
+                                            {{ Str::limit($property->title, 40) }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border fs-11">
+                                            {{ ucfirst(str_replace('_', ' ', $property->property_type)) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge fs-11 {{ $property->listing_type === 'sale' ? 'bg-primary' : 'bg-info text-dark' }}">
+                                            For {{ ucfirst($property->listing_type) }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold">₦{{ number_format($property->price, 2) }}</td>
+                                    <td class="text-muted fs-12">{{ Str::limit($property->city . ', ' . $property->state, 25) }}</td>
+                                    <td class="text-muted fs-12">
+                                        @if($property->bedrooms || $property->bathrooms)
+                                            {{ $property->bedrooms ?? '—' }} bed /
+                                            {{ $property->bathrooms ?? '—' }} bath
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge orderer-badge badge-{{ $property->status }}">
+                                            {{ ucfirst($property->status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('admin.houses.show', $property->id) }}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="feather-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($seller->properties->count() > 8)
+                    <div class="p-3 text-center text-muted fs-12 border-top">
+                        Showing 8 of {{ $seller->properties->count() }}
+                    </div>
+                    @endif
+                    @else
+                    <div class="text-center py-4 text-muted">
+                        <i class="feather-home d-block mb-2" style="font-size:28px;"></i>
+                        <p class="mb-0 fs-13">No properties listed yet.</p>
+                    </div>
+                    @endif
+                </div>
+
+            </div>{{-- /tab-content --}}
+        </div>{{-- /card --}}
 
         {{-- Wallet Transactions --}}
         <div class="card mb-3">
@@ -314,10 +529,8 @@
                     <i class="feather-activity me-2"></i> Recent Wallet Transactions
                 </h5>
                 @if($wallet)
-                <a href="{{ route('admin.finance.transactions', ['search' => $seller->email]) }}" 
-                   class="btn btn-sm btn-outline-primary">
-                    View All
-                </a>
+                <a href="{{ route('admin.finance.transactions', ['search' => $seller->email]) }}"
+                   class="btn btn-sm btn-outline-primary">View All</a>
                 @endif
             </div>
             <div class="card-body p-0">
@@ -325,31 +538,29 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
-                              <tr>
+                            <tr>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Reference</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Amount</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Balance After</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Date</th>
-                              </tr>
+                            </tr>
                         </thead>
                         <tbody>
                             @foreach($transactions as $txn)
-                            @php 
+                            @php
                                 $isCredit = in_array($txn->type, ['credit','escrow_release','referral_credit','escrow_refund']);
                                 $statusColors = [
                                     'completed' => '#28a745',
-                                    'pending' => '#ffc107',
-                                    'failed' => '#dc3545',
-                                    'reversed' => '#6c757d',
+                                    'pending'   => '#ffc107',
+                                    'failed'    => '#dc3545',
+                                    'reversed'  => '#6c757d',
                                 ];
                                 $statusColor = $statusColors[$txn->status] ?? '#6c757d';
                             @endphp
-                              <tr>
-                                <td>
-                                    <code class="fs-12">{{ Str::limit($txn->reference, 20) }}</code>
-                                </td>
+                            <tr>
+                                <td><code class="fs-12">{{ Str::limit($txn->reference, 20) }}</code></td>
                                 <td>
                                     <span class="badge orderer-badge {{ $isCredit ? 'badge-approved' : 'badge-pending' }}">
                                         {{ str_replace('_', ' ', ucfirst($txn->type)) }}
@@ -360,21 +571,12 @@
                                 </td>
                                 <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
                                 <td>
-                                    <span class="badge" style="
-                                        background-color: {{ $statusColor }};
-                                        color: {{ $txn->status === 'pending' ? '#212529' : '#ffffff' }};
-                                        padding: 5px 10px;
-                                        border-radius: 4px;
-                                        font-size: 11px;
-                                        font-weight: 600;
-                                    ">
+                                    <span class="badge" style="background-color:{{ $statusColor }};color:{{ $txn->status === 'pending' ? '#212529' : '#ffffff' }};padding:5px 10px;border-radius:4px;font-size:11px;font-weight:600;">
                                         {{ ucfirst($txn->status) }}
                                     </span>
                                 </td>
-                                <td class="text-muted fs-12">
-                                    {{ $txn->created_at->format('M d, Y H:i') }}
-                                </td>
-                              </tr>
+                                <td class="text-muted fs-12">{{ $txn->created_at->format('M d, Y H:i') }}</td>
+                            </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -388,7 +590,7 @@
             </div>
         </div>
 
-                {{-- Referrals --}}
+        {{-- Referrals --}}
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">
@@ -402,15 +604,12 @@
                     @endif
                 </div>
             </div>
-
-            {{-- Referral code row --}}
             <div class="px-3 pt-3 pb-2">
                 <div class="d-flex align-items-center gap-2">
                     <small class="text-muted fw-semibold text-uppercase" style="white-space:nowrap;">Referral Code:</small>
                     <code class="fs-13 text-primary fw-bold">{{ $seller->referral_code ?? '—' }}</code>
                     @if($seller->referral_code)
-                    <button type="button"
-                            class="btn btn-outline-primary btn-sm"
+                    <button type="button" class="btn btn-outline-primary btn-sm"
                             onclick="adminCopyRef('{{ $seller->referral_code }}')"
                             title="Copy referral link">
                         <i class="feather-copy"></i>
@@ -424,7 +623,6 @@
                     @endif
                 </div>
             </div>
-
             <div class="card-body p-0">
                 @if($sellerReferrals->count())
                 <div class="table-responsive">
@@ -443,27 +641,17 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div style="width:28px;height:28px;border-radius:50%;background:#2ECC71;
-                                                    display:flex;align-items:center;justify-content:center;
-                                                    color:#fff;font-weight:700;font-size:11px;flex-shrink:0;">
+                                        <div style="width:28px;height:28px;border-radius:50%;background:#2ECC71;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;flex-shrink:0;">
                                             {{ strtoupper(substr($ref->referred->first_name ?? 'S', 0, 1)) }}
                                         </div>
-                                        <span class="fw-semibold fs-13">
-                                            {{ $ref->referred->full_name ?? 'Unknown' }}
-                                        </span>
+                                        <span class="fw-semibold fs-13">{{ $ref->referred->full_name ?? 'Unknown' }}</span>
                                     </div>
                                 </td>
-                                <td class="text-muted fs-13">
-                                    {{ $ref->referred->business_name ?? '—' }}
-                                </td>
-                                <td class="text-muted fs-12">
-                                    {{ $ref->created_at->format('M d, Y') }}
-                                </td>
+                                <td class="text-muted fs-13">{{ $ref->referred->business_name ?? '—' }}</td>
+                                <td class="text-muted fs-12">{{ $ref->created_at->format('M d, Y') }}</td>
                                 <td>
                                     @foreach($ref->earnings as $earning)
-                                        <span class="fw-bold text-success d-block">
-                                            ₦{{ number_format($earning->amount, 2) }}
-                                        </span>
+                                        <span class="fw-bold text-success d-block">₦{{ number_format($earning->amount, 2) }}</span>
                                     @endforeach
                                     @if($ref->earnings->isEmpty()) <span class="text-muted">—</span> @endif
                                 </td>
@@ -491,11 +679,8 @@
             </div>
         </div>
 
-
         {{-- Brand --}}
-        @php
-            $brand = $seller->brand;
-        @endphp
+        @php $brand = $seller->brand; @endphp
         @if($brand)
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Brand Information</h5></div>
@@ -515,8 +700,8 @@
                         <div class="text-center p-2 bg-light rounded">
                             <small class="text-muted d-block">Rating</small>
                             <div class="text-warning">
-                                @for($i=1;$i<=5;$i++) 
-                                    {{ $i<=round($brand->average_rating ?? 0)?'★':'☆' }} 
+                                @for($i=1;$i<=5;$i++)
+                                    {{ $i <= round($brand->average_rating ?? 0) ? '★' : '☆' }}
                                 @endfor
                                 <small class="text-muted">({{ number_format($brand->average_rating ?? 0, 1) }})</small>
                             </div>
@@ -539,127 +724,108 @@
         </div>
         @endif
 
-    </div>
+    </div>{{-- /col-lg-8 --}}
 </div>
 
-{{-- Custom Reject Modal --}}
-<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; margin: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
-            <h5 style="margin: 0; font-size: 18px; font-weight: 600;">Reject Seller Application</h5>
+{{-- Reject Modal --}}
+<div id="rejectModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:12px;max-width:500px;width:90%;margin:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);animation:modalFadeIn 0.3s ease;">
+        <div style="padding:20px;border-bottom:1px solid #e5e7eb;">
+            <h5 style="margin:0;font-size:18px;font-weight:600;">Reject Seller Application</h5>
         </div>
         <form id="rejectForm" method="POST" action="">
-            @csrf
-            @method('PUT')
-            <div style="padding: 20px;">
-                <p id="modalSellerInfo" style="margin-bottom: 20px; color: #6b7280; font-size: 14px;"></p>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Reason</label>
-                    <textarea name="reason" rows="4" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;" placeholder="Why are you rejecting this seller?" required></textarea>
+            @csrf @method('PUT')
+            <div style="padding:20px;">
+                <p id="modalSellerInfo" style="margin-bottom:20px;color:#6b7280;font-size:14px;"></p>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px;">Reason</label>
+                    <textarea name="reason" rows="4" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;" placeholder="Why are you rejecting this seller?" required></textarea>
                 </div>
             </div>
-            <div style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeRejectModal()" style="padding: 8px 20px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Cancel</button>
-                <button type="submit" style="padding: 8px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Reject</button>
+            <div style="padding:20px;border-top:1px solid #e5e7eb;display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" onclick="closeRejectModal()" style="padding:8px 20px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+                <button type="submit" style="padding:8px 20px;background:#dc2626;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Reject</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- Custom Suspend Modal --}}
-<div id="suspendModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999; align-items: center; justify-content: center;">
-    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; margin: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
-            <h5 style="margin: 0; font-size: 18px; font-weight: 600;">Suspend Seller</h5>
+{{-- Suspend Modal --}}
+<div id="suspendModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:12px;max-width:500px;width:90%;margin:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);animation:modalFadeIn 0.3s ease;">
+        <div style="padding:20px;border-bottom:1px solid #e5e7eb;">
+            <h5 style="margin:0;font-size:18px;font-weight:600;">Suspend Seller</h5>
         </div>
         <form id="suspendForm" method="POST" action="">
-            @csrf
-            @method('PUT')
-            <div style="padding: 20px;">
-                <p id="suspendSellerInfo" style="margin-bottom: 20px; color: #6b7280; font-size: 14px;"></p>
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px;">Reason</label>
-                    <textarea name="reason" rows="4" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;" placeholder="Reason for suspension..." required></textarea>
+            @csrf @method('PUT')
+            <div style="padding:20px;">
+                <p id="suspendSellerInfo" style="margin-bottom:20px;color:#6b7280;font-size:14px;"></p>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px;">Reason</label>
+                    <textarea name="reason" rows="4" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;" placeholder="Reason for suspension..." required></textarea>
                 </div>
             </div>
-            <div style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeSuspendModal()" style="padding: 8px 20px; background: #f3f4f6; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Cancel</button>
-                <button type="submit" style="padding: 8px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Suspend</button>
+            <div style="padding:20px;border-top:1px solid #e5e7eb;display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" onclick="closeSuspendModal()" style="padding:8px 20px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Cancel</button>
+                <button type="submit" style="padding:8px 20px;background:#dc2626;color:white;border:none;border-radius:6px;cursor:pointer;font-size:14px;">Suspend</button>
             </div>
         </form>
     </div>
 </div>
 
 <style>
-    @keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    .badge-orderer-badge {
-        padding: 5px 10px;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 600;
-    }
+@keyframes modalFadeIn {
+    from { opacity:0; transform:translateY(-20px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+/* Make tab badges smaller and subtler */
+#listingsTabs .badge { font-size: 10px; font-weight: 600; }
+#listingsTabs .nav-link { font-size: 13px; border-radius: 6px 6px 0 0; }
+#listingsTabs .nav-link.active { background: #fff; border-bottom-color: #fff; }
+
+/* Clickable listing title links */
+.listing-title-link {
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.listing-title-link:hover {
+    color: #0d6efd !important;
+    text-decoration: underline;
+}
 </style>
 
 <script>
-    function openRejectModal(id, sellerName) {
-        const modal = document.getElementById('rejectModal');
-        const form = document.getElementById('rejectForm');
-        const sellerInfo = document.getElementById('modalSellerInfo');
-        
-        form.action = "{{ route('admin.sellers.reject', ['seller' => '__ID__']) }}".replace('__ID__', id);
-        sellerInfo.innerHTML = `<strong>${sellerName}</strong><br>This seller application will be rejected.`;
-        
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeRejectModal() {
-        const modal = document.getElementById('rejectModal'); 
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    
-    function openSuspendModal(id, sellerName) {
-        const modal = document.getElementById('suspendModal');
-        const form = document.getElementById('suspendForm');
-        const sellerInfo = document.getElementById('suspendSellerInfo');
-        
-        form.action = "{{ route('admin.sellers.suspend', ['seller' => '__ID__']) }}".replace('__ID__', id);
-        sellerInfo.innerHTML = `<strong>${sellerName}</strong><br>This seller will be suspended and unable to list products.`;
-        
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeSuspendModal() {
-        const modal = document.getElementById('suspendModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    
-    // Close modals when clicking outside
-    document.getElementById('rejectModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeRejectModal();
-        }
-    });
-    
-    document.getElementById('suspendModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeSuspendModal();
-        }
-    });
-
-    function adminCopyRef(code) {
+function openRejectModal(id, sellerName) {
+    document.getElementById('rejectForm').action =
+        "{{ route('admin.sellers.reject', ['seller' => '__ID__']) }}".replace('__ID__', id);
+    document.getElementById('modalSellerInfo').innerHTML =
+        `<strong>${sellerName}</strong><br>This seller application will be rejected.`;
+    document.getElementById('rejectModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+function openSuspendModal(id, sellerName) {
+    document.getElementById('suspendForm').action =
+        "{{ route('admin.sellers.suspend', ['seller' => '__ID__']) }}".replace('__ID__', id);
+    document.getElementById('suspendSellerInfo').innerHTML =
+        `<strong>${sellerName}</strong><br>This seller will be suspended and unable to list products.`;
+    document.getElementById('suspendModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeSuspendModal() {
+    document.getElementById('suspendModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+document.getElementById('rejectModal').addEventListener('click', function(e) {
+    if (e.target === this) closeRejectModal();
+});
+document.getElementById('suspendModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSuspendModal();
+});
+function adminCopyRef(code) {
     const link = 'https://ordererweb.com/seller/register?ref=' + code;
     navigator.clipboard.writeText(link).then(() => {
         alert('Referral link copied: ' + link);

@@ -174,7 +174,7 @@
                     </div>
                     @endif
                     <div>
-                        <p class="mb-0 fw-semibold">{{ $service->seller->business_name }}</p>
+                        <p class="mb-0 fw-semibold"><a href="{{ route('admin.sellers.show', $service->seller_id) }}" class="text-primary">{{ $service->seller->business_name }}</a></p>
                         <small class="text-muted">{{ $service->seller->email }}</small>
                     </div>
                 </div>

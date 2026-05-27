@@ -88,10 +88,10 @@ class SellerController extends Controller
 
     public function show(Seller $seller)
     {
-        $seller->load(['documents', 'products', 'brand']);
+        $seller->load(['documents', 'products', 'brand', 'services', 'properties']);
 
-        $orderCount   = \App\Models\OrderItem::where('seller_id', $seller->id)->count();
-        $totalEarnings= \App\Models\OrderItem::where('seller_id', $seller->id)
+        $orderCount    = \App\Models\OrderItem::where('seller_id', $seller->id)->count();
+        $totalEarnings = \App\Models\OrderItem::where('seller_id', $seller->id)
                             ->where('status', 'completed')
                             ->sum('seller_earnings');
 
@@ -99,7 +99,6 @@ class SellerController extends Controller
                     ->where('walletable_id', $seller->id)
                     ->first();
 
-        // Get wallet transactions
         $transactions = [];
         if ($wallet) {
             $transactions = \App\Models\WalletTransaction::where('wallet_id', $wallet->id)
@@ -108,7 +107,6 @@ class SellerController extends Controller
                             ->get();
         }
 
-        // Referrals this seller brought in
         $sellerReferrals = \App\Models\Referral::where('referrer_type', 'App\Models\Seller')
             ->where('referrer_id', $seller->id)
             ->with(['referred', 'earnings'])
@@ -131,7 +129,8 @@ class SellerController extends Controller
             'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions',
             'sellerReferrals', 'referralStats'
         ));
-    } 
+    }
+
     public function approve(Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) {
