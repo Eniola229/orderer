@@ -36,6 +36,7 @@ Route::get('/search',               [StorefrontController::class, 'search'])->na
 Route::get('/brands',               [StorefrontController::class, 'brands'])->name('brands.index');
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+Route::get('/search/suggestions', \App\Http\Controllers\SearchSuggestController::class)->name('search.suggestions');
 //Waitlist
 Route::get('/waitlist', fn() => view('waitlist'))->name('waitlist');
  

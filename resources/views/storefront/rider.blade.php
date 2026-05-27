@@ -1168,7 +1168,7 @@ body * {
                         @endif
                     </div>
 
-                    <div class="pay-option" id="opt-monnify" onclick="selectPayment('monnify')">
+         <!--            <div class="pay-option" id="opt-monnify" onclick="selectPayment('monnify')">
                         <div class="pay-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1182,7 +1182,7 @@ body * {
                             <div class="pay-label">Monnify</div>
                             <div class="pay-sub">Card · Bank Transfer · USSD · Phone Number</div>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="pay-option {{ auth('web')->user()->wallet_balance <= 0 ? 'selected' : '' }}"
                          id="payOptKorapay" onclick="selectPayment('korapay')">
                         <div class="pay-icon">💳</div>

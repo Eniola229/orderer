@@ -11,7 +11,7 @@
     
     <style>
     .swal-deny-visible {
-        display: inline-block !important;
+        display: inline-block !important; 
         visibility: visible !important;
         opacity: 1 !important;
     }
@@ -28,7 +28,114 @@
     .mega-col li a {
         display: block !important;
     }
-    </style>
+
+/* ── Search suggestion dropdown ── */
+.ord-search { position: relative; }
+
+.ord-suggest {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: 320px;
+    background: var(--color-background-primary, #fff);
+    border: 0.5px solid rgba(0,0,0,.15);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    z-index: 9999;
+    overflow: hidden;
+    display: none;
+}
+.ord-suggest.open { display: block; }
+
+.ord-suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: background .12s;
+}
+.ord-suggest-item:hover,
+.ord-suggest-item.active {
+    background: rgba(0,0,0,.04);
+}
+
+.ord-suggest-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(0,0,0,.06);
+}
+.ord-suggest-thumb-placeholder {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: rgba(0,0,0,.3);
+}
+
+.ord-suggest-text { flex: 1; min-width: 0; }
+.ord-suggest-label {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-primary, #111);
+}
+.ord-suggest-meta {
+    font-size: 11px;
+    color: var(--color-text-secondary, #666);
+    margin-top: 1px;
+}
+
+.ord-suggest-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: rgba(0,0,0,.06);
+    color: var(--color-text-secondary, #666);
+    flex-shrink: 0;
+}
+.ord-suggest-badge.brand { background: #e8f4ff; color: #185fa5; }
+
+.ord-suggest-empty {
+    padding: 14px;
+    font-size: 13px;
+    color: var(--color-text-secondary, #888);
+    text-align: center;
+}
+.ord-suggest-footer {
+    border-top: 0.5px solid rgba(0,0,0,.08);
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--color-text-secondary, #888);
+    text-align: center;
+}
+.ord-suggest-footer a {
+    color: #2ECC71;
+    font-weight: 500;
+    text-decoration: none;
+}
+.ord-header,
+.ord-header-inner,
+.ord-actions,
+.ord-search {
+    overflow: visible !important;
+}
+</style>
+
 
     {{-- Dynamic Title, Favicon & OG Variables --}}
     @php
@@ -145,7 +252,7 @@
             </ul>
         </nav>
 
-        <!-- Actions -->
+        <!-- Actions --> 
         <div class="ord-actions">
 
             <!-- Search -->
@@ -210,6 +317,162 @@
         </div>
     </div>
 </header>
+
+
+<script>
+(function () {
+    const SUGGEST_URL = '{{ route("search.suggestions") }}';
+    const SEARCH_URL  = '{{ route("search") }}';
+
+    document.querySelectorAll('.ord-search').forEach(function (form) {
+        const input = form.querySelector('input[name="q"]');
+        if (!input) return;
+
+        // Build the dropdown
+        const dropdown = document.createElement('div');
+        dropdown.className = 'ord-suggest';
+        form.appendChild(dropdown);
+
+        let debounceTimer = null;
+        let activeIndex   = -1;
+        let currentItems  = [];
+
+        function highlight(index) {
+            currentItems.forEach(function (el, i) {
+                el.classList.toggle('active', i === index);
+            });
+        }
+
+        function close() {
+            dropdown.classList.remove('open');
+            activeIndex = -1;
+        }
+
+        function open() {
+            dropdown.classList.add('open');
+        }
+
+        function renderResults(data, q) {
+            dropdown.innerHTML = '';
+            activeIndex = -1;
+
+            if (!data.length) {
+                dropdown.innerHTML = '<div class="ord-suggest-empty">No results for "<strong>' + escHtml(q) + '</strong>"</div>';
+                open();
+                return;
+            }
+
+            data.forEach(function (item) {
+                var a = document.createElement('a');
+                a.href = item.url;
+                a.className = 'ord-suggest-item';
+
+                // Thumb
+                if (item.image) {
+                    var img = document.createElement('img');
+                    img.className = 'ord-suggest-thumb';
+                    img.src = item.image;
+                    img.alt = '';
+                    img.loading = 'lazy';
+                    a.appendChild(img);
+                } else {
+                    var ph = document.createElement('div');
+                    ph.className = 'ord-suggest-thumb-placeholder';
+                    ph.textContent = item.type === 'brand' ? '🏷' : '📦';
+                    a.appendChild(ph);
+                }
+
+                // Text block
+                var text = document.createElement('div');
+                text.className = 'ord-suggest-text';
+
+                var label = document.createElement('div');
+                label.className = 'ord-suggest-label';
+                label.textContent = item.label;
+                text.appendChild(label);
+
+                if (item.price) {
+                    var meta = document.createElement('div');
+                    meta.className = 'ord-suggest-meta';
+                    meta.textContent = item.price;
+                    text.appendChild(meta);
+                }
+                a.appendChild(text);
+
+                // Badge
+                var badge = document.createElement('span');
+                badge.className = 'ord-suggest-badge' + (item.type === 'brand' ? ' brand' : '');
+                badge.textContent = item.type === 'brand' ? 'Brand' : 'Product';
+                a.appendChild(badge);
+
+                dropdown.appendChild(a);
+            });
+
+            // "See all results" footer
+            var footer = document.createElement('div');
+            footer.className = 'ord-suggest-footer';
+            var link = document.createElement('a');
+            link.href = SEARCH_URL + '?q=' + encodeURIComponent(q);
+            link.textContent = 'See all results for "' + q + '" →';
+            footer.appendChild(link);
+            dropdown.appendChild(footer);
+
+            currentItems = Array.from(dropdown.querySelectorAll('.ord-suggest-item'));
+            open();
+        }
+
+        function fetchSuggestions(q) {
+            fetch(SUGGEST_URL + '?q=' + encodeURIComponent(q), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) { renderResults(data, q); })
+            .catch(function () { close(); });
+        }
+
+        input.addEventListener('input', function () {
+            var q = input.value.trim();
+            clearTimeout(debounceTimer);
+            if (q.length < 2) { close(); return; }
+            debounceTimer = setTimeout(function () { fetchSuggestions(q); }, 220);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', function (e) {
+            if (!dropdown.classList.contains('open')) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, currentItems.length - 1);
+                highlight(activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                highlight(activeIndex);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                currentItems[activeIndex].click();
+            } else if (e.key === 'Escape') {
+                close();
+            }
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            if (!form.contains(e.target)) close();
+        });
+
+        // Prevent form submit hiding results (let Enter key handle navigation)
+        input.addEventListener('focus', function () {
+            if (input.value.trim().length >= 2 && dropdown.innerHTML) open();
+        });
+
+        function escHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    });
+})();
+</script>
 
 <script>
 // ── Global cart alert with checkout + continue shopping buttons ──
