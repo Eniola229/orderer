@@ -119,7 +119,7 @@ class StorefrontController extends Controller
             default:           $query->latest(); break;
         }
 
-        $products = $query->paginate(12)->withQueryString();
+        $products = $query->paginate(30)->withQueryString();
 
         // ── Best Sellers & Top Rated with filters applied ───────────
         // Create a separate query with the SAME filters
