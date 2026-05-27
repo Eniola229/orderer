@@ -80,7 +80,7 @@ class LogController extends Controller
         }
 
         // Get paginated logs for display
-        $logs = $query->orderBy('created_at', 'desc')->paginate(30)->withQueryString();
+        $logs = $query->orderBy('created_at', 'desc')->paginate(100)->withQueryString();
 
         // Calculate stats from the SAME filtered query (without pagination)
         $statsQuery = clone $query;

@@ -43,7 +43,7 @@ class BuyerController extends Controller
             );
         }
 
-        $buyers = $query->latest()->paginate(20)->withQueryString();
+        $buyers = $query->latest()->paginate(50)->withQueryString();
 
         // ── Stats ─────────────────────────────────────────────────────────────
 

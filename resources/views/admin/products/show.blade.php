@@ -230,7 +230,7 @@
                 @endif
                 @if($product->location)
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted">Location</span>
+                    <span class="text-muted">Location </span>
                     <span>{{ $product->location }}</span>
                 </div>
                 @endif
@@ -243,6 +243,10 @@
                 <div class="d-flex justify-content-between">
                     <span class="text-muted">Views</span>
                     <span><code>{{ $product->views ?? 0 }}</code></span>
+                </div>
+               <div class="d-flex justify-content-between">
+                    <span class="text-muted">Total Sold</span>
+                    <span><code>{{ $product->total_sold ?? 0 }}</code></span>
                 </div>
             </div>
         </div>

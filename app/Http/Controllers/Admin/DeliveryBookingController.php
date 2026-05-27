@@ -57,7 +57,7 @@ class DeliveryBookingController extends Controller
             });
         }
 
-        $bookings = $query->paginate(20)->withQueryString();
+        $bookings = $query->paginate(50)->withQueryString();
 
         // Stats (unfiltered totals + filtered)
         $stats = [

@@ -36,7 +36,7 @@ class HouseController extends Controller
             });
         }
 
-        $houses = $query->latest()->paginate(20)->withQueryString();
+        $houses = $query->latest()->paginate(50)->withQueryString();
 
         return view('admin.houses.index', compact('houses'));
     }

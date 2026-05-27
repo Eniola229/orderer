@@ -27,7 +27,7 @@ class ServiceController extends Controller
             });
         }
 
-        $services = $query->latest()->paginate(20)->withQueryString();
+        $services = $query->latest()->paginate(50)->withQueryString();
 
         return view('admin.services.index', compact('services'));
     }

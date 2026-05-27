@@ -37,7 +37,7 @@ class SellerController extends Controller
         $sellers = $query
             ->withCount(['products', 'orders' => fn($q) => $q->whereHas('items', fn($r) => $r->where('seller_id', \DB::raw('sellers.id')))])
             ->latest()
-            ->paginate(20)
+            ->paginate(50)
             ->withQueryString();
 
         // ── Stats ────────────────────────────────────────────────────────────────

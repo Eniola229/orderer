@@ -51,7 +51,7 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->latest()->paginate(20)->withQueryString();
+        $products = $query->latest()->paginate(50)->withQueryString();
         $categories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
         
         $featuredCount = Product::where('is_featured', true)->count();

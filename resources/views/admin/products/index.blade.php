@@ -359,7 +359,7 @@
                                             <label class="fs-11 text-muted mb-1 d-block">Total Sold</label>
                                             <strong>{{ $product->total_sold ?? 0 }}</strong>
                                         </div>
-                                    </div>
+                                    </div> 
                                     <div class="col-md-4">
                                         <div class="p-3 border rounded bg-white">
                                             <label class="fs-11 text-muted mb-1 d-block">Views</label>

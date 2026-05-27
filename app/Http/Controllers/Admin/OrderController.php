@@ -46,7 +46,7 @@ class OrderController extends Controller
             });
         }
      
-        $orders = $query->latest()->paginate(20)->withQueryString();
+        $orders = $query->latest()->paginate(50)->withQueryString();
 
         // Calculate stats based on the same filters (excluding pagination)
         $statsQuery = clone $query;
