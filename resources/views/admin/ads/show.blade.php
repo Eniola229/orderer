@@ -253,7 +253,7 @@
                     </div>
                     @endif
                     <div>
-                        <p class="mb-0 fw-semibold">{{ $ad->seller->business_name }}</p>
+                        <p class="mb-0 fw-semibold"><a href="{{ route('admin.sellers.show', $ad->seller_id) }}" class="text-primary">{{ $ad->seller->business_name }}</a></p>
                         <small class="text-muted">{{ $ad->seller->email }}</small>
                     </div>
                 </div>
@@ -441,7 +441,7 @@
         const form = document.getElementById('approveForm');
         const adInfo = document.getElementById('approveAdInfo');
         
-        form.action = `/admin/ads/${id}/approve`;
+        form.action = "{{ route('admin.ads.approve', ['ad' => '__ID__']) }}".replace('__ID__', id);
         adInfo.innerHTML = `<strong>${adTitle}</strong><br>This ad will be approved and activated.`;
         
         modal.style.display = 'flex';
@@ -459,7 +459,7 @@
         const form = document.getElementById('rejectForm');
         const adInfo = document.getElementById('rejectAdInfo');
         
-        form.action = `/admin/ads/${id}/reject`;
+        form.action = "{{ route('admin.ads.reject', ['ad' => '__ID__']) }}".replace('__ID__', id);
         adInfo.innerHTML = `<strong>${adTitle}</strong><br>Please provide a reason for rejection.`;
         
         modal.style.display = 'flex';
@@ -477,7 +477,7 @@
         const form = document.getElementById('suspendForm');
         const adInfo = document.getElementById('suspendAdInfo');
         
-        form.action = `/admin/ads/${id}/suspend`;
+        form.action = "{{ route('admin.ads.suspend', ['ad' => '__ID__']) }}".replace('__ID__', id);
         adInfo.innerHTML = `<strong>${adTitle}</strong><br>This ad will be paused.`;
         
         modal.style.display = 'flex';

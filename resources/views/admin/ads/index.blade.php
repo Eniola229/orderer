@@ -501,7 +501,7 @@
 
     // Approve Modal
     function openApproveModal(id, title) {
-        document.getElementById('approveForm').action = `/admin/ads/${id}/approve`;
+        document.getElementById('approveForm').action = "{{ route('admin.ads.approve', ['ad' => '__ID__']) }}".replace('__ID__', id);
         document.getElementById('approveAdInfo').innerHTML = `<strong>${title}</strong><br>This ad will be approved and activated.`;
         document.getElementById('approveModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -513,7 +513,7 @@
 
     // Reject Modal
     function openRejectModal(id, title) {
-        document.getElementById('rejectForm').action = `/admin/ads/${id}/reject`;
+        document.getElementById('rejectForm').action = "{{ route('admin.ads.reject', ['ad' => '__ID__']) }}".replace('__ID__', id);
         document.getElementById('rejectAdInfo').innerHTML = `<strong>${title}</strong><br>Please provide a reason for rejection.`;
         document.getElementById('rejectModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -525,7 +525,7 @@
 
     // Suspend Modal
     function openSuspendModal(id, title) {
-        document.getElementById('suspendForm').action = `/admin/ads/${id}/suspend`;
+        document.getElementById('suspendForm').action = "{{ route('admin.ads.suspend', ['ad' => '__ID__']) }}".replace('__ID__', id);
         document.getElementById('suspendAdInfo').innerHTML = `<strong>${title}</strong><br>This ad will be paused.`;
         document.getElementById('suspendModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';

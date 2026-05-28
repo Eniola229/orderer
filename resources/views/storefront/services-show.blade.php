@@ -485,6 +485,90 @@
     </div>
 </section>
 
+{{-- ── Related Services ───────────────────────────────────────── --}}
+@if((isset($sponsoredRelatedServiceAds) && $sponsoredRelatedServiceAds->count()) || (isset($relatedServices) && $relatedServices->count()))
+<section style="background:#f4fdf8;padding:40px 0;margin-top:0;">
+    <div class="container">
+        <h4 style="font-weight:800;margin-bottom:24px;">Related Services</h4>
+        <div class="row g-3">
+
+            {{-- Sponsored related first --}}
+            @if(isset($sponsoredRelatedServiceAds))
+            @foreach($sponsoredRelatedServiceAds as $ad)
+            @php $sp = $ad->promotable; @endphp
+            <div class="col-12 col-sm-6 col-lg-4">
+                <div class="service-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;position:relative;background:#fff;">
+                    <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                        Sponsored
+                    </div>
+                    <div style="position:relative;">
+                        @if($sp->portfolio_images && count($sp->portfolio_images))
+                            <img src="{{ $sp->portfolio_images[0]['url'] }}" style="width:100%;height:180px;object-fit:cover;" alt="{{ $sp->title }}">
+                        @else
+                            <div style="width:100%;height:180px;background:#f0faf5;display:flex;align-items:center;justify-content:center;">
+                                <i class="fa fa-cogs" style="font-size:40px;color:#2ECC71;opacity:.4;"></i>
+                            </div>
+                        @endif
+                        @if($sp->seller->is_verified_business)
+                            <span style="position:absolute;top:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;">
+                                <i class="fa fa-check-circle"></i> Verified
+                            </span>
+                        @endif
+                    </div>
+                    <div style="padding:14px;">
+                        <span style="font-size:11px;color:#2ECC71;font-weight:600;">{{ $sp->category->name ?? 'Uncategorized' }}</span>
+                        <h6 style="font-weight:700;margin:6px 0;font-size:15px;">{{ Str::limit($sp->title, 50) }}</h6>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+                            <span style="font-weight:800;color:#2ECC71;font-size:16px;">
+                                @if($sp->pricing_type === 'negotiable') Negotiable
+                                @else ₦{{ number_format($sp->price, 0) }}@if($sp->pricing_type === 'hourly')<small>/hr</small>@endif
+                                @endif
+                            </span>
+                            <a href="{{ $ad->clickTrackingUrl() }}" class="btn essence-btn btn-sm" style="font-size:11px;padding:5px 12px;">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            @endif
+
+            {{-- Regular related --}}
+            @if(isset($relatedServices))
+            @foreach($relatedServices as $rel)
+            <div class="col-12 col-sm-6 col-lg-4">
+                <div class="service-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;background:#fff;">
+                    <div style="position:relative;">
+                        @if($rel->portfolio_images && count($rel->portfolio_images))
+                            <img src="{{ $rel->portfolio_images[0]['url'] }}" style="width:100%;height:180px;object-fit:cover;" alt="{{ $rel->title }}">
+                        @else
+                            <div style="width:100%;height:180px;background:#f0faf5;display:flex;align-items:center;justify-content:center;">
+                                <i class="fa fa-cogs" style="font-size:40px;color:#2ECC71;opacity:.4;"></i>
+                            </div>
+                        @endif
+                    </div>
+                    <div style="padding:14px;">
+                        <span style="font-size:11px;color:#2ECC71;font-weight:600;">{{ $rel->category->name ?? 'Uncategorized' }}</span>
+                        <h6 style="font-weight:700;margin:6px 0;font-size:15px;">{{ Str::limit($rel->title, 50) }}</h6>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+                            <span style="font-weight:800;color:#2ECC71;font-size:16px;">
+                                @if($rel->pricing_type === 'negotiable') Negotiable
+                                @else ₦{{ number_format($rel->price, 0) }}@if($rel->pricing_type === 'hourly')<small>/hr</small>@endif
+                                @endif
+                            </span>
+                            <a href="{{ route('services.show', $rel->slug) }}" class="btn essence-btn btn-sm" style="font-size:11px;padding:5px 12px;">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            @endif
+
+        </div>
+    </div>
+</section>
+@endif
+{{-- END RELATED SERVICES --}}
+
 {{-- Image Modal --}}
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">

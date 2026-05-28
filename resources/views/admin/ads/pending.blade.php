@@ -9,7 +9,7 @@
 @section('content')
 
 @if($ads->count())
-<div class="row">
+<div class="row"> 
     @foreach($ads as $ad)
     <div class="col-lg-6 mb-4">
         <div class="card h-100">
@@ -79,23 +79,29 @@
                 </div>
                 @endif
 
-                <div class="d-flex gap-2">
-                    @if($ad->seller->ads_balance >= $ad->budget)
-                    <form action="{{ route('admin.ads.approve', $ad->id) }}" method="POST">
-                        @csrf @method('PUT')
-                        <button type="submit" class="btn btn-success btn-sm">
-                            <i class="feather-check me-1"></i> Approve & Activate
-                        </button>
-                    </form>
-                    @endif
+            <div class="d-flex gap-2">
 
-                    <button type="button"
-                            class="btn btn-danger btn-sm"
-                            data-bs-toggle="modal"
-                            data-bs-target="#rejectModal{{ $ad->id }}">
-                        <i class="feather-x me-1"></i> Reject
+                @if($ad->seller->ads_balance >= $ad->budget)
+                <form action="{{ route('admin.ads.approve', $ad->id) }}" method="POST">
+                    @csrf @method('PUT')
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="feather-check me-1"></i> Approve & Activate
                     </button>
-                </div>
+                </form>
+                @endif
+
+                <button type="button"
+                        class="btn btn-danger btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#rejectModal{{ $ad->id }}">
+                    <i class="feather-x me-1"></i> Reject
+                </button>                
+
+                <a href="{{ route('admin.ads.show', $ad->id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="feather-eye me-1"></i> View
+                </a>
+
+            </div>
             </div>
         </div>
 

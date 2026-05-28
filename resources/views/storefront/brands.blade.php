@@ -82,6 +82,25 @@
         @endif
         {{-- END BANNER AD --}}
 
+        @if(isset($sponsoredBrandAds) && $sponsoredBrandAds->count() && $brands->currentPage() === 1)
+        <div class="row mb-4">
+            <div class="col-12">
+                <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
+                    <i class="fa fa-star" style="color:#F39C12;"></i> Sponsored
+                </p>
+            </div>
+            @foreach($sponsoredBrandAds as $ad)
+            @php $sp = $ad->promotable; @endphp
+            <div class="col-6 col-md-4 col-lg-3 mb-4" style="position:relative;">
+                <div style="position:absolute;top:16px;left:16px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                    Sponsored
+                </div>
+                {{-- paste your existing brand card markup here, using $sp instead of $brand, href="{{ $ad->clickTrackingUrl() }}" --}}
+            </div>
+            @endforeach
+            <div class="col-12"><hr style="border-color:#eee;margin:4px 0 20px;"></div>
+        </div>
+        @endif
 
         {{-- Brand cards --}}
         <div class="row">

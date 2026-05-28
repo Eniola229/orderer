@@ -21,7 +21,7 @@
                 </button>
             </div>
         </div>
-    </div></div></div>
+    </div></div></div> 
 </div>
 
 <style>
@@ -471,15 +471,35 @@
         </div>
 
         {{-- Similar Properties --}}
-        @if($similarHouses && $similarHouses->count() > 0)
+        @php
+            $allSimilar = collect();
+            if(isset($sponsoredSimilarAds)) {
+                foreach($sponsoredSimilarAds as $ad) {
+                    $ad->promotable->_is_sponsored = true;
+                    $ad->promotable->_ad = $ad;
+                    $allSimilar->push($ad->promotable);
+                }
+            }
+            foreach($similarHouses as $sh) {
+                $sh->_is_sponsored = false;
+                $allSimilar->push($sh);
+            }
+        @endphp
+
+        @if($allSimilar->count() > 0)
         <div class="mt-5">
             <h4 class="mb-4">Similar Properties You Might Like</h4>
             <div class="row">
-                @foreach($similarHouses->take(3) as $similar)
+                @foreach($allSimilar->take(3) as $similar)
                 @php $similarImg = $similar->images->where('is_primary',true)->first() ?? $similar->images->first(); @endphp
                 <div class="col-md-4 mb-4">
-                    <a href="{{ route('houses.show', $similar->slug) }}" style="text-decoration: none;">
-                        <div class="similar-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;">
+                    <a href="{{ $similar->_is_sponsored ? $similar->_ad->clickTrackingUrl() : route('houses.show', $similar->slug) }}" style="text-decoration: none;">
+                        <div class="similar-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;position:relative;">
+                            @if($similar->_is_sponsored)
+                            <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                                Sponsored
+                            </div>
+                            @endif
                             <img src="{{ $similarImg->image_url ?? asset('img/product-img/product-1.jpg') }}"
                                  style="width:100%;height:180px;object-fit:cover;" alt="">
                             <div style="padding:15px;">

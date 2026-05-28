@@ -129,8 +129,83 @@
                     <li><a class="dropdown-item" href="#" onclick="changePerPage(24)">24 per page</a></li>
                     <li><a class="dropdown-item" href="#" onclick="changePerPage(48)">48 per page</a></li>
                 </ul>
-            </div>
+            </div> 
         </div>
+
+            {{-- ── SPONSORED SERVICES ──────────────────────────────────────
+         Shown on page 1 only. Mirrors shop.blade sponsored products.
+                 ──────────────────────────────────────────────────────────── --}}
+            @if(isset($sponsoredServiceAds) && $sponsoredServiceAds->count() && $services->currentPage() === 1)
+            <div class="row mb-4">
+                <div class="col-12">
+                    <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
+                        <i class="fa fa-star" style="color:#F39C12;"></i> Sponsored
+                    </p>
+                </div>
+                @foreach($sponsoredServiceAds as $ad)
+                @php $sp = $ad->promotable; @endphp
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="service-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;transition: transform 0.3s, box-shadow 0.3s;position:relative;">
+                        {{-- Sponsored badge --}}
+                        <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                            Sponsored
+                        </div>
+                        <div style="position:relative;">
+                            @if($sp->portfolio_images && count($sp->portfolio_images))
+                                <img src="{{ $sp->portfolio_images[0]['url'] }}"
+                                     style="width:100%;height:200px;object-fit:cover;" alt="{{ $sp->title }}">
+                            @else
+                                <div style="width:100%;height:200px;background:#f0faf5;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fa fa-cogs" style="font-size:48px;color:#2ECC71;opacity:.4;"></i>
+                                </div>
+                            @endif
+                            @if($sp->seller->is_verified_business)
+                                <span style="position:absolute;top:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                                    <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                                </span>
+                            @endif
+                        </div>
+                        <div style="padding:15px;">
+                            <span style="font-size:11px;color:#2ECC71;font-weight:600;">{{ $sp->category->name ?? 'Uncategorized' }}</span>
+                            <h6 style="font-weight:700;margin:8px 0;font-size:16px;">{{ Str::limit($sp->title, 50) }}</h6>
+                            <p style="color:#888;font-size:12px;margin-bottom:12px;line-height:1.5;">{{ Str::limit($sp->description, 80) }}</p>
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                                <div>
+                                    @if($sp->pricing_type === 'negotiable')
+                                        <span style="font-weight:700;color:#1a1a1a;font-size:16px;">Negotiable</span>
+                                    @else
+                                        <span style="font-weight:800;color:#2ECC71;font-size:18px;">₦{{ number_format($sp->price, 0) }}</span>
+                                        @if($sp->pricing_type === 'hourly')<small style="color:#888;">/hr</small>@endif
+                                    @endif
+                                </div>
+                                @if($sp->delivery_time)
+                                    <small style="color:#888;font-size:11px;"><i class="fa fa-clock-o mr-1"></i>{{ $sp->delivery_time }}</small>
+                                @endif
+                            </div>
+                            <div style="padding-top:12px;border-top:1px solid #f5f5f5;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    @if($sp->seller->avatar)
+                                        <img src="{{ $sp->seller->avatar }}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;" alt="">
+                                    @else
+                                        <div style="width:28px;height:28px;border-radius:50%;background:#2ECC71;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">
+                                            {{ strtoupper(substr($sp->seller->business_name ?? 'S', 0, 1)) }}
+                                        </div>
+                                    @endif
+                                    <small style="color:#666;font-weight:500;">{{ Str::limit($sp->seller->business_name ?? 'Seller', 20) }}</small>
+                                </div>
+                                <a href="{{ $ad->clickTrackingUrl() }}" class="btn essence-btn btn-sm" style="padding: 5px 12px; font-size: 11px;">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+                {{-- Divider --}}
+                <div class="col-12"><hr style="border-color:#eee;margin:8px 0 16px;"></div>
+            </div>
+            @endif
+            {{-- END SPONSORED SERVICES --}}
 
         {{-- Services Grid --}}
         <div class="row g-3 g-md-4">

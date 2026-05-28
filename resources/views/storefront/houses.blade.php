@@ -12,7 +12,7 @@
     </div></div></div>
 </div>
 
-<section class="section-padding-80">
+<section class="section-padding-80"> 
     <div class="container">
 
         {{-- Search Bar (unchanged) --}}
@@ -132,6 +132,65 @@
                 </ul>
             </div>
         </div>
+
+        {{-- ── SPONSORED PROPERTIES ─────────────────────────────────────
+         Shown on page 1 only.
+             ──────────────────────────────────────────────────────────── --}}
+        @if(isset($sponsoredHouseAds) && $sponsoredHouseAds->count() && $houses->currentPage() === 1)
+        <div class="row mb-4">
+            <div class="col-12">
+                <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
+                    <i class="fa fa-star" style="color:#F39C12;"></i> Sponsored
+                </p>
+            </div>
+            @foreach($sponsoredHouseAds as $ad)
+            @php
+                $sp  = $ad->promotable;
+                $img = $sp->images->where('is_primary', true)->first() ?? $sp->images->first();
+            @endphp
+            <div class="col-12 col-sm-6 col-lg-4">
+                <div class="property-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;position:relative;">
+                    {{-- Sponsored badge --}}
+                    <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                        Sponsored
+                    </div>
+                    <div style="position:relative;">
+                        <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}"
+                             style="width:100%;height:200px;object-fit:cover;" alt="{{ $sp->title }}">
+                        <span style="position:absolute;top:10px;right:10px;background:#2ECC71;color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;">
+                            {{ ucfirst($sp->listing_type) }}
+                        </span>
+                        @if($sp->seller->is_verified_business)
+                        <span style="position:absolute;bottom:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </span>
+                        @endif
+                    </div>
+                    <div style="padding:15px;">
+                        <h6 style="font-weight:700;margin-bottom:6px;font-size:16px;">{{ Str::limit($sp->title, 45) }}</h6>
+                        <p style="color:#888;font-size:12px;margin-bottom:8px;">
+                            <i class="fa fa-map-marker mr-1" style="color:#2ECC71;"></i>{{ $sp->city }}, {{ $sp->state }}
+                        </p>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:12px;color:#666;">
+                            @if($sp->bedrooms !== null)<span><i class="fa fa-bed mr-1"></i>{{ $sp->bedrooms }} Bed</span>@endif
+                            @if($sp->bathrooms !== null)<span><i class="fa fa-bath mr-1"></i>{{ $sp->bathrooms }} Bath</span>@endif
+                            @if($sp->size_sqm)<span><i class="fa fa-arrows-alt mr-1"></i>{{ $sp->size_sqm }} m²</span>@endif
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                            <span style="font-size:18px;font-weight:800;color:#2ECC71;">
+                                ₦{{ number_format($sp->price, 0) }}
+                                @if($sp->listing_type == 'rent')<small class="text-muted">/year</small>@endif
+                            </span>
+                            <a href="{{ $ad->clickTrackingUrl() }}" class="btn essence-btn btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            <div class="col-12"><hr style="border-color:#eee;margin:8px 0 16px;"></div>
+        </div>
+        @endif
+        {{-- END SPONSORED PROPERTIES --}}
 
         {{-- ── SEARCH RESULTS BANNER AD ──────────────────────────────
              Placed between the results count row and the properties grid.

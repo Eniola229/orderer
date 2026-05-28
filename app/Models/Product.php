@@ -18,7 +18,7 @@ class Product extends Model
         'status', 'rejection_reason', 'is_featured',
         'average_rating', 'total_reviews', 'total_sold', 'views', 'approved_by'
     ];
-
+ 
     protected $casts = [
         'price'          => 'decimal:2',
         'sale_price'     => 'decimal:2',

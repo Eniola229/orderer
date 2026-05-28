@@ -13,6 +13,7 @@ use App\Models\ProductReview;
 use App\Models\NewsletterSubscriber;
 use App\Helpers\AdHelper;
 use Illuminate\Http\Request;
+use App\Models\Ad;
 
 class StorefrontController extends Controller
 { 
@@ -259,12 +260,36 @@ class StorefrontController extends Controller
         // Increment views
         $product->increment('views');
 
+        // ── Sponsored related products ───────────────────────────
+        $sponsoredRelatedAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', Product::class)
+            ->whereHas('promotable', fn($q) =>
+                $q->where('category_id', $product->category_id)
+                  ->where('status', 'approved')
+                  ->where('id', '!=', $product->id)
+            )
+            ->with(['promotable.images', 'promotable.seller'])
+            ->take(2)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null);
+
+        foreach ($sponsoredRelatedAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
+        $sponsoredRelatedIds = $sponsoredRelatedAds->map(fn($ad) => $ad->promotable_id)->all();
+        // ────────────────────────────────────────────────────────
+
         $relatedProducts = Product::where('status', 'approved')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
+            ->whereNotIn('id', $sponsoredRelatedIds)   // avoid duplicates in the 4 slots
             ->with(['images', 'seller'])
             ->take(4)
             ->get();
+
 
         $inWishlist = false;
         if (auth('web')->check()) {
@@ -296,7 +321,7 @@ class StorefrontController extends Controller
 
         return view('storefront.product', compact(
             'product', 'relatedProducts', 'inWishlist',
-            'sidebarAds', 'flashSale'
+            'sidebarAds', 'flashSale', 'sponsoredRelatedAds'
         ));
     }
 
@@ -307,19 +332,33 @@ class StorefrontController extends Controller
 
     public function brands()
     {
+        // ── Sponsored brand ads ──────────────────────────────────
+        $sponsoredBrandAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', Brand::class)
+            ->with('promotable.seller')
+            ->take(4)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable && $ad->promotable->is_active);
+
+        foreach ($sponsoredBrandAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+        // ────────────────────────────────────────────────────────
+
         $query = Brand::where('is_active', true)->with('seller');
 
         if (request('search')) {
             $query->where('name', 'like', '%' . request('search') . '%');
         }
 
-        // Sort by rating first, then by total orders/reviews as a tiebreaker
         $query->orderBy('average_rating', 'desc')
               ->orderBy('total_reviews', 'desc');
 
         $brands = $query->paginate(20);
 
-        return view('storefront.brands', compact('brands'));
+        return view('storefront.brands', compact('brands', 'sponsoredBrandAds'));
     }
 
     public function brandShow(string $slug)
@@ -406,6 +445,21 @@ class StorefrontController extends Controller
             default:           $query->orderBy('created_at', 'desc');
         }
 
+        // ── Sponsored service ads ────────────────────────────────
+        $sponsoredServiceAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', ServiceListing::class)
+            ->with(['promotable.seller', 'promotable.category'])
+            ->take(3)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable && $ad->promotable->status === 'approved');
+
+        foreach ($sponsoredServiceAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+        // ────────────────────────────────────────────────────────
+
         $perPage  = $request->get('per_page', 12);
         $services = $query->paginate($perPage);
 
@@ -428,8 +482,41 @@ class StorefrontController extends Controller
                             ->firstOrFail();
 
         $service->increment('views');
- 
-        return view('storefront.services-show', compact('service'));
+
+        // ── Sponsored related services ───────────────────────
+        $sponsoredRelatedServiceAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', ServiceListing::class)
+            ->whereHas('promotable', fn($q) =>
+                $q->where('category_id', $service->category_id)
+                  ->where('status', 'approved')
+                  ->where('id', '!=', $service->id)
+            )
+            ->with(['promotable.seller', 'promotable.category'])
+            ->take(2)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null);
+
+        foreach ($sponsoredRelatedServiceAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
+        $sponsoredRelatedServiceIds = $sponsoredRelatedServiceAds
+            ->map(fn($ad) => $ad->promotable_id)->all();
+
+        $relatedServices = \App\Models\ServiceListing::where('status', 'approved')
+            ->where('category_id', $service->category_id)
+            ->where('id', '!=', $service->id)
+            ->whereNotIn('id', $sponsoredRelatedServiceIds)
+            ->with(['seller', 'category'])
+            ->take(3)
+            ->get();
+        // ────────────────────────────────────────────────────
+
+        return view('storefront.services-show', compact(
+            'service', 'relatedServices', 'sponsoredRelatedServiceAds'
+        ));
     }
 
     public function houses(Request $request)
@@ -463,9 +550,24 @@ class StorefrontController extends Controller
             default:           $query->orderBy('created_at', 'desc');
         }
 
+        // ── Sponsored house ads ──────────────────────────────────
+        $sponsoredHouseAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', HouseListing::class)
+            ->with(['promotable.seller', 'promotable.images'])
+            ->take(3)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable && $ad->promotable->status === 'approved');
+
+        foreach ($sponsoredHouseAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+        // ────────────────────────────────────────────────────────
+
         $perPage = $request->get('per_page', 12);
-        $houses  = $query->with(['seller', 'images'])->paginate($perPage); // ← only change
-        return view('storefront.houses', compact('houses'));
+        $houses  = $query->with(['seller', 'images'])->paginate($perPage);
+        return view('storefront.houses', compact('houses', 'sponsoredHouseAds'));
     }
 
     public function housesshow($slug)
@@ -474,21 +576,46 @@ class StorefrontController extends Controller
                             ->where('status', 'approved')
                             ->with(['seller', 'images'])
                             ->firstOrFail();
+        // ── Sponsored similar houses ─────────────────────────────
+        $sponsoredSimilarAds = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', HouseListing::class)
+            ->whereHas('promotable', fn($q) =>
+                $q->where('status', 'approved')
+                  ->where('id', '!=', $house->id)
+                  ->where(fn($q2) =>
+                      $q2->where('listing_type', $house->listing_type)
+                         ->orWhere('city', $house->city)
+                  )
+            )
+            ->with(['promotable.images', 'promotable.seller'])
+            ->take(1)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null);
+
+        foreach ($sponsoredSimilarAds as $ad) {
+            AdHelper::recordImpression($ad->id, auth('web')->id());
+        }
+
+        $sponsoredSimilarIds = $sponsoredSimilarAds->map(fn($ad) => $ad->promotable_id)->all();
+        // ────────────────────────────────────────────────────────
 
         $similarHouses = HouseListing::where('status', 'approved')
             ->where('id', '!=', $house->id)
+            ->whereNotIn('id', $sponsoredSimilarIds)
             ->where(function($query) use ($house) {
                 $query->where('listing_type', $house->listing_type)
                       ->orWhere('property_type', $house->property_type)
                       ->orWhere('city', $house->city);
             })
-            ->take(3)
+            ->take(3 - count($sponsoredSimilarIds))
             ->get();
 
         $house->increment('views');
 
-        return view('storefront.houses-details', compact('house', 'similarHouses'));
-    }
+        return view('storefront.houses-details', compact('house', 'similarHouses', 'sponsoredSimilarAds'));
+            }
 
     public function contact()
     {
@@ -559,7 +686,7 @@ class StorefrontController extends Controller
                 );
                 $imagePaths[] = $uploaded['url']; // Store only the URL
             }
-        }
+        } 
         
         // Create review
         \App\Models\ProductReview::create([
@@ -567,7 +694,7 @@ class StorefrontController extends Controller
             'user_id' => auth()->id(),
             'rating' => $request->rating,
             'review' => $request->review,
-            'images' => $imagePaths, // This will be automatically JSON encoded
+            'images' => $imagePaths,
             'is_verified_purchase' => true,
             'is_visible' => true,
         ]);

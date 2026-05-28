@@ -18,18 +18,54 @@ class AdController extends Controller
     public function __construct(
         protected CloudinaryService $cloudinary,
         protected WalletService $wallet
-    ) {}
+    ) {} 
 
-    public function index()
+    public function index(Request $request)
     {
-        $ads = Ad::with(['adCategory', 'bannerSlot'])
-            ->where('seller_id', auth('seller')->id())
-            ->latest()
-            ->paginate(15);
+        $seller = auth('seller')->id();
 
-        return view('seller.ads.index', compact('ads'));
+        $query = Ad::with(['adCategory', 'bannerSlot'])
+            ->where('seller_id', $seller);
+
+        // Filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('category')) {
+            $query->where('ad_category_id', $request->category);
+        }
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('start_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('end_date', '<=', $request->date_to);
+        }
+
+        $ads = $query->latest()->paginate(15)->withQueryString();
+
+        // Stats (always from all seller ads, not filtered)
+        $allAds = Ad::where('seller_id', $seller);
+        $stats = [
+            'total'       => (clone $allAds)->count(),
+            'active'      => (clone $allAds)->where('status', 'active')->count(),
+            'pending'     => (clone $allAds)->where('status', 'pending')->count(),
+            'paused'      => (clone $allAds)->where('status', 'paused')->count(),
+            'total_spent' => (clone $allAds)->sum('amount_spent'),
+            'total_budget'=> (clone $allAds)->sum('budget'),
+            'impressions' => (clone $allAds)->sum('total_impressions'),
+            'clicks'      => (clone $allAds)->sum('total_clicks'),
+        ];
+        $stats['ctr'] = $stats['impressions'] > 0
+            ? round(($stats['clicks'] / $stats['impressions']) * 100, 2)
+            : 0;
+
+        $categories = AdCategory::where('is_active', true)->get();
+
+        return view('seller.ads.index', compact('ads', 'stats', 'categories'));
     }
-
     public function create()
     {
         $seller     = auth('seller')->user();
