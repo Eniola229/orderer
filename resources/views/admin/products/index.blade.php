@@ -554,7 +554,7 @@
         const form = document.getElementById('suspendForm');
         const info = document.getElementById('suspendProductInfo');
         
-        form.action = `/admin/products/${id}/suspend`;
+        form.action = "{{ route('admin.products.suspend', ['product' => '__ID__']) }}".replace('__ID__', id);
         info.innerHTML = `<strong>${productName}</strong><br>This product will be suspended and hidden from buyers.`;
         
         modal.style.display = 'flex';

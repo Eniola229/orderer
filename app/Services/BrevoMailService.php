@@ -28,7 +28,7 @@ class BrevoMailService
             'subject'     => $subject,
             'htmlContent' => $htmlContent,
         ]);
-
+ 
             if (!$response->successful()) {
                 \Log::error('Brevo API Error Details:', [
                     'status' => $response->status(),
@@ -41,6 +41,22 @@ class BrevoMailService
 
 
         return $response->successful();
+    }
+
+    public function sendSellerVerification($seller): bool
+    {
+        $hash = sha1($seller->email);
+        $url  = route('seller.verification.verify', [
+            'id'   => $seller->id,
+            'hash' => $hash,
+        ]);
+
+        return $this->send(
+            $seller->email,
+            $seller->full_name,
+            'Verify your Orderer seller email',
+            $this->sellerVerificationHtml($seller, $url)
+        );
     }
 
     public function sendWelcomeBuyer($user): bool
@@ -175,6 +191,34 @@ class BrevoMailService
             $subject,
             $this->freeShippingAnnouncementHtml($user, $rule)
         );
+    }
+
+    protected function sellerVerificationHtml($seller, string $url): string
+    {
+        return "
+        <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>
+            <div style='background:#2ECC71;padding:30px;text-align:center;'>
+                <h1 style='color:#fff;margin:0;'>Verify Your Email</h1>
+            </div>
+            <div style='padding:30px;background:#fff;'>
+                <p>Hi <strong>{$seller->first_name}</strong>,</p>
+                <p>Thanks for registering as a seller on Orderer. Please verify your email address by clicking the button below.</p>
+                <div style='text-align:center;margin:30px 0;'>
+                    <a href='{$url}'
+                       style='background:#2ECC71;color:#fff;padding:14px 28px;
+                              text-decoration:none;border-radius:4px;font-weight:bold;'>
+                        Verify My Email
+                    </a>
+                </div>
+                <p style='color:#888;font-size:13px;'>
+                    If you did not create an account, ignore this email.<br>
+                    This link does not expire.
+                </p>
+            </div>
+            <div style='background:#f8f8f8;padding:16px;text-align:center;font-size:12px;color:#aaa;'>
+                &copy; " . date('Y') . " Orderer. All rights reserved.
+            </div>
+        </div>";
     }
 
     public function sendLoginNotification($user, string $ip, string $userAgent, string $guard = 'buyer'): bool

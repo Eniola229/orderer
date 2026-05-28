@@ -19,7 +19,7 @@ class RegisterController extends Controller
     {
         return view('seller.auth.register');
     }
-
+  
     public function register(
         Request $request,
         BrevoMailService $brevo,
@@ -128,9 +128,9 @@ class RegisterController extends Controller
         }
 
         // ── Welcome email & login ─────────────────────────────────────────────
+        \App\Http\Controllers\Seller\Auth\VerificationController::sendVerificationEmail($seller);
         $brevo->sendWelcomeSeller($seller);
         auth('seller')->login($seller);
-
         return $isVerified
             ? redirect()->route('seller.pending')->with('info', 'Your account has been created and is awaiting approval.')
             : redirect()->route('seller.dashboard')->with('success', 'Welcome! Your account is ready.');

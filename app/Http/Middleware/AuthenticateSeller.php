@@ -24,13 +24,23 @@ class AuthenticateSeller
                 ->with('error', 'Your seller account has been suspended.');
         }
 
-        // Allow access to pending page and resubmit route if account is pending OR rejected
+        $verificationRoutes = [
+            'seller.verification.notice',
+            'seller.verification.verify',
+            'seller.verification.resend',
+            'seller.logout',
+        ];
+
+        if (!$seller->email_verified_at && !in_array($request->route()->getName(), $verificationRoutes)) {
+            return redirect()->route('seller.verification.notice');
+        }
+
         $allowedRoutes = ['seller.pending', 'seller.resubmit'];
-        
+
         if ((!$seller->is_approved || $seller->verification_status === 'rejected') && !in_array($request->route()->getName(), $allowedRoutes)) {
             return redirect()->route('seller.pending')
-                ->with('info', $seller->verification_status === 'rejected' 
-                    ? 'Your account was not approved. Please update your information and resubmit.' 
+                ->with('info', $seller->verification_status === 'rejected'
+                    ? 'Your account was not approved. Please update your information and resubmit.'
                     : 'Your account is awaiting approval.');
         }
 

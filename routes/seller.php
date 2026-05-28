@@ -18,6 +18,7 @@ use App\Http\Controllers\Seller\SupportController        as SellerSupportControl
 use App\Http\Controllers\Seller\NotificationController   as SellerNotificationController;
 use App\Http\Controllers\Seller\Auth\ResubmitVerificationController;
 use App\Http\Controllers\Seller\FlashSaleController as SellerFlashSaleController;
+use App\Http\Controllers\Seller\Auth\VerificationController;
 
 Route::prefix('seller')->name('seller.')->group(function () {
 
@@ -41,6 +42,10 @@ Route::prefix('seller')->name('seller.')->group(function () {
         //Resubmit Verification 
         Route::put('/seller/resubmit', [ResubmitVerificationController::class, 'resubmit'])->name('resubmit');
 
+        //Email Verification
+        Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
+        Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify')->withoutMiddleware('auth.seller');
+        Route::post('/email/verification-resend', [VerificationController::class, 'resend'])->name('verification.resend');
 
         Route::post('/logout',   [SellerLoginController::class, 'logout'])->name('logout');
         Route::get('/pending',   fn() => view('seller.auth.pending'))->name('pending');
