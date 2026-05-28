@@ -1,2 +1,100 @@
+# robots.txt for https://ordererweb.com
+# Generated: 2026-05-28
+
+# -----------------------------------------------
+# All crawlers — general rules
+# -----------------------------------------------
 User-agent: *
-Disallow:
+
+# Allow public-facing pages
+Allow: /
+Allow: /shop
+Allow: /shop/
+Allow: /brands
+Allow: /brands/
+Allow: /services
+Allow: /properties
+Allow: /rider
+Allow: /contact
+Allow: /product/
+Allow: /legal/
+Allow: /login
+Allow: /register
+Allow: /seller/login
+Allow: /seller/register
+Allow: /seller/
+
+# Disallow private / account areas
+Disallow: /account/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /admin/
+Disallow: /20050619/
+Disallow: /dashboard/
+
+# Allow internal search / filter noise
+Allow: /shop?*sort=
+Allow: /shop?*page=
+Allow: /shop?*filter=
+
+# Crawl delay to be respectful of server load
+Crawl-delay: 5
+
+# -----------------------------------------------
+# Google — no crawl delay needed; handles it well
+# -----------------------------------------------
+User-agent: Googlebot
+Allow: /
+Disallow: /account/
+Disallow: /checkout
+Disallow: /cart
+Allow: /login
+Allow: /register
+Disallow: /seller/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /20050619/
+Disallow: /api/
+
+# -----------------------------------------------
+# Bing
+# -----------------------------------------------
+User-agent: Bingbot
+Allow: /
+Disallow: /account/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /login
+Allow: /register
+Allow: /seller/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /20050619/
+Disallow: /api/
+Crawl-delay: 10
+
+# -----------------------------------------------
+# Block known aggressive / scraping bots
+# -----------------------------------------------
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# -----------------------------------------------
+# Sitemap location
+# -----------------------------------------------
+Sitemap: https://ordererweb.com/sitemap.xml

@@ -25,20 +25,21 @@ class SecurityHeaders
                 "https://maps.gstatic.com " .
                 "https://static.ads-twitter.com " .
                 "https://sdk.monnify.com " .
-                "https://sandbox.sdk.monnify.com; " .   
+                "https://sandbox.sdk.monnify.com " .
+                "https://www.googletagmanager.com; " .
             // ── Styles ───────────────────────────────────────────────────────
             "style-src 'self' 'unsafe-inline' " .
                 "cdn.jsdelivr.net " .
                 "cdnjs.cloudflare.com " .
                 "fonts.googleapis.com " .
                 "cdn.tiny.cloud " .
-                "https://*.monnify.com; " .            
+                "https://*.monnify.com; " .
             // ── Fonts ────────────────────────────────────────────────────────
             "font-src 'self' " .
                 "fonts.gstatic.com " .
                 "cdnjs.cloudflare.com " .
                 "cdn.tiny.cloud " .
-                "https://*.monnify.com; " .             
+                "https://*.monnify.com; " .
             // ── Images ───────────────────────────────────────────────────────
             "img-src 'self' data: blob: " .
                 "https://res.cloudinary.com " .
@@ -67,11 +68,13 @@ class SecurityHeaders
                 "https://ads-api.twitter.com " .
                 "https://api.monnify.com " .
                 "https://sandbox.monnify.com " .
-                "https://sandbox.sdk.monnify.com; " . 
+                "https://sandbox.sdk.monnify.com " .
+                "https://www.google-analytics.com " .
+                "https://region1.google-analytics.com; " .
             // ── Frames ───────────────────────────────────────────────────────
             "frame-src 'self' " .
                 "https://*.monnify.com " .
-                "https://*.sandbox.monnify.com; " .  
+                "https://*.sandbox.monnify.com; " .
             "worker-src 'self' blob:;"
         );
         return $response;

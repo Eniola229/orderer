@@ -16,6 +16,7 @@
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:image" content="{{ asset('dashboard/assets/images/favicon.png') }}" />
     <meta property="og:site_name" content="Orderer" />
+    <meta name="google-site-verification" content="MXUdLHni2llDyaPRU3aVbFPPDRLod4XKutL_HofeL8s" />
 
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('dashboard/assets/images/favicon.png') }}" />
 
@@ -36,6 +37,17 @@
     a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
     twq('config','rc8yq'); 
     </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QXCBGT2TY0"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-QXCBGT2TY0');
+    </script>
+
     <!-- End X Pixel Base Code -->
     @stack('head')
     @stack('styles')

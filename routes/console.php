@@ -38,3 +38,5 @@ Schedule::command('korapay:check-pending-orders')
 
 Schedule::command('monnify:check-pending-orders')
     ->everyFiveMinutes();
+
+Schedule::command('sitemap:generate')->daily();
