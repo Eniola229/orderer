@@ -1,13 +1,16 @@
 <?php
 namespace App\Services;
+
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+
 class TermiiService
 {
     protected string $apiKey;
     protected string $baseUrl;
     protected string $senderId;
     protected string $channel;
+
     public function __construct()
     {
         $this->apiKey   = config('services.termii.api_key');
@@ -16,41 +19,104 @@ class TermiiService
         $this->channel  = config('services.termii.channel', 'generic');
     }
 
+    /**
+     * Standardize phone number to Termii format (234XXXXXXXXXX)
+     * - Removes '+', ' ', '-', etc.
+     * - If starts with '0', replace with '234'
+     * - If starts with '234', keep as is
+     * - If starts with '+234', remove '+' and keep '234'
+     */
+    protected function standardizeNumber(string $number): ?string
+    {
+        // Remove all non-numeric characters except '+'
+        $number = preg_replace('/[^0-9+]/', '', $number);
+        
+        // Remove leading '+'
+        $number = ltrim($number, '+');
+        
+        // If empty after cleaning, return null
+        if (empty($number)) {
+            return null;
+        }
+        
+        // If starts with '0', replace with '234'
+        if (preg_match('/^0/', $number)) {
+            $number = '234' . substr($number, 1);
+        }
+        
+        // If starts with '234', keep as is
+        if (preg_match('/^234/', $number)) {
+            return $number;
+        }
+        
+        // If number is 10 digits (e.g., 8012345678), assume Nigerian and add '234'
+        if (strlen($number) === 10 && preg_match('/^[0-9]{10}$/', $number)) {
+            return '234' . $number;
+        }
+        
+        // If number is 11 digits starting with 0 (e.g., 08012345678), replace 0 with 234
+        if (strlen($number) === 11 && preg_match('/^0[0-9]{10}$/', $number)) {
+            return '234' . substr($number, 1);
+        }
+        
+        // If number is 13 digits starting with 234, it's already correct
+        if (strlen($number) === 13 && preg_match('/^234[0-9]{10}$/', $number)) {
+            return $number;
+        }
+        
+        // Log warning for unusual formats
+        Log::warning('TermiiService: unusual phone number format', [
+            'original' => $number,
+            'cleaned'  => $number,
+        ]);
+        
+        return $number;
+    }
+
+    /**
+     * Standardize multiple phone numbers
+     */
+    protected function standardizeNumbers(array $numbers): array
+    {
+        $standardized = [];
+        
+        foreach ($numbers as $number) {
+            $std = $this->standardizeNumber($number);
+            if ($std) {
+                $standardized[] = $std;
+            } else {
+                Log::warning('TermiiService: skipping invalid phone number', [
+                    'number' => $number,
+                ]);
+            }
+        }
+        
+        return array_values(array_unique($standardized));
+    }
+
     public function sendBulk(array $numbers, string $message): array
     {
-        $numbers = array_values(array_unique(array_filter(array_map('trim', $numbers))));
+        // Clean and standardize numbers
+        $numbers = array_map('trim', $numbers);
+        $numbers = $this->standardizeNumbers($numbers);
 
-        // Strip leading + sign to match Termii's required format
-        $numbers = array_map(fn($n) => ltrim($n, '+'), $numbers);
+        if (empty($numbers)) {
+            Log::warning('Termii sendBulk: no valid numbers to send to');
+            return ['sent' => 0, 'failed' => 0, 'errors' => ['No valid phone numbers']];
+        }
 
-        // Log::info('Termii sendBulk: raw numbers received', [
+        // Log::info('Termii sendBulk: standardized numbers', [
         //     'total'   => count($numbers),
         //     'numbers' => $numbers,
         // ]);
 
-        if (empty($numbers)) {
-            Log::warning('Termii sendBulk: no numbers to send to');
-            return ['sent' => 0, 'failed' => 0, 'errors' => []];
-        }
-
         $chunks = array_chunk($numbers, 100);
-
-        // Log::info('Termii sendBulk: chunked into batches', [
-        //     'total_numbers' => count($numbers),
-        //     'total_chunks'  => count($chunks),
-        // ]);
 
         $sent   = 0;
         $failed = 0;
         $errors = [];
 
         foreach ($chunks as $index => $chunk) {
-            Log::info("Termii sendBulk: sending chunk " . ($index + 1) . " of " . count($chunks), [
-                'chunk_number' => $index + 1,
-                'chunk_size'   => count($chunk),
-                'numbers'      => $chunk,
-            ]);
-
             try {
                 $payload = [
                     'api_key' => $this->apiKey,
@@ -66,24 +132,14 @@ class TermiiService
 
                 $body = $response->json();
 
-                // Log::info("Termii sendBulk: response for chunk " . ($index + 1), [
-                //     'http_status' => $response->status(),
-                //     'body'        => $body,
-                //     'numbers'     => $chunk,
-                // ]);
-
                 if ($response->successful() && isset($body['code']) && strtolower($body['code']) === 'ok') {
                     $sent += count($chunk);
-                    // Log::info("Termii sendBulk: chunk " . ($index + 1) . " sent successfully", [
-                    //     'sent_count' => count($chunk),
-                    // ]);
                 } else {
                     $failed += count($chunk);
                     $errors[] = $body['message'] ?? ('HTTP ' . $response->status());
                     Log::warning("Termii sendBulk: chunk " . ($index + 1) . " failed", [
                         'failed_numbers' => $chunk,
                         'response'       => $body,
-                        'http_status'    => $response->status(),
                     ]);
                 }
             } catch (\Throwable $e) {
@@ -96,13 +152,19 @@ class TermiiService
             }
         }
 
-        // Log::info('Termii sendBulk: finished', [
-        //     'total_numbers' => count($numbers),
-        //     'sent'          => $sent,
-        //     'failed'        => $failed,
-        //     'errors'        => $errors,
-        // ]);
-
         return compact('sent', 'failed', 'errors');
+    }
+
+    /**
+     * Send SMS to a single recipient
+     */
+    public function send(string $number, string $message): array
+    {
+        $result = $this->sendBulk([$number], $message);
+        
+        return [
+            'success' => $result['sent'] > 0,
+            'message' => $result['errors'][0] ?? ($result['sent'] > 0 ? 'Sent successfully' : 'Failed to send'),
+        ];
     }
 }

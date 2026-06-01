@@ -19,7 +19,11 @@ Schedule::call(function () {
 
 // Check order status
 Schedule::command('orders-sync:sync-shipping-status')
-    ->everyFifteenMinutes();
+    ->everyFiveMinutes();
+
+// Check Book a delivery status
+Schedule::command('bookings-sync:sync-shipping-status')
+    ->everyFiveMinutes();
 
 // Check delivery booking
 Schedule::command('bookings:check-pending')
