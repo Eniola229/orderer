@@ -265,11 +265,11 @@ class StorefrontController extends Controller
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', Product::class)
-            ->whereHas('promotable', fn($q) =>
+            ->whereHasMorph('promotable', [\App\Models\Product::class], function ($q) use ($product) {
                 $q->where('category_id', $product->category_id)
                   ->where('status', 'approved')
-                  ->where('id', '!=', $product->id)
-            )
+                  ->where('id', '!=', $product->id);
+            })
             ->with(['promotable.images', 'promotable.seller'])
             ->take(2)
             ->get()
@@ -488,11 +488,11 @@ class StorefrontController extends Controller
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', ServiceListing::class)
-            ->whereHas('promotable', fn($q) =>
+            ->whereHasMorph('promotable', [\App\Models\ServiceListing::class], function ($q) use ($service) {
                 $q->where('category_id', $service->category_id)
                   ->where('status', 'approved')
-                  ->where('id', '!=', $service->id)
-            )
+                  ->where('id', '!=', $service->id);
+            })
             ->with(['promotable.seller', 'promotable.category'])
             ->take(2)
             ->get()
@@ -576,19 +576,19 @@ class StorefrontController extends Controller
                             ->where('status', 'approved')
                             ->with(['seller', 'images'])
                             ->firstOrFail();
-        // ── Sponsored similar houses ─────────────────────────────
+                // ── Sponsored similar houses ─────────────────────────────
         $sponsoredSimilarAds = Ad::where('status', 'active')
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', HouseListing::class)
-            ->whereHas('promotable', fn($q) =>
+            ->whereHasMorph('promotable', [\App\Models\HouseListing::class], function ($q) use ($house) {
                 $q->where('status', 'approved')
                   ->where('id', '!=', $house->id)
-                  ->where(fn($q2) =>
+                  ->where(function ($q2) use ($house) {
                       $q2->where('listing_type', $house->listing_type)
-                         ->orWhere('city', $house->city)
-                  )
-            )
+                         ->orWhere('city', $house->city);
+                  });
+            })
             ->with(['promotable.images', 'promotable.seller'])
             ->take(1)
             ->get()

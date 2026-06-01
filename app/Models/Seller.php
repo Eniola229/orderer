@@ -14,7 +14,7 @@ class Seller extends Authenticatable
 
     protected $table = 'sellers';
 
-    protected $fillable = [
+    protected $fillable = [ 
         'first_name',
         'last_name',
         'email',

@@ -55,6 +55,10 @@ class SecurityHeaders
                 "https://analytics.twitter.com " .
                 "https://ads-api.twitter.com " .
                 "https://*.monnify.com; " .
+            // ── Media (audio/video) ───────────────────────────────────────────
+            "media-src 'self' " .
+                "https://res.cloudinary.com " .
+                "https://*.cloudinary.com; " .
             // ── Fetch / XHR / WebSocket ───────────────────────────────────
             "connect-src 'self' " .
                 "wss://*.pusher.com " .

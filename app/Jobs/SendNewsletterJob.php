@@ -6,6 +6,7 @@ use App\Models\Newsletter;
 use App\Models\Seller;
 use App\Models\User;
 use App\Services\BrevoMailService;
+use App\Services\TermiiService; 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -38,23 +39,22 @@ class SendNewsletterJob implements ShouldQueue
 
         $newsletter->update(['total_recipients' => $recipients->count()]);
 
+        // ── Email sending loop ────────────────────────────────────────────────
         foreach ($recipients as $recipient) {
             try {
-                // Clean the newsletter body before using it
                 $cleanBody = $this->cleanNewsletterBody($newsletter->body);
-                
+
                 $htmlContent = view('emails.newsletter', [
                     'subject'       => $newsletter->subject,
                     'body'          => $cleanBody,
                     'recipientName' => $recipient->full_name ?? null,
                 ])->render();
 
-                // Also clean the final rendered HTML to be safe
                 $htmlContent = $this->cleanFinalHtml($htmlContent);
 
                 $success = $brevoMailService->send(
                     $recipient->email,
-                    $recipient->full_name ?? ',i am from Orderer',  // ← fallback
+                    $recipient->full_name ?? ',i am from Orderer',
                     $newsletter->subject,
                     $htmlContent
                 );
@@ -70,62 +70,100 @@ class SendNewsletterJob implements ShouldQueue
             }
         }
 
+        // ── SMS via Termii (fires after all emails, independently) ────────────
+        if ($newsletter->send_sms && $newsletter->sms_message && $newsletter->sms_audience) {
+            $this->sendSms($newsletter);
+        }
+
         $newsletter->update([
             'status'  => Newsletter::STATUS_SENT,
             'sent_at' => now(),
         ]);
     }
 
-    /**
-     * Clean the newsletter body by removing Blade/PHP syntax
-     */
-    private function cleanNewsletterBody(string $body): string
+    // ── SMS dispatcher ────────────────────────────────────────────────────────
+    private function sendSms(Newsletter $newsletter): void
     {
-        // Remove Blade echo tags {{ $var }}
-        $body = preg_replace('/\{\{\s*.*?\s*\}\}/', '', $body);
-        
-        // Remove Blade raw echo tags {!! $var !!}
-        $body = preg_replace('/\{\!!\s*.*?\s*!!\}/', '', $body);
-        
-        // Remove Blade directives @if, @foreach, @php, etc.
-        $body = preg_replace('/@(?:php|endphp|if|elseif|else|endif|foreach|endforeach|for|endfor|while|endwhile|continue|break|switch|case|endswitch|csrf|method|include|each|yield|section|endsection|stop|show|append|overwrite|parent|once|push|endpush|prepend|endprepend|inject|lang|choice|can|cannot|elsecan|elsecannot|error|enderror)\b[^\n]*/', '', $body);
-        
-        // Remove PHP opening and closing tags
-        $body = preg_replace('/<\?php[\s\S]*?\?>/', '', $body);
-        $body = str_replace(['<?php', '?>', '<?=', '<?'], '', $body);
-        
-        // Remove any remaining curly braces that might cause issues
-        $body = preg_replace('/\{\{|\}\}|\{!!|!!\}/', '', $body);
-        
-        // Clean up extra whitespace
-        $body = preg_replace('/\s+/', ' ', $body);
-        $body = trim($body);
-        
-        return $body;
+        $phones = collect();
+
+        if (in_array($newsletter->sms_audience, ['users', 'both'])) {
+            User::whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->where('is_active', true)
+                ->pluck('phone')
+                ->each(fn($p) => $phones->push($p));
+        }
+
+        if (in_array($newsletter->sms_audience, ['sellers', 'both'])) {
+            Seller::whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->where('is_active', true)
+                ->where('is_approved', true)
+                ->pluck('phone')
+                ->each(fn($p) => $phones->push($p));
+        }
+
+        // Merge manually added extra numbers
+        if (! empty($newsletter->sms_extra_numbers)) {
+            foreach ($newsletter->sms_extra_numbers as $num) {
+                $num = trim((string) $num);
+                if ($num !== '') {
+                    $phones->push($num);
+                }
+            }
+        }
+
+        $allNumbers = $phones->unique()->values()->toArray();
+
+        if (empty($allNumbers)) {
+            Log::info("Newsletter [{$newsletter->id}] SMS skipped — no phone numbers found.");
+            return;
+        }
+
+        try {
+            $termii = app(TermiiService::class);
+            $result = $termii->sendBulk($allNumbers, $newsletter->sms_message);
+
+            // Log::info("Newsletter [{$newsletter->id}] SMS result", [
+            //     'audience'      => $newsletter->sms_audience,
+            //     'total_numbers' => count($allNumbers),
+            //     'sent'          => $result['sent'],
+            //     'failed'        => $result['failed'],
+            //     'errors'        => $result['errors'],
+            // ]);
+        } catch (\Throwable $e) {
+            // SMS failure must NOT fail the whole job — emails already sent
+            Log::error("Newsletter [{$newsletter->id}] SMS exception: {$e->getMessage()}");
+        }
     }
 
-    /**
-     * Clean the final rendered HTML for any remaining problematic syntax
-     */
+    // ── Body cleaners ─────────────────────────────────────────────────────────
+    private function cleanNewsletterBody(string $body): string
+    {
+        $body = preg_replace('/\{\{\s*.*?\s*\}\}/', '', $body);
+        $body = preg_replace('/\{\!!\s*.*?\s*!!\}/', '', $body);
+        $body = preg_replace('/@(?:php|endphp|if|elseif|else|endif|foreach|endforeach|for|endfor|while|endwhile|continue|break|switch|case|endswitch|csrf|method|include|each|yield|section|endsection|stop|show|append|overwrite|parent|once|push|endpush|prepend|endprepend|inject|lang|choice|can|cannot|elsecan|elsecannot|error|enderror)\b[^\n]*/', '', $body);
+        $body = preg_replace('/<\?php[\s\S]*?\?>/', '', $body);
+        $body = str_replace(['<?php', '?>', '<?=', '<?'], '', $body);
+        $body = preg_replace('/\{\{|\}\}|\{!!|!!\}/', '', $body);
+        $body = preg_replace('/\s+/', ' ', $body);
+
+        return trim($body);
+    }
+
     private function cleanFinalHtml(string $html): string
     {
-        // Remove any remaining Blade syntax that might have survived
         $html = preg_replace('/\{\{\s*.*?\s*\}\}/', '', $html);
         $html = preg_replace('/\{\!!\s*.*?\s*!!\}/', '', $html);
         $html = preg_replace('/@(?:php|endphp|if|elseif|else|endif|foreach|endforeach)/', '', $html);
-        
-        // Remove empty style tags
         $html = preg_replace('/<style\b[^>]*>\s*<\/style>/', '', $html);
-        
-        // Fix unclosed HTML tags (common issue)
         $html = preg_replace('/<p\s*\/?>/i', '<p>', $html);
-        
-        // Remove any NULL bytes or control characters
         $html = preg_replace('/[\x00-\x1F\x7F]/', '', $html);
-        
+
         return $html;
     }
 
+    // ── Recipient builder ─────────────────────────────────────────────────────
     private function buildRecipientList(string $audience): \Illuminate\Support\Collection
     {
         return match ($audience) {
@@ -142,22 +180,18 @@ class SendNewsletterJob implements ShouldQueue
                     'full_name' => '.',
                 ]),
 
-            // Buyers registered in the last 30 days
             'new_buyers' => User::where('is_active', true)
                 ->where('created_at', '>=', now()->subDays(30))
                 ->get(['id', 'first_name', 'last_name', 'email']),
 
-            // Buyers who have never placed an order
             'buyers_no_orders' => User::where('is_active', true)
                 ->whereDoesntHave('orders')
                 ->get(['id', 'first_name', 'last_name', 'email']),
 
-            // Buyers who have placed at least one order
             'buyers_with_orders' => User::where('is_active', true)
                 ->whereHas('orders')
                 ->get(['id', 'first_name', 'last_name', 'email']),
 
-            // Sellers who have no products, services, or properties listed
             'sellers_no_listings' => Seller::where('is_active', true)
                 ->where('is_approved', true)
                 ->whereDoesntHave('products')
@@ -165,7 +199,6 @@ class SendNewsletterJob implements ShouldQueue
                 ->whereDoesntHave('properties')
                 ->get(['id', 'first_name', 'last_name', 'email']),
 
-            // Default: all buyers + all sellers
             default => User::where('is_active', true)
                 ->get(['id', 'first_name', 'last_name', 'email'])
                 ->merge(

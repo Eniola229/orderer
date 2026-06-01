@@ -13,7 +13,7 @@
     {{-- Left --}}
     <div class="col-lg-8">
 
-        {{-- Balance card --}}
+        {{-- Balance card --}} 
         <div class="card mb-3">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -135,7 +135,7 @@
                     <div class="mb-0">
                         <label class="form-label fw-bold">Note <span class="text-muted fw-normal">(optional)</span></label>
                         <textarea name="note" class="form-control" rows="2"
-                                  placeholder="Any additional info for the admin">{{ old('note') }}</textarea>
+                                  placeholder="Any additional info">{{ old('note') }}</textarea>
                     </div>
 
                 </div>

@@ -19,10 +19,10 @@ class SyncOrderShippingStatus extends Command
         protected ShipbubbleService $shipbubble,
         protected WalletService     $walletService,
         protected BrevoMailService  $brevo,
+        protected \App\Services\TermiiService $termii,
     ) {
         parent::__construct();
     }
-
     public function handle(): int
     {
         // Fetch all active items that have a shipbubble_shipment_id
@@ -89,20 +89,39 @@ class SyncOrderShippingStatus extends Command
                         $this->info("  Item '{$item->item_name}' (Order #{$order->order_number}) — {$previousItemStatus} → {$mappedStatus}");
                     }
 
-                        // Send email to buyer
-                        try {
-                            $sellerItems = $itemsInShipment; // all items in this shipment belong to same seller
-                            $this->brevo->sendOrderStatusUpdate(
-                                $order->user,
-                                $order,
-                                $sellerItems,
-                                $mappedStatus,
-                                $trackingData['tracking_number'] ?? null
-                            );
-                        } catch (\Exception $e) {
-                            \Log::error("SyncOrderShippingStatus — email failed for order #{$order->order_number}: " . $e->getMessage());
-                        }
+                    // Send email to buyer
+                    try {
+                        $sellerItems = $itemsInShipment; // all items in this shipment belong to same seller
+                        $this->brevo->sendOrderStatusUpdate(
+                            $order->user,
+                            $order,
+                            $sellerItems,
+                            $mappedStatus,
+                            $trackingData['tracking_number'] ?? null
+                        );
+                    } catch (\Exception $e) {
+                        \Log::error("SyncOrderShippingStatus — email failed for order #{$order->order_number}: " . $e->getMessage());
+                    }
 
+                    // Send SMS to buyer
+                    try {
+                        $user = $order->user;
+                        if ($user && $user->phone) {
+                            $statusMessage = match($mappedStatus) {
+                                'delivered' => "delivered! Your item has been successfully delivered.",
+                                'shipped'   => "shipped! Your package is on the way. Tracking: " . ($trackingData['tracking_number'] ?? 'available soon'),
+                                'confirmed' => "confirmed! Your order is being processed.",
+                                default     => "updated to {$mappedStatus}. Check your email for details."
+                            };
+                            
+                            $this->termii->sendBulk(
+                                [ltrim($user->phone, '+')],
+                                "Hi {$user->first_name}, order #{$order->order_number} has been {$statusMessage} Thank you for shopping with us."
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("SyncOrderShippingStatus — SMS failed for order #{$order->order_number}: " . $e->getMessage());
+                    }
                     // Log each status change on the order timeline
                     OrderStatusLog::create([
                         'order_id'        => $order->id,

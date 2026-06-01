@@ -15,7 +15,7 @@
         <button class="btn btn-outline-secondary" id="btnViewSubscribers">
             <i class="feather-users me-1"></i> View Subscribers
         </button>
-    </div>
+    </div> 
 </div>
 
 {{-- Newsletters table --}}

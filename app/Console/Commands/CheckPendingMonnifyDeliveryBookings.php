@@ -15,6 +15,7 @@ class CheckPendingMonnifyDeliveryBookings extends Command
 
     public function __construct(
         protected ShipbubbleService $shipbubble,
+        protected \App\Services\TermiiService $termii,
     ) {
         parent::__construct();
     }
@@ -65,6 +66,19 @@ class CheckPendingMonnifyDeliveryBookings extends Command
                     if (in_array($monnifyStatus, ['PAID', 'OVERPAID'])) {
                         $booking->update(['payment_status' => 'paid']);
                         $paid++;
+
+                    // Send SMS for successful payment
+                    try {
+                        $user = $booking->user;
+                        if ($user && $user->phone) {
+                            $this->termii->sendBulk(
+                                [ltrim($user->phone, '+')],
+                                "Hi {$user->first_name}, your payment for delivery booking #{$booking->booking_number} has been confirmed! Total: ₦" . number_format($booking->fee + $booking->service_fee, 2) . ". We're processing your shipment. Thank you!"
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("monnify:check-pending-bookings — payment SMS failed for booking #{$booking->booking_number}: " . $e->getMessage());
+                    }
                         // fall through to shipment booking below
 
                     } elseif (in_array($monnifyStatus, ['FAILED', 'EXPIRED', 'REVERSED', 'CANCELLED'])) {

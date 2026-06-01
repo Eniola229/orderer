@@ -11,87 +11,88 @@ use Illuminate\Support\Facades\Auth;
 
 class NewsletterController extends Controller
 {
-    // ── Index ─────────────────────────────────────────────────
+    // ── Index ─────────────────────────────────────────────────────────────────
     public function index()
     {
         $this->authorise();
 
         $newsletters = Newsletter::with('creator')
-            ->latest() 
+            ->latest()
             ->paginate(20);
 
         return view('admin.newsletter.index', compact('newsletters'));
     }
 
+    // ── Subscribers (AJAX) ────────────────────────────────────────────────────
     public function subscribers(Request $request)
     {
         try {
             $query = NewsletterSubscriber::query();
-            
-            // Apply date filters if provided
+
             if ($request->filled('date_from')) {
                 $query->whereDate('subscribed_at', '>=', $request->date_from);
             }
-            
+
             if ($request->filled('date_to')) {
                 $query->whereDate('subscribed_at', '<=', $request->date_to);
             }
-            
-            // Paginate with 100 items per page
-            $perPage = $request->get('per_page', 100);
+
+            $perPage     = $request->get('per_page', 100);
             $subscribers = $query->orderBy('subscribed_at', 'desc')->paginate($perPage);
-            
-            // Format the data
-            $formattedSubscribers = $subscribers->getCollection()->map(function ($subscriber) {
-                return [
-                    'email' => $subscriber->email,
-                    'subscribed_at' => $subscriber->subscribed_at ? $subscriber->subscribed_at->format('M d, Y') : 'N/A'
-                ];
-            });
-            
-            return response()->json([
-                'success' => true,
-                'subscribers' => $formattedSubscribers,
-                'total' => $subscribers->total(),
-                'current_page' => $subscribers->currentPage(),
-                'last_page' => $subscribers->lastPage(),
-                'per_page' => $subscribers->perPage(),
-                'has_more_pages' => $subscribers->hasMorePages()
+
+            $formatted = $subscribers->getCollection()->map(fn($s) => [
+                'email'         => $s->email,
+                'subscribed_at' => $s->subscribed_at
+                    ? $s->subscribed_at->format('M d, Y')
+                    : 'N/A',
             ]);
-            
+
+            return response()->json([
+                'success'      => true,
+                'subscribers'  => $formatted,
+                'total'        => $subscribers->total(),
+                'current_page' => $subscribers->currentPage(),
+                'last_page'    => $subscribers->lastPage(),
+                'per_page'     => $subscribers->perPage(),
+                'has_more_pages' => $subscribers->hasMorePages(),
+            ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching subscribers: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to fetch subscribers'
+                'error'   => 'Failed to fetch subscribers',
             ], 500);
         }
     }
 
-    // ── Create form ───────────────────────────────────────────
+    // ── Create form ───────────────────────────────────────────────────────────
     public function create()
     {
         $this->authorise();
 
-        return view('admin.newsletter.create');
+        $newsletter = null; // so _form partial doesn't error on $newsletter->x
+
+        return view('admin.newsletter.create', compact('newsletter'));
     }
 
-    // ── Store (save as draft) ─────────────────────────────────
+    // ── Store (save as draft) ─────────────────────────────────────────────────
     public function store(Request $request)
     {
         $this->authorise();
 
-        $data = $request->validate([
-            'subject'  => 'required|string|max:255',
-            'body'     => 'required|string',
-            'audience' => 'required|in:buyers,sellers,both,guests,new_buyers,buyers_no_orders,buyers_with_orders,sellers_no_listings',
-        ]);
+        $data = $request->validate($this->validationRules($request));
 
         $newsletter = Newsletter::create([
-            ...$data,
-            'status'     => Newsletter::STATUS_DRAFT,
-            'created_by' => Auth::guard('admin')->id(), 
+            'subject'           => $data['subject'],
+            'body'              => $data['body'],
+            'audience'          => $data['audience'],
+            'send_sms'          => $request->boolean('send_sms'),
+            'sms_message'       => $data['sms_message'] ?? null,
+            'sms_audience'      => $data['sms_audience'] ?? null,
+            'sms_extra_numbers' => $this->cleanExtraNumbers($data['sms_extra_numbers'] ?? []),
+            'status'            => Newsletter::STATUS_DRAFT,
+            'created_by'        => Auth::guard('admin')->id(),
         ]);
 
         return redirect()
@@ -99,7 +100,7 @@ class NewsletterController extends Controller
             ->with('success', 'Newsletter saved as draft.');
     }
 
-    // ── Show ──────────────────────────────────────────────────
+    // ── Show ──────────────────────────────────────────────────────────────────
     public function show(Newsletter $newsletter)
     {
         $this->authorise();
@@ -107,7 +108,7 @@ class NewsletterController extends Controller
         return view('admin.newsletter.show', compact('newsletter'));
     }
 
-    // ── Edit ──────────────────────────────────────────────────
+    // ── Edit form ─────────────────────────────────────────────────────────────
     public function edit(Newsletter $newsletter)
     {
         $this->authorise();
@@ -117,27 +118,31 @@ class NewsletterController extends Controller
         return view('admin.newsletter.edit', compact('newsletter'));
     }
 
-    // ── Update ────────────────────────────────────────────────
+    // ── Update ────────────────────────────────────────────────────────────────
     public function update(Request $request, Newsletter $newsletter)
     {
         $this->authorise();
 
         abort_unless($newsletter->isDraft(), 403, 'Only draft newsletters can be edited.');
 
-        $data = $request->validate([
-            'subject'  => 'required|string|max:255',
-            'body'     => 'required|string',
-            'audience' => 'required|in:buyers,sellers,both,guests,new_buyers,buyers_no_orders,buyers_with_orders,sellers_no_listings',
-        ]);
+        $data = $request->validate($this->validationRules($request));
 
-        $newsletter->update($data);
+        $newsletter->update([
+            'subject'           => $data['subject'],
+            'body'              => $data['body'],
+            'audience'          => $data['audience'],
+            'send_sms'          => $request->boolean('send_sms'),
+            'sms_message'       => $data['sms_message'] ?? null,
+            'sms_audience'      => $data['sms_audience'] ?? null,
+            'sms_extra_numbers' => $this->cleanExtraNumbers($data['sms_extra_numbers'] ?? []),
+        ]);
 
         return redirect()
             ->route('admin.newsletter.show', $newsletter)
             ->with('success', 'Newsletter updated.');
     }
 
-    // ── Send (dispatch job) ───────────────────────────────────
+    // ── Send (dispatch job) ───────────────────────────────────────────────────
     public function send(Newsletter $newsletter)
     {
         $this->authorise();
@@ -153,7 +158,7 @@ class NewsletterController extends Controller
             ->with('success', 'Newsletter queued for sending. It will be dispatched in the background.');
     }
 
-    // ── Delete (draft only) ───────────────────────────────────
+    // ── Delete (draft only) ───────────────────────────────────────────────────
     public function destroy(Newsletter $newsletter)
     {
         $this->authorise();
@@ -167,7 +172,32 @@ class NewsletterController extends Controller
             ->with('success', 'Newsletter deleted.');
     }
 
-    // ── Guard helper ──────────────────────────────────────────
+    // ── Shared validation rules ───────────────────────────────────────────────
+    private function validationRules(Request $request): array
+    {
+        $sendSms = $request->boolean('send_sms');
+
+        return [
+            'subject'  => 'required|string|max:255',
+            'body'     => 'required|string',
+            'audience' => 'required|in:buyers,sellers,both,guests,new_buyers,buyers_no_orders,buyers_with_orders,sellers_no_listings',
+
+            
+            'send_sms'              => 'boolean',
+            'sms_message'           => $sendSms ? 'required|string|max:320' : 'nullable|string|max:320',
+            'sms_audience'          => $sendSms ? 'required|in:users,sellers,both' : 'nullable|in:users,sellers,both',
+            'sms_extra_numbers'     => 'nullable|array',
+            'sms_extra_numbers.*'   => 'nullable|string|max:15',
+        ];
+    }
+
+    // ── Strip empty extra numbers ─────────────────────────────────────────────
+    private function cleanExtraNumbers(array $numbers): array
+    {
+        return array_values(array_filter(array_map('trim', $numbers)));
+    }
+
+    // ── Guard helper ──────────────────────────────────────────────────────────
     private function authorise(): void
     {
         abort_unless(

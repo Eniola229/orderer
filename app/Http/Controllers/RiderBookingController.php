@@ -186,6 +186,14 @@ class RiderBookingController extends Controller
 
                 $this->bookWithShipbubble($booking, $request, $user);
                 DB::commit();
+                
+                if ($user->phone) {
+                    $termii = app(\App\Services\TermiiService::class);
+                    $termii->sendBulk(
+                        [ltrim($user->phone, '+')],
+                        "Hi {$user->first_name}, your delivery booking #{$booking->booking_number} has been confirmed! Total: ₦" . number_format($booking->fee + $booking->service_fee, 2) . ". We'll notify you once the shipment is picked up. Thank you!"
+                    );
+                }
 
                 return redirect()->route('buyer.bookings.show', $booking->id)
                     ->with('success', "Booking confirmed! #{$booking->booking_number}. Your shipment is being processed.");
@@ -309,6 +317,16 @@ class RiderBookingController extends Controller
                 // Book with Shipbubble
                 $this->bookWithShipbubble($booking, null, $user);
 
+                $user = auth('web')->user();
+
+                if ($user->phone) {
+                    $termii = app(\App\Services\TermiiService::class);
+                    $termii->sendBulk(
+                        [ltrim($user->phone, '+')],
+                        "Hi {$user->first_name}, your order #{$order->order_number} has been placed successfully! Total: ₦" . number_format($order->total, 2) . ". Thank you for shopping with us."
+                    );
+                }
+
                 return response()->json([
                     'success'      => true,
                     'message'      => "Payment confirmed! Booking #{$booking->booking_number} is being processed.",
@@ -357,6 +375,17 @@ class RiderBookingController extends Controller
                 if ($booking) {
                     $booking->update(['payment_status' => 'paid']);
                     $this->bookWithShipbubble($booking, null, auth('web')->user());
+
+                $user = auth('web')->user();
+
+                if ($user && $user->phone) {
+                    $totalAmount = $booking->fee + $booking->service_fee;
+                    $termii = app(\App\Services\TermiiService::class);
+                    $termii->sendBulk(
+                        [ltrim($user->phone, '+')],
+                        "Hi {$user->first_name}, your delivery booking #{$booking->booking_number} has been confirmed! Total: ₦" . number_format($totalAmount, 2) . ". We'll notify you once the shipment is picked up. Thank you!"
+                    );
+                }
 
                     return redirect()->route('buyer.bookings.show', $booking->id)
                         ->with('success', "Payment successful! Booking #{$booking->booking_number} confirmed.");

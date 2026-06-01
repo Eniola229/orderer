@@ -30,7 +30,7 @@ class KorapayService
         float  $amount,
         string $reference,
         string $redirectUrl,
-        string $notificationUrl = '',  // ← webhook URL per Korapay docs
+        string $notificationUrl = '',  
         array  $metadata = []
     ): array {
         $payload = [

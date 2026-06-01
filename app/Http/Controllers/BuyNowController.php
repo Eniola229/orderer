@@ -12,7 +12,7 @@ use App\Services\KorapayService;
 use App\Services\BrevoMailService;
 use App\Services\ShipbubbleService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;  
 use App\Services\TikTokEventService;
 use App\Services\MonnifyService;
 use App\Services\FreeShippingService;
@@ -713,12 +713,33 @@ class BuyNowController extends Controller
     {
         try {
             $this->brevo->sendOrderPlacedBuyer($user, $order);
+            
+            // SMS to buyer
+            if ($user->phone) {
+                $termii = app(\App\Services\TermiiService::class);
+                $termii->sendBulk(
+                    [ltrim($user->phone, '+')],
+                    "Hi {$user->first_name}, your order #{$order->order_number} has been placed successfully! Total: ₦" . number_format($order->total, 2) . ". Thank you for shopping with us."
+                );
+            }
+
             $order->load('items.seller');
- 
-            foreach ($order->items->pluck('seller_id')->unique() as $sellerId) {
+            $sellerIds = $order->items->pluck('seller_id')->unique();
+
+            foreach ($sellerIds as $sellerId) {
                 $seller = \App\Models\Seller::find($sellerId);
                 if ($seller) {
                     $this->brevo->sendOrderNotifySeller($seller, $order);
+
+                    // SMS to seller
+                    if ($seller->phone) {
+                        $termii = app(\App\Services\TermiiService::class);
+                        $termii->sendBulk(
+                            [ltrim($seller->phone, '+')],
+                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to process it."
+                        );
+                    }
+
                     \App\Models\Notification::create([
                         'notifiable_type' => 'App\Models\Seller',
                         'notifiable_id'   => $sellerId,
@@ -730,7 +751,7 @@ class BuyNowController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('BuyNow sendOrderEmails failed: ' . $e->getMessage());
+            \Log::error('sendOrderEmails failed: ' . $e->getMessage());
         }
     }
  

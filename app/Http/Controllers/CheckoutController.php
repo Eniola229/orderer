@@ -396,11 +396,11 @@ class CheckoutController extends Controller
         $requestTokensMap = session('shipbubble_request_tokens', []);
         $legacyToken      = session('shipbubble_request_token');
 
-        \Log::info('bookShipmentForOrder called', [
-            'order_id'        => $order->id,
-            'is_multi_seller' => $order->is_multi_seller,
-            'tokens'          => $requestTokensMap,
-        ]);
+        // \Log::info('bookShipmentForOrder called', [
+        //     'order_id'        => $order->id,
+        //     'is_multi_seller' => $order->is_multi_seller,
+        //     'tokens'          => $requestTokensMap,
+        // ]);
 
         $order->load('items.product');
 
@@ -482,7 +482,7 @@ class CheckoutController extends Controller
             return response()->json(['error' => 'Cart is empty'], 400);
         }
 
-        try {
+        try { 
             $recipientValidation  = $this->shipbubble->validateAddress([
                 'name'    => $request->shipping_name,
                 'email'   => auth('web')->user()->email,
@@ -690,6 +690,16 @@ class CheckoutController extends Controller
     {
         try {
             $this->brevo->sendOrderPlacedBuyer($user, $order);
+            
+            // SMS to buyer
+            if ($user->phone) {
+                $termii = app(\App\Services\TermiiService::class);
+                $termii->sendBulk(
+                    [ltrim($user->phone, '+')],
+                    "Hi {$user->first_name}, your order #{$order->order_number} has been placed successfully! Total: ₦" . number_format($order->total, 2) . ". Thank you for shopping with us."
+                );
+            }
+
             $order->load('items.seller');
             $sellerIds = $order->items->pluck('seller_id')->unique();
 
@@ -697,6 +707,16 @@ class CheckoutController extends Controller
                 $seller = \App\Models\Seller::find($sellerId);
                 if ($seller) {
                     $this->brevo->sendOrderNotifySeller($seller, $order);
+
+                    // SMS to seller
+                    if ($seller->phone) {
+                        $termii = app(\App\Services\TermiiService::class);
+                        $termii->sendBulk(
+                            [ltrim($seller->phone, '+')],
+                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to process it."
+                        );
+                    }
+
                     \App\Models\Notification::create([
                         'notifiable_type' => 'App\Models\Seller',
                         'notifiable_id'   => $sellerId,
@@ -711,7 +731,6 @@ class CheckoutController extends Controller
             \Log::error('sendOrderEmails failed: ' . $e->getMessage());
         }
     }
-
     private function getCart(): \App\Models\Cart
     {
         if (auth('web')->check()) {

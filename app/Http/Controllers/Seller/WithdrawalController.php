@@ -83,17 +83,16 @@ class WithdrawalController extends Controller
     }
 
     /**
-     * Return Nigerian bank list via Monnify.
+     * Return Nigerian bank list via Korapay.
      * Called via AJAX on page load.
      */
     public function getBanks(Request $request)
     {
-        // We only support Nigeria — ignore any country param
         try {
-            $monnify = app(\App\Services\MonnifyService::class);
-            $raw     = $monnify->getBanks();
+            $korapay = app(\App\Services\KorapayService::class);
+            $raw     = $korapay->getBanks('NG');
 
-            // Monnify returns: [{ name, code, ussdTemplate, baseUssdCode, transferUssdTemplate }, ...]
+            // Korapay returns: [{ name, slug, code, country }, ...]
             $banks = collect($raw)->map(fn($b) => [
                 'name' => $b['name'],
                 'code' => $b['code'],
@@ -102,7 +101,7 @@ class WithdrawalController extends Controller
             return response()->json(['status' => 'ok', 'banks' => $banks]);
 
         } catch (\Exception $e) {
-            \Log::error('Monnify getBanks error: ' . $e->getMessage());
+            \Log::error('Korapay getBanks error: ' . $e->getMessage());
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Unable to fetch banks. Please refresh and try again.',
@@ -111,7 +110,7 @@ class WithdrawalController extends Controller
     }
 
     /**
-     * Resolve a Nigerian bank account number via Monnify.
+     * Resolve a Nigerian bank account number via Korapay.
      * Returns confirmed account_name.
      */
     public function resolveAccount(Request $request)
@@ -122,22 +121,22 @@ class WithdrawalController extends Controller
         ]);
 
         try {
-            $monnify = app(\App\Services\MonnifyService::class);
+            $korapay = app(\App\Services\KorapayService::class);
 
-            $result = $monnify->resolveBankAccount(
+            $result = $korapay->resolveBankAccount(
                 $request->bank_code,
-                $request->account_number
+                $request->account_number,
+                'NGN'
             );
 
-            \Log::info('Monnify resolveAccount result', [
+            \Log::info('Korapay resolveAccount result', [
                 'bank_code'      => $request->bank_code,
                 'account_number' => $request->account_number,
                 'result'         => $result,
             ]);
 
-            // Monnify responseBody keys: accountName, accountNumber, bankCode, bankName
-            // Guard against empty/null responseBody
-            if (empty($result) || empty($result['accountName'])) {
+            // Korapay responseBody keys: account_name, account_number, bank_code, bank_name
+            if (empty($result) || empty($result['account_name'])) {
                 return response()->json([
                     'status'  => 'error',
                     'message' => 'Account not found. Check the account number and selected bank.',
@@ -146,29 +145,28 @@ class WithdrawalController extends Controller
 
             return response()->json([
                 'status'       => 'ok',
-                'account_name' => $result['accountName'],
-                'bank_name'    => $result['bankName'] ?? '',
-                'bank_code'    => $result['bankCode'] ?? $request->bank_code,
+                'account_name' => $result['account_name'],
+                'bank_name'    => $result['bank_name']  ?? '',
+                'bank_code'    => $result['bank_code']  ?? $request->bank_code,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Monnify resolveAccount error', [
+            \Log::error('Korapay resolveAccount error', [
                 'bank_code'      => $request->bank_code,
                 'account_number' => $request->account_number,
                 'error'          => $e->getMessage(),
             ]);
 
-            // Monnify sends back responseMessage in the exception — pick it out cleanly
             $raw = $e->getMessage();
 
             $msg = match(true) {
-                str_contains($raw, 'Invalid account')           => 'Account not found. Check the account number and selected bank.',
-                str_contains($raw, 'Account not found')         => 'Account not found. Check the account number and selected bank.',
-                str_contains($raw, 'Invalid bank')              => 'Invalid bank selected. Please try again.',
-                str_contains($raw, 'Required request parameter')=> 'Verification failed — please check bank and account number.',
-                str_contains($raw, 'authentication')            => 'Service temporarily unavailable. Please try again shortly.',
-                str_contains($raw, '401')                       => 'Service temporarily unavailable. Please try again shortly.',
-                default                                         => 'Verification failed. Please try again.',
+                str_contains($raw, 'Invalid account')            => 'Account not found. Check the account number and selected bank.',
+                str_contains($raw, 'Account not found')          => 'Account not found. Check the account number and selected bank.',
+                str_contains($raw, 'Invalid bank')               => 'Invalid bank selected. Please try again.',
+                str_contains($raw, 'Required request parameter') => 'Verification failed — please check bank and account number.',
+                str_contains($raw, 'authentication')             => 'Service temporarily unavailable. Please try again shortly.',
+                str_contains($raw, '401')                        => 'Service temporarily unavailable. Please try again shortly.',
+                default                                          => 'Verification failed. Please try again.',
             };
 
             return response()->json([

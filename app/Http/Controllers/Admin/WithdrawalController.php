@@ -22,8 +22,39 @@ class WithdrawalController extends Controller
 
         $query = WithdrawalRequest::with('seller');
 
-        if ($request->status && $request->status !== 'all') {
+        // Status filter
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
+        }
+
+        // Search: seller name, email, account number, account name, reference
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('account_number',    'like', "%{$search}%")
+                  ->orWhere('account_name',    'like', "%{$search}%")
+                  ->orWhere('korapay_reference','like', "%{$search}%")
+                  ->orWhereHas('seller', function ($sq) use ($search) {
+                      $sq->where('business_name', 'like', "%{$search}%")
+                         ->orWhere('email',        'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Amount range
+        if ($request->filled('amount_min')) {
+            $query->where('amount', '>=', (float) $request->amount_min);
+        }
+        if ($request->filled('amount_max')) {
+            $query->where('amount', '<=', (float) $request->amount_max);
         }
 
         $withdrawals = $query->latest()->paginate(20)->withQueryString();
@@ -46,7 +77,6 @@ class WithdrawalController extends Controller
 
         return view('admin.withdrawals.index', compact('withdrawals', 'stats', 'statusColors'));
     }
-
     public function approve(Request $request, WithdrawalRequest $wd)
     {
         if (!auth('admin')->user()->canManageFinance()) abort(403);
@@ -82,54 +112,77 @@ class WithdrawalController extends Controller
             return back()->with('error', 'Withdrawal is already being processed.');
         }
 
-        $monnify   = app(\App\Services\MonnifyService::class);
-        $reference = $monnify->generateReference('PAY');
+        $korapay  = app(\App\Services\KorapayService::class);
+        $reference = $korapay->generateReference('PAY');
 
         try {
-            $result = $monnify->disbursePayout(
-                reference:                $reference,
-                amount:                   (float) $withdrawal->amount,
-                destinationBankCode:      $withdrawal->bank_code,
-                destinationAccountNumber: $withdrawal->account_number,
-                destinationAccountName:   $withdrawal->account_name,
-                narration:                "Seller withdrawal – {$withdrawal->seller->business_name}",
-                sourceAccountNumber:      config('services.monnify.source_account'),
-                async:                    false,
+            $result = $korapay->disbursePayout(
+                reference: $reference,
+                destination: [
+                    'type'      => 'bank_account',
+                    'amount'    => (float) $withdrawal->amount,
+                    'currency'  => 'NGN',
+                    'narration' => "Seller withdrawal – {$withdrawal->seller->business_name}",
+                    'bank_account' => [
+                        'bank'    => $withdrawal->bank_code,
+                        'account' => $withdrawal->account_number,
+                    ],
+                    'customer' => [
+                        'name'  => $withdrawal->account_name,
+                        'email' => $withdrawal->seller->email,
+                    ],
+                ],
                 metadata: [
-                    'withdrawal_id' => (string) $withdrawal->id,
-                    'seller_id'     => (string) $withdrawal->seller_id,
+                    'withdrawal-id' => (string) $withdrawal->id,
+                    'seller-id'     => (string) $withdrawal->seller_id,
                 ]
             );
 
-            \Log::info('Monnify disbursePayout result', [
+            \Log::info('Korapay disbursePayout result', [
                 'withdrawal_id' => $withdrawal->id,
                 'result'        => $result,
             ]);
 
-            $monnifyStatus = $result['status'] ?? 'UNKNOWN';
+            // Korapay statuses: processing, success, failed
+            $korapayStatus = $result['status'] ?? 'unknown';
 
-            // ── MFA enabled — Monnify is waiting for OTP before processing ──
-            if ($monnifyStatus === 'PENDING_AUTHORIZATION') {
-
-                // Save the reference so authorizeOtp() can find and complete it
+            if ($korapayStatus === 'failed') {
+                // Payout was definitively rejected — refund the seller
                 $withdrawal->update([
-                    'korapay_reference' => $result['reference'] ?? $reference,
-                    'korapay_status'    => 'PENDING_AUTHORIZATION',
+                    'status'            => 'rejected',
+                    'processed_at'      => now(),
                     'processed_by'      => auth('admin')->id(),
-                    // status stays 'processing' — not approved yet
+                    'korapay_reference' => $result['reference'] ?? $reference,
+                    'korapay_status'    => 'failed',
+                    'payout_fee'        => $result['fee'] ?? null,
                 ]);
 
-                // Flash the withdrawal ID so the blade can auto-open the OTP modal
-                return back()
-                    ->with('otp_required', $withdrawal->id)
-                    ->with('otp_info', "OTP sent to your Monnify registered email. Enter it below to complete the ₦" . number_format($withdrawal->amount, 2) . " payout to {$withdrawal->account_name}.");
+                $this->wallet->credit(
+                    $withdrawal->seller,
+                    $withdrawal->amount,
+                    'refund',
+                    "Withdrawal payout failed — amount refunded. Reference: {$reference}"
+                );
+
+                Notification::create([
+                    'notifiable_type' => 'App\Models\Seller',
+                    'notifiable_id'   => $withdrawal->seller_id,
+                    'type'            => 'withdrawal_failed',
+                    'title'           => 'Withdrawal Failed',
+                    'body'            => "Your withdrawal of ₦" . number_format($withdrawal->amount, 2) . " could not be processed. The amount has been returned to your wallet — please try again.",
+                    'action_url'      => route('seller.withdrawals.index'),
+                ]);
+
+                return back()->with('error',
+                    "Payout failed for ₦" . number_format($withdrawal->amount, 2) . " to {$withdrawal->account_name}. Amount has been refunded to the seller's wallet. Reference: {$reference}"
+                );
             }
 
-            // ── MFA disabled — transfer went straight through ───────────────
+            // Status is 'processing' or 'success' — mark approved
             $this->markApproved($withdrawal, $result, $reference);
 
         } catch (\Exception $e) {
-            \Log::error('Monnify payout exception', [
+            \Log::error('Korapay payout exception', [
                 'withdrawal_id' => $withdrawal->id,
                 'error'         => $e->getMessage(),
                 'trace'         => $e->getTraceAsString(),
@@ -142,11 +195,11 @@ class WithdrawalController extends Controller
 
                 $withdrawal->update([
                     'korapay_reference' => $reference,
-                    'korapay_status'    => 'UNKNOWN',
+                    'korapay_status'    => 'unknown',
                     'processed_by'      => auth('admin')->id(),
                 ]);
 
-                return back()->with('warning', 'Payout submitted but status is unknown. Verify in your Monnify dashboard before retrying: ' . $errorMessage);
+                return back()->with('warning', 'Payout submitted but status is unknown. Verify in your Korapay dashboard before retrying: ' . $errorMessage);
             }
 
             $withdrawal->update(['status' => 'pending']);
@@ -154,109 +207,6 @@ class WithdrawalController extends Controller
         }
 
         return back()->with('success', "Withdrawal of ₦" . number_format($withdrawal->amount, 2) . " approved and payout sent successfully.");
-    }
-
-    /**
-     * Authorize a PENDING_AUTHORIZATION transfer with the OTP from Monnify email.
-     */
-    public function authorizeOtp(Request $request, WithdrawalRequest $wd)
-    {
-        if (!auth('admin')->user()->canManageFinance()) abort(403);
-
-        $request->validate([
-            'otp' => ['required', 'string', 'min:4', 'max:10'],
-        ]);
-
-        $withdrawal = $wd;
-
-        if ($withdrawal->status !== 'processing') {
-            return back()->with('error', 'This withdrawal is not awaiting OTP authorization.');
-        }
-
-        if ($withdrawal->korapay_status !== 'PENDING_AUTHORIZATION') {
-            return back()->with('error', 'This withdrawal does not require OTP authorization.');
-        }
-
-        if (empty($withdrawal->korapay_reference)) {
-            return back()->with('error', 'No Monnify reference found for this withdrawal. Please contact support.');
-        }
-
-        $monnify = app(\App\Services\MonnifyService::class);
-
-        try {
-            $result = $monnify->authorizeTransfer(
-                $withdrawal->korapay_reference,
-                $request->otp
-            );
-
-            \Log::info('Monnify authorizeOtp result', [
-                'withdrawal_id' => $withdrawal->id,
-                'result'        => $result,
-            ]);
-
-            $monnifyStatus = $result['status'] ?? 'UNKNOWN';
-
-            if ($monnifyStatus === 'FAILED') {
-                // Transfer was definitively rejected by the bank network — refund the seller
-                $withdrawal->update([
-                    'status'         => 'rejected',
-                    'processed_at'   => now(),
-                    'processed_by'   => auth('admin')->id(),
-                    'korapay_status' => 'FAILED',
-                    'payout_fee'     => $result['totalFee'] ?? null,
-                ]);
-
-                // Refund wallet so seller can request again
-                $this->wallet->credit(
-                    $withdrawal->seller,
-                    $withdrawal->amount,
-                    'refund',
-                    "Withdrawal payout failed — amount refunded. Reference: {$withdrawal->korapay_reference}"
-                );
-
-                // Notify seller
-                Notification::create([
-                    'notifiable_type' => 'App\Models\Seller',
-                    'notifiable_id'   => $withdrawal->seller_id,
-                    'type'            => 'withdrawal_failed',
-                    'title'           => 'Withdrawal Failed',
-                    'body'            => "Your withdrawal of ₦" . number_format($withdrawal->amount, 2) . " could not be processed. The amount has been returned to your wallet — please try again.",
-                    'action_url'      => route('seller.withdrawals.index'),
-                ]);
-
-                \Log::warning('Monnify transfer FAILED after OTP', [
-                    'withdrawal_id' => $withdrawal->id,
-                    'reference'     => $withdrawal->korapay_reference,
-                    'result'        => $result,
-                ]);
-
-                return back()->with('error',
-                    "Transfer failed after OTP authorization. The ₦" . number_format($withdrawal->amount, 2) . " has been refunded to the seller's wallet. Check your Monnify dashboard for the reason (reference: {$withdrawal->korapay_reference})."
-                );
-            }
-
-            if (!in_array($monnifyStatus, ['SUCCESS', 'COMPLETED'])) {
-                // Ambiguous — still processing or unknown. Don't mark either way, let admin check dashboard.
-                return back()->with('warning',
-                    "OTP accepted but transfer status is: {$monnifyStatus}. Check your Monnify dashboard for reference {$withdrawal->korapay_reference} before taking further action."
-                );
-            }
-
-            $this->markApproved($withdrawal, $result, $withdrawal->korapay_reference);
-
-        } catch (\Exception $e) {
-            \Log::error('Monnify authorizeOtp exception', [
-                'withdrawal_id' => $withdrawal->id,
-                'error'         => $e->getMessage(),
-            ]);
-
-            // Don't roll back to pending — the reference is still valid and can be retried
-            return back()
-                ->with('otp_required', $withdrawal->id)
-                ->with('error', 'OTP authorization failed: ' . $e->getMessage() . ' — please try again.');
-        }
-
-        return back()->with('success', "OTP verified! Payout of ₦" . number_format($withdrawal->amount, 2) . " to {$withdrawal->account_name} completed successfully.");
     }
 
     /**
@@ -269,8 +219,8 @@ class WithdrawalController extends Controller
             'processed_at'      => now(),
             'processed_by'      => auth('admin')->id(),
             'korapay_reference' => $result['reference'] ?? $reference,
-            'korapay_status'    => $result['status']    ?? 'SUCCESS',
-            'payout_fee'        => $result['totalFee']  ?? $result['fee'] ?? null,
+            'korapay_status'    => $result['status']    ?? 'processing',
+            'payout_fee'        => $result['fee']       ?? null,
             'currency'          => 'NGN',
             'converted_amount'  => (float) $withdrawal->amount,
         ]);
@@ -321,7 +271,6 @@ class WithdrawalController extends Controller
             "Withdrawal rejected — amount refunded. Reason: {$request->reason}"
         );
 
-        // ── Email seller ───────────────────────────────────────────────────
         try {
             $this->brevo->sendWithdrawalRejected($withdrawal, $request->reason);
         } catch (\Exception $mailEx) {
@@ -331,7 +280,6 @@ class WithdrawalController extends Controller
             ]);
         }
 
-        // ── In-app notification ────────────────────────────────────────────
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
             'notifiable_id'   => $withdrawal->seller_id,
@@ -346,7 +294,7 @@ class WithdrawalController extends Controller
 
     /**
      * Change withdrawal status (processing → pending or approved).
-     * Used when a Monnify server error left a withdrawal in an ambiguous state.
+     * Used when a Korapay server error left a withdrawal in an ambiguous state.
      */
     public function changeStatus(Request $request, WithdrawalRequest $wd)
     {
@@ -366,10 +314,10 @@ class WithdrawalController extends Controller
         $newStatus = $request->status;
 
         $withdrawal->update([
-            'status'        => $newStatus,
-            'processed_at'  => $newStatus === 'approved' ? now() : null,
-            'processed_by'  => auth('admin')->id(),
-            'korapay_status'=> $newStatus === 'pending' ? null : $withdrawal->korapay_status,
+            'status'         => $newStatus,
+            'processed_at'   => $newStatus === 'approved' ? now() : null,
+            'processed_by'   => auth('admin')->id(),
+            'korapay_status' => $newStatus === 'pending' ? null : $withdrawal->korapay_status,
         ]);
 
         Notification::create([

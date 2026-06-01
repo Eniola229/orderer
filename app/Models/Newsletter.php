@@ -19,6 +19,11 @@ class Newsletter extends Model
         'failed_count',
         'sent_at',
         'created_by',
+        'send_sms',
+        'sms_message',
+        'sms_audience',
+        'sms_extra_numbers',
+
     ];
 
     protected $casts = [
@@ -26,6 +31,8 @@ class Newsletter extends Model
         'total_recipients' => 'integer',
         'sent_count'       => 'integer',
         'failed_count'     => 'integer',
+        'send_sms'          => 'boolean',
+        'sms_extra_numbers' => 'array',
     ];
 
     // ── Audience constants ────────────────────────────────────

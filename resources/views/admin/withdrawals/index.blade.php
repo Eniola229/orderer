@@ -35,13 +35,106 @@
 </div>
 
 <div class="d-flex gap-2 mb-4">
-    @foreach(['all'=>'All','pending'=>'Pending','approved'=>'Approved','rejected'=>'Rejected'] as $val=>$label)
-    <a href="{{ route('admin.withdrawals.index', ['status'=>$val]) }}"
+    @foreach(['all'=>'All','pending'=>'Pending','approved'=>'Approved','rejected'=>'Rejected','processing'=>'Processing','failed'=>'Failed'] as $val=>$label)
+    <a href="{{ route('admin.withdrawals.index', array_merge(request()->only(['search','date_from','date_to','amount_min','amount_max']), ['status'=>$val])) }}"
        class="btn btn-sm {{ request('status','all')===$val ? 'btn-primary' : 'btn-outline-secondary' }}">
         {{ $label }}
     </a>
     @endforeach
 </div>
+
+
+{{-- ── Search & Filter Bar ─────────────────────────────────────────────── --}}
+<form method="GET" action="{{ route('admin.withdrawals.index') }}" id="filterForm">
+    {{-- preserve status tab selection --}}
+    @if(request('status') && request('status') !== 'all')
+        <input type="hidden" name="status" value="{{ request('status') }}">
+    @endif
+
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="row g-2 align-items-end">
+
+                {{-- Search --}}
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fs-12 fw-semibold text-muted mb-1">Search</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="feather-search" style="font-size:13px;"></i></span>
+                        <input type="text" name="search" class="form-control"
+                               placeholder="Seller, account number, reference…"
+                               value="{{ request('search') }}">
+                    </div>
+                </div>
+
+                {{-- Date From --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <label class="form-label fs-12 fw-semibold text-muted mb-1">From</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm"
+                           value="{{ request('date_from') }}">
+                </div>
+
+                {{-- Date To --}}
+                <div class="col-lg-2 col-md-3 col-6">
+                    <label class="form-label fs-12 fw-semibold text-muted mb-1">To</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm"
+                           value="{{ request('date_to') }}">
+                </div>
+
+                {{-- Amount Min --}}
+                <div class="col-lg-1 col-md-3 col-6">
+                    <label class="form-label fs-12 fw-semibold text-muted mb-1">Min ₦</label>
+                    <input type="number" name="amount_min" class="form-control form-control-sm"
+                           placeholder="0" min="0" value="{{ request('amount_min') }}">
+                </div>
+
+                {{-- Amount Max --}}
+                <div class="col-lg-1 col-md-3 col-6">
+                    <label class="form-label fs-12 fw-semibold text-muted mb-1">Max ₦</label>
+                    <input type="number" name="amount_max" class="form-control form-control-sm"
+                           placeholder="∞" min="0" value="{{ request('amount_max') }}">
+                </div>
+
+                {{-- Buttons --}}
+                <div class="col-lg-2 col-md-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i class="feather-filter me-1"></i> Filter
+                    </button>
+                    @if(request()->hasAny(['search','date_from','date_to','amount_min','amount_max']))
+                        <a href="{{ route('admin.withdrawals.index', request()->only('status')) }}"
+                           class="btn btn-outline-secondary btn-sm"
+                           title="Clear filters">
+                            <i class="feather-x"></i>
+                        </a>
+                    @endif
+                </div>
+
+            </div>
+
+            {{-- Active filter summary --}}
+            @if(request()->hasAny(['search','date_from','date_to','amount_min','amount_max']))
+                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                    <small class="text-muted fw-semibold">Active filters:</small>
+                    @if(request('search'))
+                        <span class="badge bg-light text-dark border">
+                            Search: "{{ request('search') }}"
+                        </span>
+                    @endif
+                    @if(request('date_from') || request('date_to'))
+                        <span class="badge bg-light text-dark border">
+                            Date: {{ request('date_from') ?? '…' }} → {{ request('date_to') ?? 'now' }}
+                        </span>
+                    @endif
+                    @if(request('amount_min') || request('amount_max'))
+                        <span class="badge bg-light text-dark border">
+                            Amount: ₦{{ number_format(request('amount_min', 0)) }} – {{ request('amount_max') ? '₦'.number_format(request('amount_max')) : '∞' }}
+                        </span>
+                    @endif
+                    <small class="text-muted">— {{ $withdrawals->total() }} result(s)</small>
+                </div>
+            @endif
+        </div>
+    </div>
+</form>
 
 <div class="card">
     <div class="card-body p-0">
@@ -62,15 +155,19 @@
                 <tbody>
                     @foreach($withdrawals as $wd)
                     <tr
-                        data-otp-url="{{ route('admin.withdrawals.authorize-otp', $wd->id) }}"
                         data-reject-url="{{ route('admin.withdrawals.reject', $wd->id) }}"
                         data-wd-id="{{ $wd->id }}"
                     >
                         <td>
-                            <div>
-                                <p class="mb-0 fw-semibold fs-13">{{ $wd->seller->business_name ?? '—' }}</p>
+                            <a href="{{ route('admin.sellers.show', $wd->seller_id) }}"
+                               class="text-decoration-none d-block"
+                               title="View seller profile">
+                                <p class="mb-0 fw-semibold fs-13 text-primary">
+                                    {{ $wd->seller->business_name ?? '—' }}
+                                    <i class="feather-external-link" style="font-size:10px;opacity:.6;"></i>
+                                </p>
                                 <small class="text-muted">{{ $wd->seller->email ?? '' }}</small>
-                            </div>
+                            </a>
                         </td>
                         <td>
                             <span class="fw-bold text-success">₦{{ number_format($wd->amount, 2) }}</span>
@@ -96,14 +193,27 @@
                                 padding:5px 10px;border-radius:4px;font-size:12px;font-weight:600;">
                                 {{ ucfirst($wd->status) }}
                             </span>
-                            {{-- Show OTP sub-status badge --}}
-                            @if($wd->status === 'processing' && $wd->korapay_status === 'PENDING_AUTHORIZATION')
-                                <br><span class="badge bg-warning text-dark mt-1" style="font-size:10px;">
-                                    <i class="feather-lock" style="font-size:10px;"></i> Awaiting OTP
+                            {{-- Korapay transfer status --}}
+                            @if($wd->korapay_status)
+                                @php
+                                    $kStyle = match($wd->korapay_status) {
+                                        'success'    => 'background:#d1fae5;color:#065f46;',
+                                        'processing' => 'background:#dbeafe;color:#1e40af;',
+                                        'failed'     => 'background:#fee2e2;color:#991b1b;',
+                                        default      => 'background:#f3f4f6;color:#374151;',
+                                    };
+                                @endphp
+                                <br><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;{{ $kStyle }}">
+                                    Korapay: {{ strtoupper($wd->korapay_status) }}
                                 </span>
                             @endif
                             @if($wd->rejection_reason)
                                 <p class="fs-11 text-muted mb-0 mt-1">{{ $wd->rejection_reason }}</p>
+                            @endif
+                            @if($wd->korapay_reference)
+                                <p class="fs-10 text-muted mb-0 mt-1">
+                                    <code style="font-size:10px;">{{ $wd->korapay_reference }}</code>
+                                </p>
                             @endif
                         </td>
                         <td class="text-muted fs-12">
@@ -115,31 +225,13 @@
                         <td>
                             @if(auth('admin')->user()->canManageFinance())
                                 <div class="d-flex flex-column gap-1">
-                                    @if($wd->status === 'processing' && $wd->korapay_status === 'PENDING_AUTHORIZATION')
 
-                                        {{-- Primary action: complete the OTP --}}
-                                        <button type="button"
-                                                class="btn btn-sm btn-warning w-100"
-                                                onclick="openOtpModal(this, '{{ number_format($wd->amount,2) }}', '{{ addslashes($wd->account_name) }}')">
-                                            <i class="feather-shield me-1"></i> Enter OTP
-                                        </button>
-                                        {{-- Escape hatch: reset to pending if OTP is expired/wrong reference --}}
+                                    @if($wd->status === 'processing')
+
+                                        {{-- Server error state — let admin resolve manually --}}
                                         <form action="{{ route('admin.withdrawals.change-status', $wd->id) }}"
                                               method="POST"
-                                              onsubmit="return confirm('Reset to pending? Only do this if the Monnify transfer was NOT sent.')">
-                                            @csrf @method('PUT')
-                                            <input type="hidden" name="status" value="pending">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
-                                                <i class="feather-rotate-ccw me-1"></i> Reset to Pending
-                                            </button>
-                                        </form>
-
-                                    @elseif($wd->status === 'processing')
-
-                                        {{-- Processing but not OTP — server error state --}}
-                                        <form action="{{ route('admin.withdrawals.change-status', $wd->id) }}"
-                                              method="POST"
-                                              onsubmit="return confirm('Reset to pending? Only do this if the Monnify transfer was NOT sent.')">
+                                              onsubmit="return confirm('Reset to pending? Only do this if the Korapay transfer was NOT sent.')">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="status" value="pending">
                                             <button type="submit" class="btn btn-sm btn-outline-secondary w-100">
@@ -148,7 +240,7 @@
                                         </form>
                                         <form action="{{ route('admin.withdrawals.change-status', $wd->id) }}"
                                               method="POST"
-                                              onsubmit="return confirm('Force approve? Only do this after confirming the transfer succeeded in Monnify dashboard.')">
+                                              onsubmit="return confirm('Force approve? Only do this after confirming the transfer succeeded in the Korapay dashboard.')">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="status" value="approved">
                                             <button type="submit" class="btn btn-sm btn-success w-100">
@@ -183,6 +275,7 @@
                                             <i class="feather-x-circle me-1"></i> Rejected
                                         </small>
                                     @endif
+
                                 </div>
                             @endif
                         </td>
@@ -198,54 +291,6 @@
             <p>No withdrawal requests found.</p>
         </div>
         @endif
-    </div>
-</div>
-
-{{-- ── OTP Authorization Modal ──────────────────────────────────────────── --}}
-<div id="otpModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999999;align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:12px;max-width:460px;width:90%;margin:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);animation:modalFadeIn .3s ease;">
-        <div style="padding:20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="feather-shield" style="color:#f59e0b;font-size:18px;"></i>
-            </div>
-            <div>
-                <h5 style="margin:0;font-size:17px;font-weight:600;">Authorize Payout</h5>
-                <p style="margin:0;font-size:12px;color:#6b7280;">Enter the OTP sent to our Monnify registered email</p>
-            </div>
-        </div>
-        <form id="otpForm" method="POST" action="">
-            @csrf
-            @method('PUT')
-            <div style="padding:24px;">
-                <p id="otpInfo" style="margin:0 0 20px 0;font-size:14px;color:#374151;background:#f9fafb;padding:12px;border-radius:8px;border-left:3px solid #f59e0b;"></p>
-
-                <label style="display:block;margin-bottom:8px;font-weight:600;font-size:14px;">
-                    OTP Code <span style="color:#dc2626;">*</span>
-                </label>
-                <input type="text"
-                       id="otpInput"
-                       name="otp"
-                       inputmode="numeric"
-                       autocomplete="one-time-code"
-                       maxlength="10"
-                       placeholder="e.g. 123456"
-                       style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:22px;letter-spacing:6px;text-align:center;font-weight:700;outline:none;"
-                       required>
-                <p style="margin:8px 0 0 0;font-size:12px;color:#6b7280;">
-                    Check the email registered on our Monnify account. OTPs expire after a few minutes.
-                </p>
-            </div>
-            <div style="padding:16px 24px;border-top:1px solid #e5e7eb;display:flex;gap:10px;justify-content:flex-end;">
-                <button type="button" onclick="closeOtpModal()"
-                        style="padding:9px 20px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:500;">
-                    Cancel
-                </button>
-                <button type="submit"
-                        style="padding:9px 24px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">
-                    <i class="feather-check me-1"></i> Authorize Transfer
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -286,63 +331,13 @@
     from { opacity:0; transform:translateY(-20px); }
     to   { opacity:1; transform:translateY(0); }
 }
-#otpInput:focus {
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 3px rgba(245,158,11,.2);
-}
 </style>
 
 <script>
-// ── Helpers ───────────────────────────────────────────────────────────────
 function getRow(el) {
     return el.closest('tr');
 }
 
-// ── OTP modal ─────────────────────────────────────────────────────────────
-function openOtpModal(btn, amount, accountName) {
-    const row   = getRow(btn);
-    const url   = row.dataset.otpUrl;
-    const modal = document.getElementById('otpModal');
-
-    document.getElementById('otpForm').action = url;
-    document.getElementById('otpInfo').innerHTML =
-        `Authorizing payout of <strong>₦${parseFloat(amount.replace(/,/g,'')).toLocaleString('en-NG', {minimumFractionDigits:2})}</strong> to <strong>${accountName}</strong>.`;
-    document.getElementById('otpInput').value = '';
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => document.getElementById('otpInput').focus(), 100);
-}
-
-function closeOtpModal() {
-    document.getElementById('otpModal').style.display = 'none';
-    document.body.style.overflow = '';
-}
-
-document.getElementById('otpModal').addEventListener('click', function(e) {
-    if (e.target === this) closeOtpModal();
-});
-
-// ── Auto-open OTP modal after approve redirect ────────────────────────────
-@if(session('otp_required'))
-    document.addEventListener('DOMContentLoaded', function() {
-        const wdId  = '{{ session('otp_required') }}';
-        const info  = @json(session('otp_info', ''));
-        const row   = document.querySelector(`tr[data-wd-id="${wdId}"]`);
-        const url   = row ? row.dataset.otpUrl : null;
-        const modal = document.getElementById('otpModal');
-
-        if (!url) return; // row not on this page
-
-        document.getElementById('otpForm').action = url;
-        document.getElementById('otpInfo').innerHTML = info || 'Enter the OTP from your Monnify email.';
-        document.getElementById('otpInput').value = '';
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => document.getElementById('otpInput').focus(), 150);
-    });
-@endif
-
-// ── Reject modal ──────────────────────────────────────────────────────────
 function openRejectModal(btn, amount, sellerName) {
     const row   = getRow(btn);
     const url   = row.dataset.rejectUrl;

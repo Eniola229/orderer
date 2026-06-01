@@ -64,4 +64,11 @@ return [
         'source_account' => env('MONNIFY_SOURCE_ACCOUNT'),
     ],
 
+    'termii' => [
+        'api_key'   => env('TERMII_API_KEY'),
+        'base_url'  => env('TERMII_BASE_URL', 'https://v3.api.termii.com'),
+        'sender_id' => env('TERMII_SENDER_ID', 'YourBrand'),
+        'channel'   => env('TERMII_CHANNEL', 'dnd'),
+    ],
+
 ];

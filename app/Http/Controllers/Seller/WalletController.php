@@ -260,29 +260,4 @@ class WalletController extends Controller
         }
     }
 
-    public function webhook(Request $request)
-    {
-        $payload   = $request->getContent();
-        $signature = $request->header('x-korapay-signature', '');
-
-        if (!$this->korapay->verifyWebhookSignature($payload, $signature)) {
-            return response()->json(['message' => 'Invalid signature'], 401);
-        }
-
-        $event = $request->json('event');
-        $data  = $request->json('data');
-
-        if ($event === 'charge.success') {
-            $txn = KorapayTransaction::where('reference', $data['reference'])->first();
-            if ($txn && $txn->status !== 'success') {
-                $txn->update([
-                    'status'            => 'success',
-                    'korapay_reference' => $data['payment_reference'] ?? null,
-                    'gateway_response'  => $data,
-                ]);
-            }
-        }
-
-        return response()->json(['message' => 'OK']);
-    }
 }

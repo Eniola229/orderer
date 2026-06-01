@@ -145,13 +145,23 @@
                 <h5 class="card-title mb-0">Product Videos</h5>
             </div>
             <div class="card-body">
-                @foreach($product->videos as $video)
-                <div class="mb-2">
-                    <video controls style="max-width: 100%; max-height: 200px; border-radius: 8px;">
-                        <source src="{{ $video->video_url }}" type="video/mp4">
-                    </video>
-                </div>
-                @endforeach
+            @foreach($product->videos as $video)
+            @php
+                $ext = strtolower(pathinfo($video->video_url, PATHINFO_EXTENSION));
+                $mimeTypes = [
+                    'mp4' => 'video/mp4',
+                    'mov' => 'video/quicktime',
+                    'avi' => 'video/x-msvideo',
+                ];
+                $mime = $mimeTypes[$ext] ?? 'video/mp4';
+            @endphp
+            <div class="mb-2">
+                <video controls style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                    <source src="{{ $video->video_url }}" type="{{ $mime }}">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            @endforeach
             </div>
         </div>
         @endif

@@ -22,9 +22,10 @@ class CheckPendingMonnifyOrders extends Command
         protected WalletService     $walletService,
         protected ShipbubbleService $shipbubble,
         protected BrevoMailService  $brevo,
+        protected \App\Services\TermiiService $termii,
     ) {
         parent::__construct();
-    }
+}
 
     public function handle(MonnifyService $monnify): int
     {
@@ -86,9 +87,21 @@ class CheckPendingMonnifyOrders extends Command
 
                     // Send emails + seller notifications
                     $this->sendOrderEmails($order);
+                    
+                    // Send SMS to buyer
+                    try {
+                        $user = $order->user;
+                        if ($user && $user->phone) {
+                            $this->termii->sendBulk(
+                                [ltrim($user->phone, '+')],
+                                "Hi {$user->first_name}, your order #{$order->order_number} has been confirmed! Total: ₦" . number_format($order->total, 2) . ". We'll notify you once your items are shipped. Thank you for shopping with us!"
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("monnify:check-pending-orders — SMS failed for order #{$order->order_number}: " . $e->getMessage());
+                    }
 
                     $paid++;
-
                 } elseif (in_array($monnifyStatus, ['FAILED', 'EXPIRED', 'REVERSED', 'CANCELLED'])) {
                     DB::transaction(function () use ($order) {
                         // 1. Revert inventory changes

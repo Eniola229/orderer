@@ -8,7 +8,7 @@ use App\Http\Controllers\Admin\BuyerController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\FinanceController;
-use App\Http\Controllers\Admin\WithdrawalController;
+use App\Http\Controllers\Admin\WithdrawalController; 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\SupportController;

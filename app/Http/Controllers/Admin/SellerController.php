@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Seller;
-use App\Models\SellerDocument; 
+use App\Models\SellerDocument;
+use App\Models\WithdrawalRequest;
+use App\Models\Ad;
 use App\Services\BrevoMailService;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -40,36 +42,26 @@ class SellerController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        // ── Stats ────────────────────────────────────────────────────────────────
         $stats = [
-            'total'            => Seller::count(),
-            'pending'          => Seller::where('is_approved', false)->count(),
-            'approved'         => Seller::where('is_approved', true)->count(),
-            'verified'         => Seller::where('is_verified_business', true)->count(),
-            'individual'       => Seller::where('is_verified_business', false)->count(),
-            'active'           => Seller::where('is_active', true)->where('is_approved', true)->count(),
-            'suspended'        => Seller::where('is_active', false)->count(),
-
-            // Wallet totals (from wallets table — the canonical balances)
-            'total_wallet'     => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('balance'),
-            'total_ads_bal'    => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('ads_balance'),
-
-            // Orders
-            'total_orders'     => \App\Models\OrderItem::distinct('order_id')->count('order_id'),
-
-            // Sellers currently running active ads
-            'running_ads'      => \App\Models\Ad::where('status', 'active')
+            'total'           => Seller::count(),
+            'pending'         => Seller::where('is_approved', false)->count(),
+            'approved'        => Seller::where('is_approved', true)->count(),
+            'verified'        => Seller::where('is_verified_business', true)->count(),
+            'individual'      => Seller::where('is_verified_business', false)->count(),
+            'active'          => Seller::where('is_active', true)->where('is_approved', true)->count(),
+            'suspended'       => Seller::where('is_active', false)->count(),
+            'total_wallet'    => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('balance'),
+            'total_ads_bal'   => \App\Models\Wallet::where('walletable_type', 'App\Models\Seller')->sum('ads_balance'),
+            'total_orders'    => \App\Models\OrderItem::distinct('order_id')->count('order_id'),
+            'running_ads'     => \App\Models\Ad::where('status', 'active')
                                     ->where('start_date', '<=', now())
                                     ->where('end_date', '>=', now())
-                                    ->distinct('seller_id')
-                                    ->count('seller_id'),
-
-            // Sellers with at least one published product / service / property
-            'with_products'    => \App\Models\Product::where('status', 'approved')
                                     ->distinct('seller_id')->count('seller_id'),
-            'with_services'    => \App\Models\ServiceListing::where('status', 'approved')
+            'with_products'   => \App\Models\Product::where('status', 'approved')
                                     ->distinct('seller_id')->count('seller_id'),
-            'with_properties'  => \App\Models\HouseListing::where('status', 'approved')
+            'with_services'   => \App\Models\ServiceListing::where('status', 'approved')
+                                    ->distinct('seller_id')->count('seller_id'),
+            'with_properties' => \App\Models\HouseListing::where('status', 'approved')
                                     ->distinct('seller_id')->count('seller_id'),
         ];
 
@@ -107,6 +99,35 @@ class SellerController extends Controller
                             ->get();
         }
 
+        // ── Withdrawal history (latest 8, all statuses) ───────────────────
+        $withdrawals = WithdrawalRequest::where('seller_id', $seller->id)
+                        ->latest()
+                        ->limit(8)
+                        ->get();
+
+        $withdrawalStats = [
+            'total_requested' => WithdrawalRequest::where('seller_id', $seller->id)->sum('amount'),
+            'total_paid'      => WithdrawalRequest::where('seller_id', $seller->id)
+                                    ->where('status', 'approved')->sum('amount'),
+            'pending_count'   => WithdrawalRequest::where('seller_id', $seller->id)
+                                    ->whereIn('status', ['pending', 'processing'])->count(),
+        ];
+
+        // ── Ads history (latest 8) ────────────────────────────────────────
+        $ads = Ad::where('seller_id', $seller->id)
+                ->latest()
+                ->limit(8)
+                ->get();
+
+        $adStats = [
+            'total'       => Ad::where('seller_id', $seller->id)->count(),
+            'active'      => Ad::where('seller_id', $seller->id)->where('status', 'active')
+                                ->where('start_date', '<=', now())->where('end_date', '>=', now())->count(),
+            'total_spent' => Ad::where('seller_id', $seller->id)->sum('amount_spent'),
+            'impressions' => Ad::where('seller_id', $seller->id)->sum('total_impressions'),
+            'clicks'      => Ad::where('seller_id', $seller->id)->sum('total_clicks'),
+        ];
+
         $sellerReferrals = \App\Models\Referral::where('referrer_type', 'App\Models\Seller')
             ->where('referrer_id', $seller->id)
             ->with(['referred', 'earnings'])
@@ -127,31 +148,27 @@ class SellerController extends Controller
 
         return view('admin.sellers.show', compact(
             'seller', 'orderCount', 'totalEarnings', 'wallet', 'transactions',
+            'withdrawals', 'withdrawalStats',
+            'ads', 'adStats',
             'sellerReferrals', 'referralStats'
         ));
     }
 
     public function approve(Seller $seller)
     {
-        if (!auth('admin')->user()->canModerateSellers()) {
-            abort(403);
-        }
+        if (!auth('admin')->user()->canModerateSellers()) abort(403);
 
         $seller->update([
-            'is_approved' => true,
-            'verification_status' => "approved",
-            'approved_by' => auth('admin')->id(),
-            'approved_at' => now(),
+            'is_approved'         => true,
+            'verification_status' => 'approved',
+            'approved_by'         => auth('admin')->id(),
+            'approved_at'         => now(),
         ]);
 
-        // Also approve the document if specified
-        // Check if seller has a document and update it
         if ($seller->document) {
-            $seller->document->update([
-                'status' => 'approved',
-            ]);
+            $seller->document->update(['status' => 'approved']);
         }
-     
+
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
             'notifiable_id'   => $seller->id,
@@ -170,43 +187,38 @@ class SellerController extends Controller
     {
         if (!auth('admin')->user()->canModerateSellers()) abort(403);
 
-        $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
+        $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        // Update seller with rejection reason and status
         $seller->update([
             'verification_status' => 'rejected',
-            'is_approved' => false,
-            'rejection_reason' => $request->reason,
-            'rejected_at' => now(),
-            'rejected_by' => auth('admin')->id(),
+            'is_approved'         => false,
+            'rejection_reason'    => $request->reason,
+            'rejected_at'         => now(),
+            'rejected_by'         => auth('admin')->id(),
         ]);
 
-    // Also reject the document if specified
-    if ($seller->document) {
-        $seller->document->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->reason
-        ]);
-    }
+        if ($seller->document) {
+            $seller->document->update([
+                'status'           => 'rejected',
+                'rejection_reason' => $request->reason,
+            ]);
+        }
 
-        // Create notification
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
             'notifiable_id'   => $seller->id,
             'type'            => 'account_rejected',
             'title'           => 'Application Not Approved',
-            'body'            => "Your seller application was not approved. Reason: {$request->reason}" . 
+            'body'            => "Your seller application was not approved. Reason: {$request->reason}" .
                                  ($request->required_fields ? " Please update the following: " . implode(', ', $request->required_fields) : ""),
             'action_url'      => route('seller.pending'),
         ]);
 
-        // Send rejection email
         $this->brevo->sendSellerRejected($seller, $request->reason);
 
         return back()->with('success', 'Seller application rejected. The seller can now update their information.');
     }
+
     public function suspend(Request $request, Seller $seller)
     {
         if (!auth('admin')->user()->canModerateSellers()) abort(403);
@@ -214,9 +226,9 @@ class SellerController extends Controller
         $request->validate(['reason' => ['required', 'string']]);
 
         $seller->update([
-            'is_active'          => false,
-            'rejection_reason'=> $request->reason,
-        ]); 
+            'is_active'        => false,
+            'rejection_reason' => $request->reason,
+        ]);
 
         Notification::create([
             'notifiable_type' => 'App\Models\Seller',
@@ -236,9 +248,6 @@ class SellerController extends Controller
         return back()->with('success', 'Seller account reinstated.');
     }
 
-    /**
-     * Adjust seller wallet balance (credit or debit for main wallet or ads balance)
-     */
     public function adjustWallet(Request $request, Seller $seller)
     {
         if (!auth('admin')->user()->canManageFinance()) {
@@ -254,73 +263,40 @@ class SellerController extends Controller
 
         try {
             $walletService = app(\App\Services\WalletService::class);
-            $wallet = $walletService->getOrCreate($seller);
-            
-            $amount = $request->amount;
-            $reason = $request->reason;
+            $wallet        = $walletService->getOrCreate($seller);
+
+            $amount     = $request->amount;
+            $reason     = $request->reason;
             $walletType = $request->wallet_type;
             $actionType = $request->type;
-            
-            // Check for sufficient balance if it's a debit
+
             if ($actionType === 'debit') {
                 if ($walletType === 'balance' && $wallet->balance < $amount) {
-                    return redirect()->back()->with('error', 
-                        "Insufficient main wallet balance. Current balance: ₦" . number_format($wallet->balance, 2)
-                    );
+                    return back()->with('error', "Insufficient main wallet balance. Current balance: ₦" . number_format($wallet->balance, 2));
                 }
                 if ($walletType === 'ads' && $wallet->ads_balance < $amount) {
-                    return redirect()->back()->with('error', 
-                        "Insufficient ads balance. Current balance: ₦" . number_format($wallet->ads_balance, 2)
-                    );
+                    return back()->with('error', "Insufficient ads balance. Current balance: ₦" . number_format($wallet->ads_balance, 2));
                 }
             }
-            
-            // Process the adjustment based on wallet type and action type
+
             if ($walletType === 'balance') {
-                // Main wallet adjustment
                 if ($actionType === 'credit') {
-                    $transaction = $walletService->credit(
-                        $seller,
-                        $amount,
-                        'credit',  // Using the enum value from schema
-                        "System adjustment: {$reason}",
-                        'seller',
-                        $seller->id
-                    );
-                    
+                    $walletService->credit($seller, $amount, 'credit', "System adjustment: {$reason}", 'seller', $seller->id);
                     $message = "Successfully added ₦" . number_format($amount, 2) . " to seller's main wallet.";
-                    
-                } else { // debit
-                    $transaction = $walletService->debit(
-                        $seller,
-                        $amount,
-                        'debit',  // Using the enum value from schema
-                        "System adjustment: {$reason}",
-                        'seller',
-                        $seller->id
-                    );
-                    
+                } else {
+                    $walletService->debit($seller, $amount, 'debit', "System adjustment: {$reason}", 'seller', $seller->id);
                     $message = "Successfully deducted ₦" . number_format($amount, 2) . " from seller's main wallet.";
                 }
-                
-            } else { // Ads balance adjustment
+            } else {
                 if ($actionType === 'credit') {
-                    // Top up ads balance
                     $walletService->topupAdsBalance($seller, $amount);
-                    
                     $message = "Successfully added ₦" . number_format($amount, 2) . " to seller's ads balance.";
-                    
-                } else { // debit
-                    // Debit ads balance
+                } else {
                     $walletService->debitAdsBalance($seller, $amount, 'admin_adjustment_' . time());
-                    
                     $message = "Successfully deducted ₦" . number_format($amount, 2) . " from seller's ads balance.";
                 }
-                
-                $transaction = null;
             }
-            
-            // Create notification for seller
+
             Notification::create([
                 'notifiable_type' => 'App\Models\Seller',
                 'notifiable_id'   => $seller->id,
@@ -335,8 +311,7 @@ class SellerController extends Controller
                     'reason'      => $reason,
                 ]),
             ]);
-            
-            // Log admin action
+
             \Illuminate\Support\Facades\Log::info('Admin wallet adjustment', [
                 'admin_id'    => auth('admin')->id(),
                 'seller_id'   => $seller->id,
@@ -345,17 +320,17 @@ class SellerController extends Controller
                 'amount'      => $amount,
                 'reason'      => $reason,
             ]);
-            
-            return redirect()->back()->with('success', $message);
-            
+
+            return back()->with('success', $message);
+
         } catch (\Exception $e) {
             \Log::error('Wallet adjustment failed', [
                 'seller_id' => $seller->id,
                 'admin_id'  => auth('admin')->id(),
                 'error'     => $e->getMessage(),
             ]);
-            
-            return redirect()->back()->with('error', 'Failed to adjust wallet: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to adjust wallet: ' . $e->getMessage());
         }
     }
 }

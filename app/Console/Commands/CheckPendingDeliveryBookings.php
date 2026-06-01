@@ -16,6 +16,7 @@ class CheckPendingDeliveryBookings extends Command
 
     public function __construct(
         protected ShipbubbleService $shipbubble,
+        protected \App\Services\TermiiService $termii,
     ) {
         parent::__construct();
     }
@@ -175,6 +176,20 @@ class CheckPendingDeliveryBookings extends Command
                 'estimated_delivery_date' => $shipment['estimated_delivery_date'] ?? null,
                 'status'                  => 'confirmed',
             ]);
+
+            // Send SMS to user
+            try {
+                $user = $booking->user;
+                if ($user && $user->phone) {
+                    $trackingCode = $shipment['courier']['tracking_code'] ?? 'available soon';
+                    $this->termii->sendBulk(
+                        [ltrim($user->phone, '+')],
+                        "Hi {$user->first_name}, your delivery booking #{$booking->booking_number} has been confirmed! Tracking #: {$trackingCode}. We'll notify you once it's picked up. Thank you!"
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::error("bookings:check-pending — SMS failed for booking #{$booking->booking_number}: " . $e->getMessage());
+            }
 
             return true;
 

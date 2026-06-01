@@ -89,6 +89,10 @@
                         <small class="text-muted">Ads Balance</small>
                         <strong class="text-info">₦{{ number_format($wallet->ads_balance ?? 0, 2) }}</strong>
                     </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-muted">Total Withdrawn</small>
+                        <strong class="text-danger">₦{{ number_format($withdrawalStats['total_paid'], 2) }}</strong>
+                    </div>
                     <div class="d-flex justify-content-between">
                         <small class="text-muted">Joined</small>
                         <strong>{{ $seller->created_at->format('M d, Y') }}</strong>
@@ -150,7 +154,7 @@
             </div>
         </div>
 
-        {{-- Wallet adjustment -- finance only --}}
+        {{-- Wallet adjustment — finance only --}}
         @if(auth('admin')->user()->canManageFinance())
         <div class="card mb-3">
             <div class="card-header">
@@ -276,7 +280,7 @@
         </div>
         @endif
 
-        {{-- ── Listings Tabs: Products / Services / Properties ─────────────── --}}
+        {{-- ── Listings Tabs: Products / Services / Properties / Withdrawals ── --}}
         <div class="card mb-3">
             <div class="card-header p-0">
                 <ul class="nav nav-tabs border-0 px-3 pt-2" id="listingsTabs">
@@ -299,6 +303,13 @@
                             <i class="feather-home me-1"></i>
                             Properties
                             <span class="badge bg-secondary ms-1">{{ $seller->properties->count() }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-withdrawals">
+                            <i class="feather-arrow-up-right me-1"></i>
+                            Withdrawals
+                            <span class="badge bg-secondary ms-1">{{ $withdrawals->count() }}</span>
                         </button>
                     </li>
                 </ul>
@@ -519,6 +530,120 @@
                     @endif
                 </div>
 
+                {{-- Withdrawals tab --}}
+                <div class="tab-pane fade" id="tab-withdrawals">
+                    <div class="card-header d-flex align-items-center justify-content-between" style="border-top: 1px solid #dee2e6;">
+                        <div class="d-flex gap-3 align-items-center">
+                            <span class="fs-13 text-muted">{{ $withdrawals->count() }} recent withdrawal(s)</span>
+                            @if($withdrawalStats['pending_count'] > 0)
+                                <span class="badge bg-warning text-dark">{{ $withdrawalStats['pending_count'] }} pending</span>
+                            @endif
+                        </div>
+                        <a href="{{ route('admin.withdrawals.index', ['search' => $seller->email]) }}"
+                           class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+
+                    {{-- Summary stats --}}
+                    <div class="px-3 pt-3 pb-2">
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="p-2 bg-light rounded text-center">
+                                    <small class="text-muted d-block fs-11">Total Requested</small>
+                                    <strong class="fs-13">₦{{ number_format($withdrawalStats['total_requested'], 2) }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 bg-light rounded text-center">
+                                    <small class="text-muted d-block fs-11">Total Paid Out</small>
+                                    <strong class="fs-13 text-success">₦{{ number_format($withdrawalStats['total_paid'], 2) }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 bg-light rounded text-center">
+                                    <small class="text-muted d-block fs-11">Pending</small>
+                                    <strong class="fs-13 text-warning">{{ $withdrawalStats['pending_count'] }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($withdrawals->count())
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Amount</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Bank</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Account</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Transfer</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Requested</th>
+                                    <th class="fs-11 text-uppercase text-muted fw-semibold">Processed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($withdrawals as $wd)
+                                @php
+                                    $wdBadge = match($wd->status) {
+                                        'pending'    => 'background:#ffc107;color:#212529;',
+                                        'approved'   => 'background:#28a745;color:#fff;',
+                                        'rejected'   => 'background:#dc3545;color:#fff;',
+                                        'failed'     => 'background:#343a40;color:#fff;',
+                                        'processing' => 'background:#007bff;color:#fff;',
+                                        default      => 'background:#6c757d;color:#fff;',
+                                    };
+                                    [$transferLabel, $transferStyle] = match($wd->korapay_status ?? '') {
+                                        'processing' => ['Transfer in progress', 'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;'],
+                                        'success'    => ['Sent to bank', 'background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;'],
+                                        'failed'     => ['Transfer failed', 'background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;'],
+                                        default      => [null, null],
+                                    };
+                                @endphp
+                                <tr>
+                                    <td class="fw-bold text-success">₦{{ number_format($wd->amount, 2) }}</td>
+                                    <td class="fs-13">{{ $wd->bank_name }}</td>
+                                    <td class="fs-13">
+                                        {{ $wd->account_name }}<br>
+                                        <code class="fs-11">{{ $wd->account_number }}</code>
+                                    </td>
+                                    <td>
+                                        <span style="{{ $wdBadge }} padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                                            {{ ucfirst($wd->status) }}
+                                        </span>
+                                        @if($wd->rejection_reason)
+                                            <p class="fs-10 text-muted mb-0 mt-1">{{ Str::limit($wd->rejection_reason, 35) }}</p>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($transferLabel)
+                                            <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:3px;{{ $transferStyle }}">
+                                                {{ $transferLabel }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted fs-12">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-muted fs-12">{{ $wd->created_at->format('M d, Y') }}</td>
+                                    <td class="text-muted fs-12">{{ $wd->processed_at?->format('M d, Y') ?? '—' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if($withdrawals->count() >= 8)
+                    <div class="p-3 text-center text-muted fs-12 border-top">
+                        Showing latest 8 —
+                        <a href="{{ route('admin.withdrawals.index', ['search' => $seller->email]) }}">view all withdrawals</a>
+                    </div>
+                    @endif
+                    @else
+                    <div class="text-center py-4 text-muted">
+                        <i class="feather-arrow-up-right d-block mb-2" style="font-size:28px;"></i>
+                        <p class="mb-0 fs-13">No withdrawal requests yet.</p>
+                    </div>
+                    @endif
+                </div>{{-- /tab-withdrawals --}}
+
             </div>{{-- /tab-content --}}
         </div>{{-- /card --}}
 
@@ -585,6 +710,135 @@
                 <div class="text-center py-4 text-muted">
                     <i class="feather-activity mb-2 d-block" style="font-size:32px;"></i>
                     <p>No wallet transactions yet.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Ads History --}}
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                    <i class="feather-zap me-2"></i> Ads History
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    @if($adStats['active'] > 0)
+                        <span class="badge bg-success">{{ $adStats['active'] }} live</span>
+                    @endif
+                    <a href="{{ route('admin.ads.index', ['search' => $seller->business_name]) }}"
+                       class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+
+            {{-- Ad summary stats --}}
+            <div class="px-3 pt-3 pb-2">
+                <div class="row g-2">
+                    <div class="col">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block fs-11">Total Ads</small>
+                            <strong class="fs-14">{{ $adStats['total'] }}</strong>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block fs-11">Amount Spent</small>
+                            <strong class="fs-14 text-danger">₦{{ number_format($adStats['total_spent'], 2) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block fs-11">Impressions</small>
+                            <strong class="fs-14">{{ number_format($adStats['impressions']) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block fs-11">Clicks</small>
+                            <strong class="fs-14">{{ number_format($adStats['clicks']) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="p-2 bg-light rounded text-center">
+                            <small class="text-muted d-block fs-11">CTR</small>
+                            <strong class="fs-14">
+                                {{ $adStats['impressions'] > 0 ? number_format(($adStats['clicks'] / $adStats['impressions']) * 100, 2) : '0.00' }}%
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                @if($ads->count())
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Title</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Budget</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Spent</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Impr.</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Clicks</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Period</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($ads as $ad)
+                            @php
+                                $adBadgeStyle = match($ad->status) {
+                                    'active'   => 'background:#28a745;color:#fff;',
+                                    'pending'  => 'background:#ffc107;color:#212529;',
+                                    'approved' => 'background:#17a2b8;color:#fff;',
+                                    'rejected' => 'background:#dc3545;color:#fff;',
+                                    'expired'  => 'background:#6c757d;color:#fff;',
+                                    'paused'   => 'background:#fd7e14;color:#fff;',
+                                    default    => 'background:#6c757d;color:#fff;',
+                                };
+                                $ctr = $ad->total_impressions > 0
+                                    ? number_format(($ad->total_clicks / $ad->total_impressions) * 100, 2)
+                                    : '0.00';
+                            @endphp
+                            <tr>
+                                <td class="fw-semibold fs-13">{{ Str::limit($ad->title, 35) }}</td>
+                                <td class="fs-13">₦{{ number_format($ad->budget, 2) }}</td>
+                                <td class="fs-13 text-danger">₦{{ number_format($ad->amount_spent, 2) }}</td>
+                                <td class="fs-13 text-muted">{{ number_format($ad->total_impressions) }}</td>
+                                <td class="fs-13">
+                                    {{ number_format($ad->total_clicks) }}
+                                    <small class="text-muted">({{ $ctr }}%)</small>
+                                </td>
+                                <td class="fs-12 text-muted">
+                                    {{ $ad->start_date->format('M d') }} –
+                                    {{ $ad->end_date->format('M d, Y') }}
+                                </td>
+                                <td>
+                                    <span style="{{ $adBadgeStyle }} padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                                        {{ ucfirst($ad->status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.ads.show', $ad->id) }}"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="feather-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @if($adStats['total'] > 8)
+                <div class="p-3 text-center text-muted fs-12 border-top">
+                    Showing latest 8 of {{ $adStats['total'] }} —
+                    <a href="{{ route('admin.ads.index', ['search' => $seller->business_name]) }}">view all ads</a>
+                </div>
+                @endif
+                @else
+                <div class="text-center py-4 text-muted">
+                    <i class="feather-zap d-block mb-2" style="font-size:28px;"></i>
+                    <p class="mb-0 fs-13">No ads created yet.</p>
                 </div>
                 @endif
             </div>
@@ -778,12 +1032,9 @@
     from { opacity:0; transform:translateY(-20px); }
     to   { opacity:1; transform:translateY(0); }
 }
-/* Make tab badges smaller and subtler */
 #listingsTabs .badge { font-size: 10px; font-weight: 600; }
 #listingsTabs .nav-link { font-size: 13px; border-radius: 6px 6px 0 0; }
 #listingsTabs .nav-link.active { background: #fff; border-bottom-color: #fff; }
-
-/* Clickable listing title links */
 .listing-title-link {
     text-decoration: none;
     transition: color 0.15s ease;

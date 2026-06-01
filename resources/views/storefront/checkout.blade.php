@@ -662,26 +662,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── Payment method selection ─────────────────────────────────────
-document.getElementById('monnifyMethodCard').addEventListener('click', function() {
-    document.getElementById('paymentMonnify').checked = true;
-    document.getElementById('monnifyMethodCard').classList.add('selected');
-    document.getElementById('walletMethodCard').classList.remove('selected');
-    document.getElementById('korapayMethodCard').classList.remove('selected');
-});
+const monnifyCard = document.getElementById('monnifyMethodCard');
+const walletCard = document.getElementById('walletMethodCard');
+const korapayCard = document.getElementById('korapayMethodCard');
 
-document.getElementById('walletMethodCard').addEventListener('click', function() {
-    document.getElementById('paymentWallet').checked = true;
-    document.getElementById('walletMethodCard').classList.add('selected');
-    document.getElementById('korapayMethodCard').classList.remove('selected');
-    document.getElementById('monnifyMethodCard').classList.remove('selected');
-});
+if (walletCard) {
+    walletCard.addEventListener('click', function() {
+        const paymentWallet = document.getElementById('paymentWallet');
+        if (paymentWallet) paymentWallet.checked = true;
+        walletCard.classList.add('selected');
+        if (korapayCard) korapayCard.classList.remove('selected');
+        if (monnifyCard) monnifyCard.classList.remove('selected');
+    });
+}
 
-document.getElementById('korapayMethodCard').addEventListener('click', function() {
-    document.getElementById('paymentKorapay').checked = true;
-    document.getElementById('korapayMethodCard').classList.add('selected');
-    document.getElementById('walletMethodCard').classList.remove('selected');
-    document.getElementById('monnifyMethodCard').classList.remove('selected');
-});
+if (korapayCard) {
+    korapayCard.addEventListener('click', function() {
+        const paymentKorapay = document.getElementById('paymentKorapay');
+        if (paymentKorapay) paymentKorapay.checked = true;
+        korapayCard.classList.add('selected');
+        if (walletCard) walletCard.classList.remove('selected');
+        if (monnifyCard) monnifyCard.classList.remove('selected');
+    });
+}
+
 // ── Check all address fields filled ─────────────────────────────
 function allAddressFieldsFilled() {
     const name    = document.getElementById('shipping_name').value;
