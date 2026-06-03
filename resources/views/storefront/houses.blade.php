@@ -138,11 +138,11 @@
              ──────────────────────────────────────────────────────────── --}}
         @if(isset($sponsoredHouseAds) && $sponsoredHouseAds->count() && $houses->currentPage() === 1)
         <div class="row mb-4">
-            <div class="col-12">
+<!--             <div class="col-12">
                 <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
                     <i class="fa fa-star" style="color:#F39C12;"></i> Sponsored
                 </p>
-            </div>
+            </div> -->
             @foreach($sponsoredHouseAds as $ad)
             @php
                 $sp  = $ad->promotable;

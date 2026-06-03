@@ -46,10 +46,10 @@ class StorefrontController extends Controller
 
         // ── Top Rated ─────────────────────────────────────────────
         $topRatedProducts = Product::where('status', 'approved')
-            ->where('total_reviews', '>=', 1)   // only products with at least one review
+            ->where('total_reviews', '>=', 1)
             ->with(['images', 'seller'])
             ->orderBy('average_rating', 'desc')
-            ->orderBy('total_reviews', 'desc')  // break ties by review count
+            ->orderBy('total_reviews', 'desc')
             ->take(8)
             ->get();
 
@@ -65,18 +65,17 @@ class StorefrontController extends Controller
             ->whereNotNull('logo')
             ->orderBy('average_rating', 'desc')
             ->orderBy('total_reviews', 'desc')
-            ->take(6)
+            ->take(6) 
             ->get();
 
         // ── Ads ──────────────────────────────────────────────────
-        $heroBannerAds  = AdHelper::forSlot('homepage_hero', 5);   // rotating hero
-        $topListingAds  = AdHelper::topListings(4);                 // sponsored products
+        $heroBannerAds  = AdHelper::forSlot('homepage_hero', 5);
+        $topListingAds  = AdHelper::topListings(4);
 
-        // Record impressions for hero ads (they are always visible)
         foreach ($heroBannerAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
-
+        
         return view('storefront.home', compact(
             'categories', 'featuredProducts', 'newArrivals',
             'bestSellers', 'topRatedProducts',
@@ -123,11 +122,9 @@ class StorefrontController extends Controller
         $products = $query->paginate(30)->withQueryString();
 
         // ── Best Sellers & Top Rated with filters applied ───────────
-        // Create a separate query with the SAME filters
         $bestSellersQuery = Product::where('status', 'approved')
             ->with(['images', 'seller']);
         
-        // Apply same filters to Best Sellers
         if ($request->min_price) $bestSellersQuery->where('price', '>=', $request->min_price);
         if ($request->max_price) $bestSellersQuery->where('price', '<=', $request->max_price);
         if ($request->condition) $bestSellersQuery->whereIn('condition', (array) $request->condition);
@@ -141,7 +138,6 @@ class StorefrontController extends Controller
         
         $bestSellers = $bestSellersQuery->orderBy('total_sold', 'desc')->take(8)->get();
 
-        // Apply same filters to Top Rated
         $topRatedQuery = Product::where('status', 'approved')
             ->where('total_reviews', '>=', 1)
             ->with(['images', 'seller']);
@@ -161,11 +157,34 @@ class StorefrontController extends Controller
             ->orderBy('total_reviews', 'desc')
             ->take(8)
             ->get();
+
+        // ── Sponsored Top Listings with filters applied ───────────
+        $sponsoredQuery = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', Product::class)
+            ->whereHasMorph('promotable', [Product::class], function ($q) use ($request) {
+                $q->where('status', 'approved');
+                
+                // Apply same filters to sponsored products
+                if ($request->min_price) $q->where('price', '>=', $request->min_price);
+                if ($request->max_price) $q->where('price', '<=', $request->max_price);
+                if ($request->condition) $q->whereIn('condition', (array) $request->condition);
+                if ($request->q) {
+                    $search = $request->q;
+                    $q->where(function($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->with(['promotable.images', 'promotable.seller']);
+        
+        $topListingAds = $sponsoredQuery->take(4)->get();
         // ────────────────────────────────────────────────────────────
 
         // ── Ads ──────────────────────────────────────────────────
         $searchBannerAds = AdHelper::forSlot('search_results', 1);
-        $topListingAds   = AdHelper::topListings(4);
 
         foreach ($searchBannerAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
@@ -181,7 +200,7 @@ class StorefrontController extends Controller
         ));
     }
 
-     public function shopCategory(Request $request, string $categorySlug)
+    public function shopCategory(Request $request, string $categorySlug)
     {
         $allCategories   = Category::where('is_active', true)->withCount('products')->with('subcategories')->get();
         $currentCategory = Category::where('slug', $categorySlug)->where('is_active', true)->firstOrFail();
@@ -230,11 +249,27 @@ class StorefrontController extends Controller
             ->orderBy('total_reviews', 'desc')
             ->take(8)
             ->get();
+
+        // ── Sponsored Top Listings with filters applied ───────────
+        $sponsoredQuery = Ad::where('status', 'active')
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('end_date', '>=', now())
+            ->where('promotable_type', Product::class)
+            ->whereHasMorph('promotable', [Product::class], function ($q) use ($request, $currentCategory) {
+                $q->where('status', 'approved')
+                  ->where('category_id', $currentCategory->id);
+                
+                if ($request->min_price) $q->where('price', '>=', $request->min_price);
+                if ($request->max_price) $q->where('price', '<=', $request->max_price);
+                if ($request->condition) $q->whereIn('condition', (array) $request->condition);
+            })
+            ->with(['promotable.images', 'promotable.seller']);
+        
+        $topListingAds = $sponsoredQuery->take(4)->get();
         // ────────────────────────────────────────────────────────────
 
         // ── Ads ──────────────────────────────────────────────────
         $categoryBannerAds = AdHelper::forSlot('category_page', 1);
-        $topListingAds     = AdHelper::topListings(4, $currentCategory->id);
 
         foreach ($categoryBannerAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
@@ -257,39 +292,52 @@ class StorefrontController extends Controller
             ->with(['images', 'videos', 'seller', 'category', 'subcategory', 'reviews.user', 'options.values'])
             ->firstOrFail();
 
-        // Increment views
         $product->increment('views');
 
-        // ── Sponsored related products ───────────────────────────
-        $sponsoredRelatedAds = Ad::where('status', 'active')
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
-            ->where('promotable_type', Product::class)
-            ->whereHasMorph('promotable', [\App\Models\Product::class], function ($q) use ($product) {
-                $q->where('category_id', $product->category_id)
-                  ->where('status', 'approved')
-                  ->where('id', '!=', $product->id);
-            })
-            ->with(['promotable.images', 'promotable.seller'])
-            ->take(2)
-            ->get()
-            ->filter(fn($ad) => $ad->promotable !== null);
+        // ── Sponsored related products using AdHelper ─────────────────────
+        // Get sponsored ads for products in the SAME category
+        $sponsoredRelatedAds = AdHelper::topListings(2, $product->category_id);
+        
+        // If no sponsored ads in this category, try with subcategory
+        if ($sponsoredRelatedAds->isEmpty() && $product->subcategory_id) {
+            $sponsoredRelatedAds = AdHelper::topListings(2, null, $product->subcategory_id);
+        }
+        
+        // If STILL no sponsored ads, get any sponsored products as fallback
+        if ($sponsoredRelatedAds->isEmpty()) {
+            $sponsoredRelatedAds = AdHelper::topListings(2);
+        }
 
         foreach ($sponsoredRelatedAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
 
         $sponsoredRelatedIds = $sponsoredRelatedAds->map(fn($ad) => $ad->promotable_id)->all();
-        // ────────────────────────────────────────────────────────
 
+        // Get regular related products from same category
         $relatedProducts = Product::where('status', 'approved')
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->whereNotIn('id', $sponsoredRelatedIds)   // avoid duplicates in the 4 slots
+            ->whereNotIn('id', $sponsoredRelatedIds)
             ->with(['images', 'seller'])
+            ->inRandomOrder()
             ->take(4)
             ->get();
-
+        
+        // If not enough, get from subcategory
+        if ($relatedProducts->count() < 4 && $product->subcategory_id) {
+            $moreProducts = Product::where('status', 'approved')
+                ->where('subcategory_id', $product->subcategory_id)
+                ->where('id', '!=', $product->id)
+                ->whereNotIn('id', $sponsoredRelatedIds)
+                ->whereNotIn('id', $relatedProducts->pluck('id')->toArray())
+                ->with(['images', 'seller'])
+                ->inRandomOrder()
+                ->take(4 - $relatedProducts->count())
+                ->get();
+            
+            $relatedProducts = $relatedProducts->merge($moreProducts);
+        }
 
         $inWishlist = false;
         if (auth('web')->check()) {
@@ -299,10 +347,8 @@ class StorefrontController extends Controller
                 ->exists();
         }
 
-        // ── Ads ──────────────────────────────────────────────────
         $sidebarAds = AdHelper::forSlot('product_page_sidebar', 2);
 
-            // ── Flash sale check ─────────────────────────────────────────────────
         $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
             ->where('is_active', true)
             ->where('starts_at', '<=', now())
@@ -312,8 +358,6 @@ class StorefrontController extends Controller
                   ->orWhereColumn('quantity_sold', '<', 'quantity_limit');
             })
             ->first();
-        // ────────────────────────────────────────────────────────────────────
-
 
         foreach ($sidebarAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
@@ -324,7 +368,6 @@ class StorefrontController extends Controller
             'sidebarAds', 'flashSale', 'sponsoredRelatedAds'
         ));
     }
-
     public function search(Request $request)
     {
         return $this->shop($request);
@@ -332,25 +375,39 @@ class StorefrontController extends Controller
 
     public function brands()
     {
-        // ── Sponsored brand ads ──────────────────────────────────
-        $sponsoredBrandAds = Ad::where('status', 'active')
+        $searchQuery = request('search');
+        
+        // ── Sponsored brand ads with search filter ──────────────────
+        $sponsoredBrandAdsQuery = Ad::where('status', 'active')
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', Brand::class)
-            ->with('promotable.seller')
-            ->take(4)
+            ->whereHasMorph('promotable', [Brand::class], function ($q) use ($searchQuery) {
+                $q->where('is_active', true);
+                
+                if ($searchQuery) {
+                    $q->where('name', 'like', '%' . $searchQuery . '%');
+                }
+            })
+            ->with(['promotable.seller']);
+        
+        $sponsoredBrandAds = $sponsoredBrandAdsQuery
             ->get()
-            ->filter(fn($ad) => $ad->promotable && $ad->promotable->is_active);
-
+            ->sortByDesc(function ($ad) {
+                return $ad->promotable ? $ad->promotable->average_rating : 0;
+            })
+            ->take(4)
+            ->values();
+        
         foreach ($sponsoredBrandAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
-        // ────────────────────────────────────────────────────────
+        // ────────────────────────────────────────────────────────────
 
         $query = Brand::where('is_active', true)->with('seller');
 
-        if (request('search')) {
-            $query->where('name', 'like', '%' . request('search') . '%');
+        if ($searchQuery) {
+            $query->where('name', 'like', '%' . $searchQuery . '%');
         }
 
         $query->orderBy('average_rating', 'desc')
@@ -382,7 +439,7 @@ class StorefrontController extends Controller
     public function services(Request $request)
     {
         $query = \App\Models\ServiceListing::where('status', 'approved')
-            ->with(['seller', 'category',]);
+            ->with(['seller', 'category']);
 
         // Search
         if ($request->filled('search')) {
@@ -445,25 +502,54 @@ class StorefrontController extends Controller
             default:           $query->orderBy('created_at', 'desc');
         }
 
-        // ── Sponsored service ads ────────────────────────────────
-        $sponsoredServiceAds = Ad::where('status', 'active')
+        // ── Sponsored service ads with filters applied ─────────────
+        $sponsoredServiceAdsQuery = Ad::where('status', 'active')
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', ServiceListing::class)
-            ->with(['promotable.seller', 'promotable.category'])
-            ->take(3)
-            ->get()
-            ->filter(fn($ad) => $ad->promotable && $ad->promotable->status === 'approved');
+            ->whereHasMorph('promotable', [ServiceListing::class], function ($q) use ($request) {
+                $q->where('status', 'approved');
+                
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $q->where(function($sub) use ($search) {
+                        $sub->where('title', 'LIKE', "%{$search}%")
+                            ->orWhere('description', 'LIKE', "%{$search}%");
+                    });
+                }
+                
+                if ($request->filled('category_id')) {
+                    $q->where('category_id', $request->category_id);
+                }
+                
+                if ($request->filled('pricing_type')) {
+                    $q->where('pricing_type', $request->pricing_type);
+                }
+                
+                if ($request->filled('min_price')) {
+                    $q->where('price', '>=', $request->min_price);
+                }
+                
+                if ($request->filled('max_price')) {
+                    $q->where('price', '<=', $request->max_price);
+                }
+                
+                if ($request->filled('rating')) {
+                    $q->where('average_rating', '>=', $request->rating);
+                }
+            })
+            ->with(['promotable.seller', 'promotable.category']);
+        
+        $sponsoredServiceAds = $sponsoredServiceAdsQuery->take(3)->get();
+        // ────────────────────────────────────────────────────────────
 
         foreach ($sponsoredServiceAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
-        // ────────────────────────────────────────────────────────
 
         $perPage  = $request->get('per_page', 12);
         $services = $query->paginate($perPage);
 
-        // Get categories that have approved services
         $categoryIds = \App\Models\ServiceListing::where('status', 'approved')
                         ->whereNotNull('category_id')
                         ->distinct()
@@ -471,7 +557,7 @@ class StorefrontController extends Controller
 
         $categories = \App\Models\Category::whereIn('id', $categoryIds)->get();
 
-        return view('storefront.services', compact('services', 'categories'));
+        return view('storefront.services', compact('services', 'categories', 'sponsoredServiceAds'));
     }
 
     public function serviceShow($slug)
@@ -483,20 +569,14 @@ class StorefrontController extends Controller
 
         $service->increment('views');
 
-        // ── Sponsored related services ───────────────────────
-        $sponsoredRelatedServiceAds = Ad::where('status', 'active')
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
-            ->where('promotable_type', ServiceListing::class)
-            ->whereHasMorph('promotable', [\App\Models\ServiceListing::class], function ($q) use ($service) {
-                $q->where('category_id', $service->category_id)
-                  ->where('status', 'approved')
-                  ->where('id', '!=', $service->id);
-            })
-            ->with(['promotable.seller', 'promotable.category'])
-            ->take(2)
-            ->get()
-            ->filter(fn($ad) => $ad->promotable !== null);
+        // ── Sponsored related services using AdHelper ────────────────────
+        // Get sponsored ads for services in the SAME category
+        $sponsoredRelatedServiceAds = AdHelper::topServiceListings(2, $service->category_id);
+        
+        // If no sponsored ads in this category, get any sponsored services as fallback
+        if ($sponsoredRelatedServiceAds->isEmpty()) {
+            $sponsoredRelatedServiceAds = AdHelper::topServiceListings(2);
+        }
 
         foreach ($sponsoredRelatedServiceAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
@@ -505,14 +585,29 @@ class StorefrontController extends Controller
         $sponsoredRelatedServiceIds = $sponsoredRelatedServiceAds
             ->map(fn($ad) => $ad->promotable_id)->all();
 
+        // Get regular related services from same category
         $relatedServices = \App\Models\ServiceListing::where('status', 'approved')
             ->where('category_id', $service->category_id)
             ->where('id', '!=', $service->id)
             ->whereNotIn('id', $sponsoredRelatedServiceIds)
             ->with(['seller', 'category'])
+            ->inRandomOrder()
             ->take(3)
             ->get();
-        // ────────────────────────────────────────────────────
+        
+        // If not enough, get recent services
+        if ($relatedServices->count() < 3) {
+            $recentServices = \App\Models\ServiceListing::where('status', 'approved')
+                ->where('id', '!=', $service->id)
+                ->whereNotIn('id', $sponsoredRelatedServiceIds)
+                ->whereNotIn('id', $relatedServices->pluck('id')->toArray())
+                ->with(['seller', 'category'])
+                ->latest()
+                ->take(3 - $relatedServices->count())
+                ->get();
+            
+            $relatedServices = $relatedServices->merge($recentServices);
+        }
 
         return view('storefront.services-show', compact(
             'service', 'relatedServices', 'sponsoredRelatedServiceAds'
@@ -550,23 +645,69 @@ class StorefrontController extends Controller
             default:           $query->orderBy('created_at', 'desc');
         }
 
-        // ── Sponsored house ads ──────────────────────────────────
-        $sponsoredHouseAds = Ad::where('status', 'active')
+        // ── Sponsored house ads with filters applied ───────────────
+        $sponsoredHouseAdsQuery = Ad::where('status', 'active')
             ->whereDate('start_date', '<=', now())
             ->whereDate('end_date', '>=', now())
             ->where('promotable_type', HouseListing::class)
-            ->with(['promotable.seller', 'promotable.images'])
-            ->take(3)
-            ->get()
-            ->filter(fn($ad) => $ad->promotable && $ad->promotable->status === 'approved');
+            ->whereHasMorph('promotable', [HouseListing::class], function ($q) use ($request) {
+                $q->where('status', 'approved');
+                
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $q->where(function($sub) use ($search) {
+                        $sub->where('title', 'LIKE', "%{$search}%")
+                            ->orWhere('description', 'LIKE', "%{$search}%")
+                            ->orWhere('address', 'LIKE', "%{$search}%")
+                            ->orWhere('city', 'LIKE', "%{$search}%")
+                            ->orWhere('state', 'LIKE', "%{$search}%");
+                    });
+                }
+                
+                if ($request->filled('listing_type')) {
+                    $q->where('listing_type', $request->listing_type);
+                }
+                
+                if ($request->filled('property_type')) {
+                    $q->where('property_type', $request->property_type);
+                }
+                
+                if ($request->filled('min_price')) {
+                    $q->where('price', '>=', $request->min_price);
+                }
+                
+                if ($request->filled('max_price')) {
+                    $q->where('price', '<=', $request->max_price);
+                }
+                
+                if ($request->filled('bedrooms')) {
+                    $q->where('bedrooms', '>=', $request->bedrooms);
+                }
+                
+                if ($request->filled('bathrooms')) {
+                    $q->where('bathrooms', '>=', $request->bathrooms);
+                }
+                
+                if ($request->filled('city')) {
+                    $q->where('city', 'LIKE', "%{$request->city}%");
+                }
+                
+                if ($request->filled('state')) {
+                    $q->where('state', 'LIKE', "%{$request->state}%");
+                }
+            })
+            ->with(['promotable.images', 'promotable.seller']);
+        
+        $sponsoredHouseAds = $sponsoredHouseAdsQuery->take(3)->get();
+        // ────────────────────────────────────────────────────────────
 
         foreach ($sponsoredHouseAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
-        // ────────────────────────────────────────────────────────
 
         $perPage = $request->get('per_page', 12);
         $houses  = $query->with(['seller', 'images'])->paginate($perPage);
+        
         return view('storefront.houses', compact('houses', 'sponsoredHouseAds'));
     }
 
@@ -576,31 +717,34 @@ class StorefrontController extends Controller
                             ->where('status', 'approved')
                             ->with(['seller', 'images'])
                             ->firstOrFail();
-                // ── Sponsored similar houses ─────────────────────────────
-        $sponsoredSimilarAds = Ad::where('status', 'active')
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
-            ->where('promotable_type', HouseListing::class)
-            ->whereHasMorph('promotable', [\App\Models\HouseListing::class], function ($q) use ($house) {
-                $q->where('status', 'approved')
-                  ->where('id', '!=', $house->id)
-                  ->where(function ($q2) use ($house) {
-                      $q2->where('listing_type', $house->listing_type)
-                         ->orWhere('city', $house->city);
-                  });
-            })
-            ->with(['promotable.images', 'promotable.seller'])
-            ->take(1)
-            ->get()
-            ->filter(fn($ad) => $ad->promotable !== null);
+                            
+        // ── Sponsored similar houses using AdHelper ──────────────────────
+        // Get sponsored ads for similar houses (AdHelper might not support filtering by type)
+        // So we'll get sponsored houses and then filter them
+        $sponsoredSimilarAds = AdHelper::topHouseListings(4);
+        
+        // Filter to only show houses similar to current one
+        $sponsoredSimilarAds = $sponsoredSimilarAds->filter(function($ad) use ($house) {
+            $promotable = $ad->promotable;
+            if (!$promotable) return false;
+            
+            return $promotable->listing_type == $house->listing_type ||
+                   $promotable->property_type == $house->property_type ||
+                   $promotable->city == $house->city;
+        })->take(2);
+        
+        // If no matching sponsored houses, get any sponsored houses
+        if ($sponsoredSimilarAds->isEmpty()) {
+            $sponsoredSimilarAds = AdHelper::topHouseListings(2);
+        }
 
         foreach ($sponsoredSimilarAds as $ad) {
             AdHelper::recordImpression($ad->id, auth('web')->id());
         }
 
         $sponsoredSimilarIds = $sponsoredSimilarAds->map(fn($ad) => $ad->promotable_id)->all();
-        // ────────────────────────────────────────────────────────
 
+        // Get regular similar houses
         $similarHouses = HouseListing::where('status', 'approved')
             ->where('id', '!=', $house->id)
             ->whereNotIn('id', $sponsoredSimilarIds)
@@ -609,13 +753,28 @@ class StorefrontController extends Controller
                       ->orWhere('property_type', $house->property_type)
                       ->orWhere('city', $house->city);
             })
-            ->take(3 - count($sponsoredSimilarIds))
+            ->inRandomOrder()
+            ->take(4)
             ->get();
+        
+        // If not enough, get recent houses
+        if ($similarHouses->count() < 4) {
+            $recentHouses = HouseListing::where('status', 'approved')
+                ->where('id', '!=', $house->id)
+                ->whereNotIn('id', $sponsoredSimilarIds)
+                ->whereNotIn('id', $similarHouses->pluck('id')->toArray())
+                ->with(['seller', 'images'])
+                ->latest()
+                ->take(4 - $similarHouses->count())
+                ->get();
+            
+            $similarHouses = $similarHouses->merge($recentHouses);
+        }
 
         $house->increment('views');
 
         return view('storefront.houses-details', compact('house', 'similarHouses', 'sponsoredSimilarAds'));
-            }
+    }
 
     public function contact()
     {
@@ -653,7 +812,6 @@ class StorefrontController extends Controller
             'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048'
         ]);
         
-        // Check if user has purchased this product
         $hasPurchased = \App\Models\OrderItem::whereHas('order', function($q) {
             $q->where('user_id', auth()->id())
               ->whereIn('payment_status', ['paid', 'completed'])
@@ -666,7 +824,6 @@ class StorefrontController extends Controller
             return back()->with('error', 'You can only review products you have purchased.');
         }
         
-        // Check if already reviewed
         $hasReviewed = \App\Models\ProductReview::where('product_id', $product->id)
             ->where('user_id', auth()->id())
             ->exists();
@@ -675,7 +832,6 @@ class StorefrontController extends Controller
             return back()->with('error', 'You have already reviewed this product.');
         }
         
-        // Handle image uploads to Cloudinary
         $imagePaths = [];
         if ($request->hasFile('images')) {
             $cloudinary = app(\App\Services\CloudinaryService::class);
@@ -684,11 +840,10 @@ class StorefrontController extends Controller
                     $image,
                     'orderer/reviews/' . $product->id . '/' . auth()->id()
                 );
-                $imagePaths[] = $uploaded['url']; // Store only the URL
+                $imagePaths[] = $uploaded['url'];
             }
         } 
         
-        // Create review
         \App\Models\ProductReview::create([
             'product_id' => $product->id,
             'user_id' => auth()->id(),
@@ -699,7 +854,6 @@ class StorefrontController extends Controller
             'is_visible' => true,
         ]);
         
-        // Update product average rating
         $avg = \App\Models\ProductReview::where('product_id', $product->id)
             ->where('is_visible', true)
             ->avg('rating');

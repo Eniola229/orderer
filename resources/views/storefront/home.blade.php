@@ -813,7 +813,6 @@
                             <img src="{{ $img->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                         </a>
                         <div class="product-badge new-badge"><span>New</span></div>
-                        {{-- FIXED: removed duplicate, kept one clean verified badge --}}
                         @if($product->seller->is_verified_business)
                         <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
                             <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified

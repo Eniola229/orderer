@@ -75,7 +75,7 @@
                     {{-- Dynamic listing selector --}}
                     <div id="productSection" style="display:none;" class="mb-4">
                         <label class="form-label fw-bold">Select Product</label>
-                        <select name="promotable_id" id="productSelect" class="form-select">
+                        <select name="promotable_id" id="productSelect" class="form-select" disabled>
                             <option value="">Select a product</option>
                             @foreach($products as $p)
                             <option value="{{ $p->id }}" {{ old('promotable_id') == $p->id ? 'selected' : '' }}>
@@ -90,30 +90,49 @@
 
                     <div id="serviceSection" style="display:none;" class="mb-4">
                         <label class="form-label fw-bold">Select Service</label>
-                        <select name="promotable_id" id="serviceSelect" class="form-select">
+                        <select name="promotable_id" id="serviceSelect" class="form-select" disabled>
                             <option value="">Select a service</option>
                             @foreach($services as $s)
-                            <option value="{{ $s->id }}">{{ $s->title }}</option>
+                            <option value="{{ $s->id }}" {{ old('promotable_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->title }}
+                            </option>
                             @endforeach
                         </select>
+                        @if($services->isEmpty())
+                            <small class="text-danger">No approved services found. Get services approved first.</small>
+                        @endif
                     </div>
 
                     <div id="houseSection" style="display:none;" class="mb-4">
                         <label class="form-label fw-bold">Select Property</label>
-                        <select name="promotable_id" id="houseSelect" class="form-select">
+                        <select name="promotable_id" id="houseSelect" class="form-select" disabled>
                             <option value="">Select a property</option>
                             @foreach($houses as $h)
-                            <option value="{{ $h->id }}">{{ $h->title }}</option>
+                            <option value="{{ $h->id }}" {{ old('promotable_id') == $h->id ? 'selected' : '' }}>
+                                {{ $h->title }}
+                            </option>
                             @endforeach
                         </select>
+                        @if($houses->isEmpty())
+                            <small class="text-danger">No approved properties found. Get properties approved first.</small>
+                        @endif
                     </div>
 
                     <div id="brandSection" style="display:none;" class="mb-4">
-                        <input type="hidden" name="promotable_id" value="{{ auth('seller')->id() }}">
-                        <div class="alert alert-info">
-                            <i class="feather-info me-2"></i>
-                            Promoting your brand will show your store banner to buyers.
-                        </div>
+                        @php $sellerBrand = auth('seller')->user()->brand; @endphp
+                        @if($sellerBrand)
+                            <input type="hidden" name="promotable_id" id="brandPromotableId" value="{{ $sellerBrand->id }}" disabled>
+                            <div class="alert alert-info">
+                                <i class="feather-info me-2"></i>
+                                Promoting <strong>{{ $sellerBrand->name }}</strong> — your brand will appear at the top of the brands listing.
+                            </div>
+                        @else
+                            <div class="alert alert-warning">
+                                <i class="feather-alert-triangle me-2"></i>
+                                You don't have a brand set up yet.
+                                <a href="{{ route('seller.brands.create') }}" class="alert-link">Create your brand first</a>.
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -223,12 +242,9 @@
                         </div>
                         <p id="adMediaName" class="text-success fs-13 mt-2 mb-0" style="display:none;"></p>
 
-                        
-                        {{-- Media Preview --}}
                         <canvas id="thumbnailCanvas" style="display:none;"></canvas>
 
-                    {{-- Media Preview --}}
-                    <div id="mediaPreview" class="media-preview" style="display:none;">
+                        <div id="mediaPreview" class="media-preview" style="display:none;">
                             <button type="button" class="remove-media" onclick="removeMedia()">×</button>
                             <img id="imagePreview" src="" alt="Preview" style="display:none;">
                             <video id="videoPreview" controls preload="metadata" style="display:none;"></video>
@@ -250,7 +266,8 @@
                 </div>
             </div>
 
-            <div class="card">
+            {{-- Region --}}
+            <div class="card mb-3">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Region</h5>
                 </div>
@@ -265,7 +282,6 @@
                     </div>
                 </div>
             </div>
-
 
             {{-- Budget & Schedule --}}
             <div class="card mb-3">
@@ -340,7 +356,7 @@
                 </div>
             </div>
 
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 mb-4">
                 <button type="submit" class="btn btn-primary">
                     <i class="feather-send me-2"></i> Submit Ad for Review
                 </button>
@@ -419,7 +435,8 @@
                 </div>
             </div>
         </div>
-        <div class="card">
+
+        <div class="card mb-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">Banner Slots</h5>
             </div>
@@ -456,6 +473,7 @@
                 </ul>
             </div>
         </div>
+
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Agreement</h5>
@@ -464,24 +482,28 @@
                 <ul class="list-unstyled fs-13 text-muted">
                     <li class="mb-3">
                         <div class="d-flex justify-content-between">
-                            <span> By placing an ads on Orderer</span>
+                            <span>By placing an ad on Orderer</span>
                             <strong class="text-primary">You agree to our <a href="{{ route('legal.ads-policy') }}">Ads Term Policy</a></strong>
                         </div>
-                        
                     </li>
-          
                 </ul>
             </div>
         </div>
+
     </div>
 </div>
 
 @push('scripts')
 <script>
-// Show/hide listing selector based on type
 document.getElementById('promotableType').addEventListener('change', function() {
+    // Hide all sections
     ['productSection','serviceSection','houseSection','brandSection'].forEach(function(id) {
         document.getElementById(id).style.display = 'none';
+    });
+
+    // Disable ALL promotable_id inputs so none submit
+    document.querySelectorAll('[name="promotable_id"]').forEach(function(el) {
+        el.disabled = true;
     });
 
     const map = {
@@ -492,7 +514,13 @@ document.getElementById('promotableType').addEventListener('change', function() 
     };
 
     if (map[this.value]) {
-        document.getElementById(map[this.value]).style.display = 'block';
+        const section = document.getElementById(map[this.value]);
+        section.style.display = 'block';
+
+        // Enable only the active section's promotable_id input
+        section.querySelectorAll('[name="promotable_id"]').forEach(function(el) {
+            el.disabled = false;
+        });
     }
 });
 
@@ -518,13 +546,13 @@ document.querySelectorAll('.slot-radio').forEach(function(radio) {
 });
 
 // Media preview
-const mediaInput     = document.getElementById('adMedia');
-const mediaNameSpan  = document.getElementById('adMediaName');
+const mediaInput       = document.getElementById('adMedia');
+const mediaNameSpan    = document.getElementById('adMediaName');
 const previewContainer = document.getElementById('mediaPreview');
-const imagePreview   = document.getElementById('imagePreview');
-const videoPreview   = document.getElementById('videoPreview');
-const thumbCanvas    = document.getElementById('thumbnailCanvas');
-const thumbCtx       = thumbCanvas.getContext('2d');
+const imagePreview     = document.getElementById('imagePreview');
+const videoPreview     = document.getElementById('videoPreview');
+const thumbCanvas      = document.getElementById('thumbnailCanvas');
+const thumbCtx         = thumbCanvas.getContext('2d');
 
 mediaInput.addEventListener('change', function () {
     const file = this.files[0];
@@ -535,7 +563,6 @@ mediaInput.addEventListener('change', function () {
     previewContainer.style.display = 'block';
 
     if (file.type.startsWith('image/')) {
-
         const reader = new FileReader();
         reader.onload = function (e) {
             imagePreview.src = e.target.result;
@@ -545,13 +572,10 @@ mediaInput.addEventListener('change', function () {
         reader.readAsDataURL(file);
 
     } else if (file.type.startsWith('video/')) {
-
-        // Show the real video player
         videoPreview.src = URL.createObjectURL(file);
         videoPreview.style.display = 'block';
         imagePreview.style.display = 'none';
 
-        // Use a SEPARATE hidden video purely for thumbnail extraction
         const tmpVid = document.createElement('video');
         tmpVid.muted      = true;
         tmpVid.playsInline = true;
@@ -560,14 +584,12 @@ mediaInput.addEventListener('change', function () {
         const tmpUrl = URL.createObjectURL(file);
         tmpVid.src = tmpUrl;
 
-        // Step 1 — wait for metadata so we know dimensions
         tmpVid.addEventListener('loadedmetadata', function () {
             thumbCanvas.width  = tmpVid.videoWidth;
             thumbCanvas.height = tmpVid.videoHeight;
-            tmpVid.currentTime = 0; // seek to first frame
+            tmpVid.currentTime = 0;
         }, { once: true });
 
-        // Step 2 — after seek, draw frame → set as poster
         tmpVid.addEventListener('seeked', function () {
             thumbCtx.drawImage(tmpVid, 0, 0, thumbCanvas.width, thumbCanvas.height);
             videoPreview.poster = thumbCanvas.toDataURL('image/jpeg');
@@ -586,29 +608,17 @@ function removeMedia() {
     previewContainer.style.display = 'none';
     imagePreview.style.display = 'none';
     videoPreview.style.display = 'none';
-    videoPreview.poster = '';
-    imagePreview.src = '';
-    videoPreview.src = '';
-}
-
-function removeMedia() {                                              
-    mediaInput.value = '';
-    mediaNameSpan.style.display = 'none';
-    previewContainer.style.display = 'none';
-    imagePreview.style.display = 'none';
-    videoPreview.style.display = 'none';
-    
-    if (imagePreview.src) URL.revokeObjectURL(imagePreview.src);
     if (videoPreview.src) URL.revokeObjectURL(videoPreview.src);
     imagePreview.src = '';
     videoPreview.src = '';
+    videoPreview.poster = '';
 }
 
 // Budget estimate
 function updateBudgetEstimate() {
-    const start   = document.getElementById('startDate').value;
-    const end     = document.getElementById('endDate').value;
-    const slot    = document.querySelector('.slot-radio:checked');
+    const start       = document.getElementById('startDate').value;
+    const end         = document.getElementById('endDate').value;
+    const slot        = document.querySelector('.slot-radio:checked');
     const pricePerDay = slot ? parseFloat(slot.dataset.price) : 5.00;
 
     if (start && end) {
@@ -617,7 +627,7 @@ function updateBudgetEstimate() {
         const div     = document.getElementById('budgetEstimate');
         div.style.display = 'block';
         div.innerHTML = `
-            <strong>${days} day(s)</strong> × ₦${pricePerDay.toFixed(2)}/day = 
+            <strong>${days} day(s)</strong> × ₦${pricePerDay.toFixed(2)}/day =
             <strong>₦${minCost} minimum budget</strong>
         `;
     }
@@ -626,7 +636,7 @@ function updateBudgetEstimate() {
 document.getElementById('startDate').addEventListener('change', updateBudgetEstimate);
 document.getElementById('endDate').addEventListener('change', updateBudgetEstimate);
 
-// Pre-trigger if old values exist
+// Pre-trigger old values on validation fail
 @if(old('promotable_type'))
     document.getElementById('promotableType').value = '{{ old("promotable_type") }}';
     document.getElementById('promotableType').dispatchEvent(new Event('change'));
@@ -638,67 +648,57 @@ document.getElementById('endDate').addEventListener('change', updateBudgetEstima
 @endif
 
 @if(old('ad_banner_slot_id'))
-    document.querySelector(`input[name="ad_banner_slot_id"][value="{{ old('ad_banner_slot_id') }}"]`).checked = true;
-    document.querySelector(`input[name="ad_banner_slot_id"][value="{{ old('ad_banner_slot_id') }}"]`).dispatchEvent(new Event('change'));
+    const oldSlot = document.querySelector(`input[name="ad_banner_slot_id"][value="{{ old('ad_banner_slot_id') }}"]`);
+    if (oldSlot) {
+        oldSlot.checked = true;
+        oldSlot.dispatchEvent(new Event('change'));
+    }
 @endif
 
-// Check if there's a media preview from old data (if any)
-@if(old('media'))
-    // Handle old media preview if needed
-@endif
-// Fallback country list if API fails
+// Countries
 const fallbackCountries = [
-    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", 
-    "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", 
-    "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", 
-    "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", 
-    "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", 
-    "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", 
-    "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", 
-    "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", 
-    "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", 
-    "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Korea, North", "Korea, South", "Kosovo", 
-    "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", 
-    "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", 
-    "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", 
-    "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Macedonia", 
-    "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", 
-    "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", 
-    "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", 
-    "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", 
-    "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", 
-    "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", 
-    "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", 
-    "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia",
+    "Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
+    "Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria",
+    "Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad",
+    "Chile","China","Colombia","Comoros","Congo","Costa Rica","Côte d'Ivoire","Croatia","Cuba","Cyprus",
+    "Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador",
+    "Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon",
+    "Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana",
+    "Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+    "Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Korea, North","Korea, South","Kosovo",
+    "Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania",
+    "Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania",
+    "Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique",
+    "Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Macedonia",
+    "Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines",
+    "Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+    "Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal",
+    "Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia",
+    "South Africa","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+    "Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia",
+    "Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+    "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"
 ];
 
 let allCountries = [];
 
 async function loadCountries() {
-    const select = document.getElementById('regionSelect');
     const searchInput = document.getElementById('countrySearch');
-    
+
     try {
-        // Try multiple APIs
         let countries = null;
-        
-        // Try REST Countries API
+
         try {
             const response = await fetch('https://restcountries.com/v3.1/all?fields=name', {
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: { 'Accept': 'application/json' }
             });
-            
             if (response.ok) {
                 const data = await response.json();
                 countries = data.map(c => c.name.common).sort();
             }
-        } catch (e) {
-            console.log('REST Countries API failed, trying alternative...');
-        }
-        
-        // If first API failed, try second API
+        } catch (e) {}
+
         if (!countries) {
             try {
                 const response = await fetch('https://countriesnow.space/api/v0.1/countries');
@@ -706,40 +706,23 @@ async function loadCountries() {
                     const data = await response.json();
                     countries = data.data.map(c => c.country).sort();
                 }
-            } catch (e) {
-                console.log('Second API failed, using fallback data...');
-            }
+            } catch (e) {}
         }
-        
-        // Use fallback if both APIs failed
-        if (!countries || countries.length === 0) {
-            countries = fallbackCountries;
-        }
-        
-        allCountries = countries;
+
+        allCountries = (countries && countries.length > 0) ? countries : fallbackCountries;
         displayCountries(allCountries);
-        
-        // Add search functionality
+
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            const filtered = allCountries.filter(country => 
-                country.toLowerCase().includes(searchTerm)
-            );
-            displayCountries(filtered);
+            const term = this.value.toLowerCase().trim();
+            displayCountries(allCountries.filter(c => c.toLowerCase().includes(term)));
         });
-        
+
     } catch (error) {
-        console.error('Error loading countries:', error);
-        // Use fallback data
         allCountries = fallbackCountries;
         displayCountries(allCountries);
-        
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            const filtered = allCountries.filter(country => 
-                country.toLowerCase().includes(searchTerm)
-            );
-            displayCountries(filtered);
+            const term = this.value.toLowerCase().trim();
+            displayCountries(allCountries.filter(c => c.toLowerCase().includes(term)));
         });
     }
 }
@@ -747,14 +730,15 @@ async function loadCountries() {
 function displayCountries(countries) {
     const select = document.getElementById('regionSelect');
     select.innerHTML = '<option value="">Select a country...</option>';
-    
     countries.forEach(country => {
         const option = document.createElement('option');
         option.value = country;
         option.textContent = country;
+        @if(old('region'))
+        if (country === '{{ old("region") }}') option.selected = true;
+        @endif
         select.appendChild(option);
     });
-    
     if (countries.length === 0) {
         const option = document.createElement('option');
         option.value = '';
@@ -764,7 +748,6 @@ function displayCountries(countries) {
     }
 }
 
-// Load countries when page loads
 document.addEventListener('DOMContentLoaded', loadCountries);
 </script>
 @endpush

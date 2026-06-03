@@ -82,35 +82,96 @@
         @endif
         {{-- END BANNER AD --}}
 
-        @if(isset($sponsoredBrandAds) && $sponsoredBrandAds->count() && $brands->currentPage() === 1)
+        {{-- Determine if there are sponsored ads on first page --}}
+        @php
+            $hasSponsoredAds = isset($sponsoredBrandAds) && $sponsoredBrandAds->count() && $brands->currentPage() === 1;
+        @endphp
+
+        @if($hasSponsoredAds)
         <div class="row mb-4">
-            <div class="col-12">
+<!--             <div class="col-12">
                 <p style="font-size:12px;color:#aaa;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;">
                     <i class="fa fa-star" style="color:#F39C12;"></i> Sponsored
                 </p>
-            </div>
+            </div> -->
             @foreach($sponsoredBrandAds as $ad)
             @php $sp = $ad->promotable; @endphp
             <div class="col-6 col-md-4 col-lg-3 mb-4" style="position:relative;">
-                <div style="position:absolute;top:16px;left:16px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
+                <div style="position:absolute;top:38px;left:16px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
                     Sponsored
                 </div>
-                {{-- paste your existing brand card markup here, using $sp instead of $brand, href="{{ $ad->clickTrackingUrl() }}" --}}
+                {{-- TOP RATED BADGE FOR ADS SIDE --}}
+                @if(!request('search') && $loop->index < 3)
+                <div style="position:absolute;top:16px;right:16px;z-index:3;background:{{ $loop->index === 0 ? '#FFD700' : ($loop->index === 1 ? '#C0C0C0' : '#CD7F32') }};color:{{ $loop->index === 0 ? '#7a5800' : ($loop->index === 1 ? '#4a4a4a' : '#6b3a00') }};padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+                    <i class="fa fa-trophy" style="font-size:9px;"></i>
+                    #{{ $loop->index + 1 }} Rated
+                </div>
+                @endif
+                <a href="{{ $ad->clickTrackingUrl() }}" class="text-decoration-none">
+                <div class="brand-card" style="border:1px solid #eee;border-radius:14px;overflow:hidden;transition:all .25s;background:#fff;position:relative;">
+
+                    {{-- Card image / logo area --}}
+                    <div style="background:#f8fdf9;padding:28px 20px;text-align:center;position:relative;border-bottom:1px solid #f0f0f0;">
+
+                        {{-- Verified badge --}}
+                        @if($sp->seller && $sp->seller->is_verified_business)
+                        <span style="position:absolute;top:10px;left:10px;background:#2ECC71;color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+                            <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified
+                        </span>
+                        @endif
+
+                        @if($sp->logo)
+                            <img src="{{ $sp->logo }}"
+                                 style="height:70px;max-width:140px;object-fit:contain;" alt="{{ $sp->name }}">
+                        @else
+                            <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#2ECC71,#27ae60);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin:0 auto;">
+                                {{ strtoupper(substr($sp->name, 0, 1)) }}
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Card body --}}
+                    <div style="padding:14px 16px;">
+                        <h6 style="font-weight:700;color:#1a1a1a;margin-bottom:5px;font-size:15px;">
+                            {{ $sp->name }}
+                        </h6>
+
+                        {{-- Star rating --}}
+                        <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+                            <span style="color:#F39C12;font-size:12px;letter-spacing:1px;">
+                                @for($i=1;$i<=5;$i++){{ $i<=round($sp->average_rating)?'★':'☆' }}@endfor
+                            </span>
+                            <span style="color:#aaa;font-size:11px;">
+                                {{ number_format($sp->average_rating, 1) }} ({{ $sp->total_reviews }} reviews)
+                            </span>
+                        </div>
+
+                        {{-- Seller name --}}
+                        @if($sp->seller)
+                        <p style="font-size:11px;color:#999;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            <i class="fa fa-store" style="color:#2ECC71;margin-right:3px;"></i>
+                            {{ Str::limit($sp->seller->business_name ?? '', 10) }}
+                        </p>
+                        @endif
+                    </div>
+
+                </div>
+            </a>
             </div>
             @endforeach
             <div class="col-12"><hr style="border-color:#eee;margin:4px 0 20px;"></div>
         </div>
         @endif
 
-        {{-- Brand cards --}}
+        {{-- Brand cards - Only show top rated badge here if NO ads are present --}}
         <div class="row">
             @forelse($brands as $index => $brand)
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <a href="{{ route('brands.show', $brand->slug) }}" class="text-decoration-none">
                     <div class="brand-card" style="border:1px solid #eee;border-radius:14px;overflow:hidden;transition:all .25s;background:#fff;position:relative;">
 
-                        {{-- Top-rated crown for top 3 brands --}}
-                        @if(!request('search') && $index < 3)
+                        {{-- Top-rated crown for top 3 brands - ONLY when there are NO sponsored ads --}}
+                        @if(!request('search') && !$hasSponsoredAds && $index < 3)
                         <div style="position:absolute;top:8px;right:8px;z-index:2;background:{{ $index === 0 ? '#FFD700' : ($index === 1 ? '#C0C0C0' : '#CD7F32') }};color:{{ $index === 0 ? '#7a5800' : ($index === 1 ? '#4a4a4a' : '#6b3a00') }};padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
                             <i class="fa fa-trophy" style="font-size:9px;"></i>
                             #{{ $index + 1 }} Rated

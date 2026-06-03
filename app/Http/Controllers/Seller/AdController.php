@@ -150,7 +150,8 @@ class AdController extends Controller
             'product' => 'App\Models\Product',
             'service' => 'App\Models\ServiceListing',
             'house'   => 'App\Models\HouseListing',
-            default   => 'App\Models\Seller',
+            'brand'   => 'App\Models\Brand',
+            default   => 'App\Models\Product',
         };
 
         // Upload media (if provided)

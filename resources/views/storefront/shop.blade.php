@@ -229,7 +229,6 @@
                                     <a href="{{ $ad->clickTrackingUrl() }}">
                                         <img src="{{ $spImg->image_url ?? asset('img/product-img/product-1.jpg') }}" alt="">
                                     </a>
-                                    {{-- ADDED: verified badge for sponsored products --}}
                                     @if($sp->seller->is_verified_business)
                                     <div class="product-badge" style="background:#2ECC71;top:50px;left:20px;display:flex;align-items:center;gap:4px;">
                                         <i class="fa fa-check-circle" style="font-size:10px;"></i> Verified

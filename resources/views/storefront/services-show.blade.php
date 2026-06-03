@@ -498,8 +498,8 @@
             @php $sp = $ad->promotable; @endphp
             <div class="col-12 col-sm-6 col-lg-4">
                 <div class="service-card" style="border:1px solid #eee;border-radius:12px;overflow:hidden;height:100%;position:relative;background:#fff;">
-                    <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
-                        Sponsored
+                    <div style="position:absolute;top:10px;right:10px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:3px;">
+                        <i class="fa fa-star" style="font-size:10px;"></i> Sponsored
                     </div>
                     <div style="position:relative;">
                         @if($sp->portfolio_images && count($sp->portfolio_images))

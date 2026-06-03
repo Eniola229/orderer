@@ -9,11 +9,6 @@ class AdHelper
 {
     /**
      * Fetch active ads for a given banner slot location.
-     * Ordered randomly so different ads rotate on each page load.
-     *
-     * @param  string  $location  e.g. 'homepage_hero', 'category_page', 'product_page_sidebar', 'search_results'
-     * @param  int     $limit
-     * @return \Illuminate\Support\Collection
      */
     public static function forSlot(string $location, int $limit = 5)
     {
@@ -29,7 +24,6 @@ class AdHelper
             ->where('status', 'active')
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->whereHas('adCategory', fn($q) => $q->where('is_active', true))
             ->with('adCategory')
             ->inRandomOrder()
             ->take($limit)
@@ -37,26 +31,22 @@ class AdHelper
     }
 
     /**
-     * Fetch top_listing sponsored products.
-     * Returns a collection of Ad records whose promotable is a Product.
-     *
-     * @param  int     $limit
-     * @param  string|null $categoryId  Filter to a specific category's products
-     * @return \Illuminate\Support\Collection
+     * Fetch top listing sponsored Products.
      */
     public static function topListings(int $limit = 4, ?string $categoryId = null)
     {
         $query = Ad::where('status', 'active')
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
-            ->whereHas('adCategory', fn($q) => $q->where('type', 'top_listing')->where('is_active', true))
+            ->whereHas('adCategory', fn($q) => $q->where('type', 'top_listing'))
             ->where('promotable_type', 'App\Models\Product')
             ->with(['promotable.images', 'promotable.seller'])
             ->inRandomOrder();
 
         if ($categoryId) {
             $query->whereHasMorph('promotable', ['App\Models\Product'], function ($q) use ($categoryId) {
-                $q->where('category_id', $categoryId)->where('status', 'approved');
+                $q->where('category_id', $categoryId)
+                  ->where('status', 'approved');
             });
         } else {
             $query->whereHasMorph('promotable', ['App\Models\Product'], function ($q) {
@@ -64,11 +54,74 @@ class AdHelper
             });
         }
 
-        return $query->take($limit)->get();
+        return $query->take($limit)->get()->filter(fn($ad) => $ad->promotable !== null)->values();
     }
 
     /**
-     * Record an ad impression (fire and forget — no exception thrown).
+     * Fetch top listing sponsored Services.
+     */
+    public static function topServiceListings(int $limit = 3)
+    {
+        return Ad::where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereHas('adCategory', fn($q) => $q->where('type', 'top_listing'))
+            ->where('promotable_type', 'App\Models\ServiceListing')
+            ->whereHasMorph('promotable', ['App\Models\ServiceListing'], function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->with(['promotable.seller', 'promotable.category'])
+            ->inRandomOrder()
+            ->take($limit)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null)
+            ->values();
+    }
+
+    /**
+     * Fetch top listing sponsored Houses.
+     */
+    public static function topHouseListings(int $limit = 3)
+    {
+        return Ad::where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereHas('adCategory', fn($q) => $q->where('type', 'top_listing'))
+            ->where('promotable_type', 'App\Models\HouseListing')
+            ->whereHasMorph('promotable', ['App\Models\HouseListing'], function ($q) {
+                $q->where('status', 'approved');
+            })
+            ->with(['promotable.seller', 'promotable.images'])
+            ->inRandomOrder()
+            ->take($limit)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null)
+            ->values();
+    }
+
+    /**
+     * Fetch top listing sponsored Brands.
+     */
+    public static function topBrandListings(int $limit = 4)
+    {
+        return Ad::where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->whereHas('adCategory', fn($q) => $q->where('type', 'top_listing'))
+            ->where('promotable_type', 'App\Models\Brand')
+            ->whereHasMorph('promotable', ['App\Models\Brand'], function ($q) {
+                $q->where('is_active', true);
+            })
+            ->with(['promotable.seller'])
+            ->inRandomOrder()
+            ->take($limit)
+            ->get()
+            ->filter(fn($ad) => $ad->promotable !== null)
+            ->values();
+    }
+
+    /**
+     * Record an ad impression.
      */
     public static function recordImpression(string $adId, ?string $userId = null): void
     {
@@ -77,13 +130,9 @@ class AdHelper
                 'ad_id'      => $adId,
                 'user_id'    => $userId,
                 'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
             ]);
-
             Ad::where('id', $adId)->increment('total_impressions');
-
         } catch (\Throwable $e) {
-            // Never break the page over an ad impression failure
             \Log::warning('Ad impression record failed: ' . $e->getMessage());
         }
     }
@@ -98,11 +147,8 @@ class AdHelper
                 'ad_id'      => $adId,
                 'user_id'    => $userId,
                 'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
             ]);
-
             Ad::where('id', $adId)->increment('total_clicks');
-
         } catch (\Throwable $e) {
             \Log::warning('Ad click record failed: ' . $e->getMessage());
         }

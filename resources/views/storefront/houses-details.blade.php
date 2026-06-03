@@ -507,9 +507,14 @@
                                 <p style="color:#888;font-size:12px;margin-bottom:8px;">
                                     <i class="fa fa-map-marker"></i> {{ $similar->city }}, {{ $similar->state }}
                                 </p>
-                                <span style="font-size:18px;font-weight:800;color:#2ECC71;">
-                                    ₦{{ number_format($similar->price, 0) }}
-                                </span>
+                           <span style="font-size:18px;font-weight:800;color:#2ECC71;">
+                            ₦{{ number_format($similar->price, 0) }}
+                            @if($similar->listing_type == 'rent')
+                                <small style="font-size:11px;font-weight:400;color:#888;">/year</small>
+                            @elseif($similar->listing_type == 'sale')
+                                <small style="font-size:11px;font-weight:400;color:#888;">(Sale)</small>
+                            @endif
+                        </span>
                             </div>
                         </div>
                     </a>
