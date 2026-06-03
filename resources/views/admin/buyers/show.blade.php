@@ -9,7 +9,7 @@
 @section('content')
 <div class="row">
     <div class="col-lg-4">
-
+ 
         {{-- Profile card --}}
         <div class="card mb-3">
             <div class="card-body text-center">
@@ -215,6 +215,120 @@
             </div>
         </div>
         @endif
+
+        {{-- Delivery Bookings --}}
+        <div class="card mt-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">
+                    Delivery Bookings ({{ $user->deliveryBookings->count() }})
+                </h5>
+                <a href="{{ route('admin.delivery-bookings.index', ['search' => $user->email]) }}"
+                   class="btn btn-sm btn-outline-primary">View All</a>
+
+            </div>
+            <div class="card-body p-0">
+                @if($user->deliveryBookings->count())
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Booking #</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Type</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Route</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Fee</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Payment</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Status</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Date</th>
+                                <th class="fs-11 text-uppercase text-muted fw-semibold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($user->deliveryBookings as $booking)
+                            @php
+                                $statusColors = [
+                                    'pending'    => 'badge-pending',
+                                    'confirmed'  => 'badge-approved',
+                                    'picked_up'  => 'badge-pending',
+                                    'in_transit' => 'badge-pending',
+                                    'delivered'  => 'badge-approved',
+                                    'cancelled'  => 'badge-rejected',
+                                    'failed'     => 'badge-rejected',
+                                ];
+                                $paymentColors = [
+                                    'paid'    => 'badge-approved',
+                                    'pending' => 'badge-pending',
+                                    'failed'  => 'badge-rejected',
+                                ];
+                                $statusClass  = $statusColors[$booking->status]          ?? 'badge-pending';
+                                $paymentClass = $paymentColors[$booking->payment_status] ?? 'badge-pending';
+                            @endphp
+                            <tr>
+                                <td>
+                                    <a href="{{ route('admin.delivery-bookings.show', $booking->id) }}"
+                                       class="fw-semibold text-primary">
+                                        {{ $booking->booking_number }}
+                                    </a>
+                                    @if($booking->tracking_number)
+                                    <br><small class="text-muted fs-11">{{ $booking->tracking_number }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border fs-11">
+                                        {{ ucfirst(str_replace('_', ' ', $booking->delivery_type ?? 'standard')) }}
+                                    </span>
+                                    @if($booking->carrier)
+                                    <br><small class="text-muted fs-11">{{ $booking->carrier }}</small>
+                                    @endif
+                                </td>
+                                <td class="fs-12">
+                                    <span class="text-muted">From:</span>
+                                    {{ Str::limit($booking->pickup_city ?? $booking->pickup_address, 20) }}
+                                    <br>
+                                    <span class="text-muted">To:</span>
+                                    {{ Str::limit($booking->delivery_city ?? $booking->delivery_address, 20) }}
+                                </td>
+                                <td class="fw-bold fs-13">
+                                    ₦{{ number_format($booking->total_amount, 2) }}
+                                    <br>
+                                    <small class="text-muted fw-normal fs-11">
+                                        incl. ₦{{ number_format($booking->service_fee, 2) }} fee
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge orderer-badge {{ $paymentClass }}">
+                                        {{ ucfirst($booking->payment_status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge orderer-badge {{ $statusClass }}">
+                                        {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
+                                    </span>
+                                </td>
+                                <td class="text-muted fs-12">
+                                    {{ $booking->created_at->format('M d, Y') }}
+                                    @if($booking->estimated_delivery_date)
+                                    <br>
+                                    <small class="text-muted fs-11">
+                                        ETA: {{ \Carbon\Carbon::parse($booking->estimated_delivery_date)->format('M d') }}
+                                    </small>
+                                    @endif
+                                </td>
+                                <td><a href="{{ route('admin.delivery-bookings.show', $booking->id) }}"
+                                   class="fw-semibold text-primary">
+                                    {{ $booking->booking_number }}
+                                </a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-4 text-muted">
+                    <p class="mb-0">No delivery bookings yet.</p>
+                </div>
+                @endif
+            </div>
+        </div>
 
     </div>
 </div>

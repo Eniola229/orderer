@@ -87,12 +87,14 @@ class BuyerController extends Controller
     public function show(User $user)
     {
         if (!auth('admin')->user()->canModerateBuyer()) abort(403);
-        $user->load('orders');
+
+        $user->load(['orders', 'deliveryBookings' => fn($q) => $q->latest()->take(10)]);
+
         $wallet = \App\Models\Wallet::where('walletable_type', 'App\Models\User')
                     ->where('walletable_id', $user->id)->first();
+
         return view('admin.buyers.show', compact('user', 'wallet'));
     }
-
     public function suspend(User $user)
     {
         if (!auth('admin')->user()->canModerateBuyer()) abort(403);

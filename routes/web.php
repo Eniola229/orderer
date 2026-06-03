@@ -52,6 +52,7 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::get('/aml-policy',              [LegalController::class, 'amlPolicy'])->name('aml');
     Route::get('/acceptable-use-policy',   [LegalController::class, 'acceptableUse'])->name('acceptable-use');
     Route::get('/disclaimer',              [LegalController::class, 'disclaimer'])->name('disclaimer');
+    Route::get('/ads-policy',              [LegalController::class, 'adsPolicy'])->name('ads-policy');
 });
 
 //Review a product

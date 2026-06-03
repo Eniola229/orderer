@@ -53,4 +53,9 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'user_id');
     }
 
+    public function deliveryBookings()
+    {
+        return $this->hasMany(\App\Models\DeliveryBooking::class);
+    }
+
 } 

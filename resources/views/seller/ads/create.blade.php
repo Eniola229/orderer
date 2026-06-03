@@ -465,7 +465,7 @@
                     <li class="mb-3">
                         <div class="d-flex justify-content-between">
                             <span> By placing an ads on Orderer</span>
-                            <strong class="text-primary">You agree to our <a href="#">Ads Term Policy</a></strong>
+                            <strong class="text-primary">You agree to our <a href="{{ route('legal.ads-policy') }}">Ads Term Policy</a></strong>
                         </div>
                         
                     </li>

@@ -21,6 +21,7 @@
                         <a href="https://www.instagram.com/_orderer_/" title="Instagram" target="_blank"><i class="fa fa-instagram"></i></a>
                         <a href="https://www.instagram.com/_orderer_/" title="Tiktok" target="_blank"><i class="fa fa-tiktok"></i></a>
                         <a href="https://x.com/_orderer_" title="Twitter / X"><i class="fa fa-twitter" target="_blank"></i></a>
+                        <a href="https://youtube.com/ordererweb" title="Youtube"><i class="fa fa-youtube" target="_blank"></i></a>
                     </div>
                 </div>
 
@@ -73,6 +74,7 @@
                         <li><a href="{{ route('legal.aml') }}">AML Policy</a></li>
                         <li><a href="{{ route('legal.acceptable-use') }}">Acceptable Use</a></li>
                         <li><a href="{{ route('legal.disclaimer') }}">Disclaimer</a></li>
+                        <li><a href="{{ route('legal.ads-policy') }}">Ads Policy</a></li>
                     </ul>
                 </div>
 

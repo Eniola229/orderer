@@ -436,7 +436,7 @@ class BrevoMailService
             </div>
             <div style='padding:30px;background:#fff;'>
                 <p>Hi <strong>{$user->first_name}</strong>,</p>
-                <p>Your account has been created successfully. You can now shop, book riders and track all your orders from one place.</p>
+                <p>Your account has been created successfully. You can now shop, book deliveries and track all your orders from one place.</p>
                 <div style='text-align:center;margin:30px 0;'>
                     <a href='" . route('home') . "' style='background:#2ECC71;color:#fff;padding:14px 28px;text-decoration:none;border-radius:4px;font-weight:bold;'>
                         Start Shopping

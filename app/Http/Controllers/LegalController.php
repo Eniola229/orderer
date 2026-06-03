@@ -54,5 +54,11 @@ class LegalController extends Controller
     public function disclaimer()
     {
         return view('legal.disclaimer');
+    } 
+
+    public function adsPolicy()
+    {
+        return view('legal.ads-policy');
     }
+    
 }
