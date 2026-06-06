@@ -12,7 +12,7 @@
     @error('subject')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
-</div>
+</div> 
 
 {{-- ── Email Audience ── --}}
 <div class="mb-3">
@@ -182,70 +182,108 @@
 <script>
   tinymce.init({
     selector: '#newsletter-body',
-    height: 400,
+    height: 500,
     menubar: true,
-    plugins: ['advlist','autolink','lists','link','image','charmap','preview',
-      'anchor','searchreplace','visualblocks','code','fullscreen',
-      'insertdatetime','media','table','help','wordcount'],
-    toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter ' +
-      'alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px; line-height:1.6; }',
-    branding: false
+    plugins: [
+      'advlist', 'autolink', 'lists', 'link', 'image', 'media',
+      'charmap', 'preview', 'anchor', 'searchreplace', 'visualblocks',
+      'code', 'fullscreen', 'insertdatetime', 'table', 'help', 'wordcount'
+    ],
+    toolbar:
+      'undo redo | blocks | bold italic backcolor | ' +
+      'alignleft aligncenter alignright alignjustify | ' +
+      'bullist numlist outdent indent | removeformat | ' +
+      'image media | help',
+
+    // ── ONLY use the custom handler, no images_upload_url ─────────────────
+    images_upload_handler: function (blobInfo, progress) {
+      return new Promise(function (resolve, reject) {
+        var fd = new FormData();
+        fd.append('file', blobInfo.blob(), blobInfo.filename());
+        fd.append('_token', '{{ csrf_token() }}');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '{{ route("admin.newsletter.media.upload") }}');
+
+        // Send the CSRF token as a header too — belt and braces
+        xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable) progress(e.loaded / e.total * 100);
+        };
+
+        xhr.onload = function () {
+          if (xhr.status === 419) {
+            reject({ message: 'Session expired — please refresh the page and try again.', remove: true });
+            return;
+          }
+          if (xhr.status !== 200) {
+            reject({ message: 'Upload failed (HTTP ' + xhr.status + ')', remove: true });
+            return;
+          }
+          try {
+            var json = JSON.parse(xhr.responseText);
+            if (!json || !json.location) throw new Error('No location in response');
+            resolve(json.location);
+          } catch (e) {
+            reject({ message: 'Bad response from server: ' + xhr.responseText, remove: true });
+          }
+        };
+
+        xhr.onerror = function () {
+          reject({ message: 'Network error — check your connection.', remove: true });
+        };
+
+        xhr.send(fd);
+      });
+    },
+
+    // ── File picker (Upload tab in image/media dialog) ─────────────────────
+    file_picker_types: 'image media',
+    file_picker_callback: function (callback, value, meta) {
+      var accept = meta.filetype === 'media' ? 'video/*' : 'image/*';
+
+      var input = document.createElement('input');
+      input.type   = 'file';
+      input.accept = accept;
+
+      input.onchange = function () {
+        var file = this.files[0];
+        if (!file) return;
+
+        var fd = new FormData();
+        fd.append('file', file, file.name);
+        fd.append('_token', '{{ csrf_token() }}');
+
+        fetch('{{ route("admin.newsletter.media.upload") }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+          },
+          body: fd,
+        })
+        .then(function (r) {
+          if (r.status === 419) throw new Error('Session expired — refresh the page.');
+          if (!r.ok) throw new Error('Server error: ' + r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data.location) throw new Error('No URL returned from server.');
+          callback(data.location, { title: file.name });
+        })
+        .catch(function (err) {
+          alert('Upload failed: ' + err.message);
+        });
+      };
+
+      input.click();
+    },
+
+    media_live_embeds: true,
+    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px; line-height:1.6; } img, video { max-width:100%; height:auto; }',
+    branding: false,
   });
 </script>
-<script>
-(function () {
-    // ── Toggle SMS section ────────────────────────────────────────────────────
-    const toggle  = document.getElementById('sendSmsToggle');
-    const section = document.getElementById('smsSection');
-
-    toggle.addEventListener('change', function () {
-        section.style.display = this.checked ? '' : 'none';
-    });
-
-    // ── Character counter ─────────────────────────────────────────────────────
-    const smsArea  = document.getElementById('smsMessage');
-    const smsCount = document.getElementById('smsCharCount');
-
-    function updateCount() {
-        const len = smsArea.value.length;
-        smsCount.textContent = len + ' / 160';
-        smsCount.className   = len > 160 ? 'text-danger fw-semibold' : 'text-muted';
-    }
-
-    smsArea.addEventListener('input', updateCount);
-    updateCount();
-
-    // ── Dynamic extra numbers ─────────────────────────────────────────────────
-    const container = document.getElementById('extraNumbersContainer');
-    const addBtn    = document.getElementById('btnAddNumber');
-
-    addBtn.addEventListener('click', function () {
-        const row = document.createElement('div');
-        row.className = 'input-group mb-2 extra-number-row';
-        row.innerHTML =
-            '<input type="text" name="sms_extra_numbers[]" class="form-control"' +
-            ' placeholder="e.g. 2348012345678">' +
-            '<button type="button" class="btn btn-outline-danger btn-remove-number">' +
-            '<i class="feather-minus"></i></button>';
-        container.appendChild(row);
-        syncRemoveButtons();
-    });
-
-    container.addEventListener('click', function (e) {
-        if (e.target.closest('.btn-remove-number')) {
-            e.target.closest('.extra-number-row').remove();
-            syncRemoveButtons();
-        }
-    });
-
-    function syncRemoveButtons() {
-        const rows = container.querySelectorAll('.extra-number-row');
-        rows.forEach(function (row) {
-            row.querySelector('.btn-remove-number').style.display =
-                rows.length === 1 ? 'none' : '';
-        });
-    }
-})();
 </script>
 @endpush

@@ -170,6 +170,7 @@ Route::prefix('20050619/admin')->name('admin.')->group(function () {
             Route::put('/{newsletter}',            [NewsletterController::class, 'update']) ->name('update');
             Route::post('/{newsletter}/send',      [NewsletterController::class, 'send'])   ->name('send');
             Route::delete('/{newsletter}',         [NewsletterController::class, 'destroy'])->name('destroy');
+            Route::post('/media/upload', [NewsletterController::class, 'mediaUpload'])->name('media.upload');
         });
 
         Route::prefix('free-shipping')->name('free-shipping.')->group(function () {

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendNewsletterJob;
-use App\Models\Newsletter;
+use App\Models\Newsletter; 
 use App\Models\NewsletterSubscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -195,6 +195,29 @@ class NewsletterController extends Controller
     private function cleanExtraNumbers(array $numbers): array
     {
         return array_values(array_filter(array_map('trim', $numbers)));
+    }
+
+    // ── Media upload ─────────────────────────────────────────────
+    public function mediaUpload(Request $request)
+    {
+        $this->authorise();
+
+        $request->validate([
+            'file' => 'required|file|max:51200|mimes:jpg,jpeg,png,gif,webp,mp4,mov,webm',
+        ]);
+
+        $file    = $request->file('file');
+        $isVideo = str_starts_with($file->getMimeType(), 'video/');
+
+        /** \App\Services\CloudinaryService $cloudinary */
+        $cloudinary = app(\App\Services\CloudinaryService::class);
+
+        $result = $isVideo
+            ? $cloudinary->uploadVideo($file, 'orderer/newsletters')
+            : $cloudinary->uploadImage($file, 'orderer/newsletters');
+
+        // TinyMCE expects: { location: "url" }
+        return response()->json(['location' => $result['url']]);
     }
 
     // ── Guard helper ──────────────────────────────────────────────────────────
