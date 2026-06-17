@@ -1,11 +1,31 @@
-{{-- ============================================================
-       1. Search/category banner — between topbar and product grid
-       2. Sponsored products — first 4 items in grid marked "Sponsored"
-     ============================================================ --}}
-
 @auth('web')@include('layouts.storefront.header-auth')@else @include('layouts.storefront.header-guest')@endauth
 @include('layouts.storefront.cart-sidebar')
 @include('layouts.partials.alerts')
+
+{{-- ── MOBILE CATEGORY SCROLL BAR ─────────────────────────── --}}
+<div class="d-block d-md-none mobile-cat-scroll-wrap">
+    <div class="mobile-cat-scroll">
+        <a href="{{ route('shop.index') }}"
+           class="mobile-cat-pill {{ !$currentCategory ? 'active' : '' }}">
+            All
+        </a>
+        @foreach($allCategories as $cat)
+        <a href="{{ route('shop.category', $cat->slug) }}"
+           class="mobile-cat-pill {{ $currentCategory && $currentCategory->id === $cat->id ? 'active' : '' }}">
+            {{ $cat->name }}
+        </a>
+        @if($cat->subcategories->count() && $currentCategory && $currentCategory->id === $cat->id)
+            @foreach($cat->subcategories as $sub)
+            <a href="{{ route('shop.subcategory', [$cat->slug, $sub->slug]) }}"
+               class="mobile-cat-pill sub {{ request()->route('subcategory') === $sub->slug ? 'active' : '' }}">
+                ↳ {{ $sub->name }}
+            </a>
+            @endforeach
+        @endif
+        @endforeach
+    </div>
+</div>
+{{-- END MOBILE CATEGORY SCROLL BAR --}}
 
 {{-- Breadcrumb (unchanged) --}}
 <div class="breadcumb_area bg-img" style="background-image: url({{ asset('img/bg-img/breadcumb.jpeg') }});">
@@ -24,102 +44,129 @@
     <div class="container">
         <div class="row">
 
-            {{-- Sidebar (unchanged) --}}
+            {{-- Sidebar with collapsible sections on mobile --}}
             <div class="col-12 col-md-4 col-lg-3">
-                <div class="shop_sidebar_area">
+                
+                {{-- Mobile Filter Toggle Button --}}
+                <div class="d-block d-md-none mb-3">
+                    <button class="btn btn-outline-success w-100" type="button" id="mobileFilterToggle">
+                        <i class="fa fa-filter me-2"></i> Show Filters
+                    </button>
+                </div>
 
-                    {{-- Categories --}}
-                    <div class="widget catagory mb-50">
-                        <h6 class="widget-title mb-30">Categories</h6>
-                        <div class="catagories-menu">
-                            <ul id="menu-content2" class="menu-content collapse show">
-                                @foreach($allCategories as $cat)
-                                <li data-toggle="collapse" data-target="#cat{{ $cat->id }}">
-                                    <a href="{{ route('shop.category', $cat->slug) }}"
-                                       class="{{ $currentCategory && $currentCategory->id === $cat->id ? 'font-weight-bold' : '' }}">
-                                        {{ $cat->name }}
-                                        <span class="float-right text-muted" style="font-size:12px;">
-                                            ({{ $cat->products_count ?? 0 }})
-                                        </span>
-                                    </a>
-                                    @if($cat->subcategories->count())
-                                    <ul class="sub-menu collapse {{ $currentCategory && $currentCategory->id === $cat->id ? 'show' : '' }}"
-                                        id="cat{{ $cat->id }}">
-                                        @foreach($cat->subcategories as $sub)
-                                        <li>
-                                            <a href="{{ route('shop.subcategory', [$cat->slug, $sub->slug]) }}">
-                                                {{ $sub->name }}
-                                            </a>
-                                        </li>
-                                        @endforeach
-                                    </ul>
-                                    @endif
-                                </li>
-                                @endforeach
-                            </ul>
+                <div class="shop_sidebar_area" id="sidebarFilters">
+                    
+                    {{-- Mobile: Show filters inline on desktop, collapsible on mobile --}}
+                    <div class="collapse-filter-section d-block d-md-block">
+                        
+                        {{-- Categories (desktop only) --}}
+                        <div class="widget catagory mb-50 d-none d-md-block">
+                            <h6 class="widget-title mb-30">Categories</h6>
+                            <div class="catagories-menu">
+                                <ul id="menu-content2" class="menu-content collapse show">
+                                    @foreach($allCategories as $cat)
+                                    <li data-toggle="collapse" data-target="#cat{{ $cat->id }}">
+                                        <a href="{{ route('shop.category', $cat->slug) }}"
+                                           class="{{ $currentCategory && $currentCategory->id === $cat->id ? 'font-weight-bold' : '' }}">
+                                            {{ $cat->name }}
+                                            <span class="float-right text-muted" style="font-size:12px;">
+                                                ({{ $cat->products_count ?? 0 }})
+                                            </span>
+                                        </a>
+                                        @if($cat->subcategories->count())
+                                        <ul class="sub-menu collapse {{ $currentCategory && $currentCategory->id === $cat->id ? 'show' : '' }}"
+                                            id="cat{{ $cat->id }}">
+                                            @foreach($cat->subcategories as $sub)
+                                            <li>
+                                                <a href="{{ route('shop.subcategory', [$cat->slug, $sub->slug]) }}">
+                                                    {{ $sub->name }}
+                                                </a>
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                        @endif
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
                         </div>
-                    </div>
 
-                    {{-- Price filter --}}
-                    <div class="widget price mb-50">
-                        <h6 class="widget-title mb-30">Filter by Price</h6>
-                        <form action="{{ request()->url() }}" method="GET" id="filterForm">
-                            @if(request('q'))<input type="hidden" name="q" value="{{ request('q') }}">@endif
-                            @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
-                            <div class="widget-desc">
-                                <div class="d-flex align-items-center gap-2 mb-3">
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">₦</span>
-                                        <input type="number" name="min_price" class="form-control"
-                                               placeholder="Min" value="{{ request('min_price') }}"
-                                               min="0" step="0.01">
+                        {{-- Price filter (collapsible on mobile - hidden by default) --}}
+                        <div class="widget price mb-50 filter-widget">
+                            <h6 class="widget-title mb-30 d-flex justify-content-between align-items-center" 
+                                style="cursor: pointer;" onclick="toggleFilterSection(this)">
+                                Filter by Price
+                                <i class="fa fa-chevron-down d-md-none filter-toggle-icon"></i>
+                            </h6>
+                            <div class="widget-desc filter-content collapsed">
+                                <form action="{{ request()->url() }}" method="GET" id="filterForm">
+                                    @if(request('q'))<input type="hidden" name="q" value="{{ request('q') }}">@endif
+                                    @if(request('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}">@endif
+                                    <div class="widget-desc">
+                                        <div class="d-flex align-items-center gap-2 mb-3">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">₦</span>
+                                                <input type="number" name="min_price" class="form-control"
+                                                       placeholder="Min" value="{{ request('min_price') }}"
+                                                       min="0" step="0.01">
+                                            </div>
+                                            <span class="text-muted">—</span>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">₦</span>
+                                                <input type="number" name="max_price" class="form-control"
+                                                       placeholder="Max" value="{{ request('max_price') }}"
+                                                       min="0" step="0.01">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn essence-btn btn-sm w-100">Apply Filter</button>
                                     </div>
-                                    <span class="text-muted">—</span>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text">₦</span>
-                                        <input type="number" name="max_price" class="form-control"
-                                               placeholder="Max" value="{{ request('max_price') }}"
-                                               min="0" step="0.01">
-                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        {{-- Condition filter (collapsible on mobile - hidden by default) --}}
+                        <div class="widget mb-50 filter-widget">
+                            <h6 class="widget-title mb-30 d-flex justify-content-between align-items-center" 
+                                style="cursor: pointer;" onclick="toggleFilterSection(this)">
+                                Condition
+                                <i class="fa fa-chevron-down d-md-none filter-toggle-icon"></i>
+                            </h6>
+                            <div class="widget-desc filter-content collapsed">
+                                @foreach(['new' => 'New', 'used' => 'Used', 'refurbished' => 'Refurbished'] as $val => $label)
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input condition-check" type="checkbox"
+                                           value="{{ $val }}" id="cond_{{ $val }}"
+                                           {{ in_array($val, (array)request('condition', [])) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="cond_{{ $val }}">{{ $label }}</label>
                                 </div>
-                                <button type="submit" class="btn essence-btn btn-sm w-100">Apply Filter</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {{-- Condition --}}
-                    <div class="widget mb-50">
-                        <h6 class="widget-title mb-30">Condition</h6>
-                        <div class="widget-desc">
-                            @foreach(['new' => 'New', 'used' => 'Used', 'refurbished' => 'Refurbished'] as $val => $label)
-                            <div class="form-check mb-2">
-                                <input class="form-check-input condition-check" type="checkbox"
-                                       value="{{ $val }}" id="cond_{{ $val }}"
-                                       {{ in_array($val, (array)request('condition', [])) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="cond_{{ $val }}">{{ $label }}</label>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- Brands sidebar --}}
-                    @if($brands->count())
-                    <div class="widget brands mb-50">
-                        <h6 class="widget-title mb-30">Brands</h6>
-                        <div class="widget-desc">
-                            <ul>
-                                @foreach($brands as $brand)
-                                <li>
-                                    <a href="{{ route('brands.show', $brand->slug) }}">
-                                        {{ $brand->name }}
-                                    </a>
-                                </li>
                                 @endforeach
-                            </ul>
+                            </div>
                         </div>
-                    </div>
-                    @endif
 
+                        {{-- Brands filter (collapsible on mobile - hidden by default) --}}
+                        @if($brands->count())
+                        <div class="widget brands mb-50 filter-widget">
+                            <h6 class="widget-title mb-30 d-flex justify-content-between align-items-center" 
+                                style="cursor: pointer;" onclick="toggleFilterSection(this)">
+                                Brands
+                                <i class="fa fa-chevron-down d-md-none filter-toggle-icon"></i>
+                            </h6>
+                            <div class="widget-desc filter-content collapsed">
+                                <ul>
+                                    @foreach($brands as $brand)
+                                    <li>
+                                        <a href="{{ route('brands.show', $brand->slug) }}">
+                                            {{ $brand->name }}
+                                        </a>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                        @endif
+
+                    </div>
+                    
                 </div>
             </div>
 
@@ -220,7 +267,7 @@
                             if (!$sp) continue;
                             $spImg = $sp->images->where('is_primary',true)->first() ?? $sp->images->first();
                         @endphp
-                        <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="col-6 col-sm-6 col-lg-4">
                             <div class="single-product-wrapper" style="position:relative;">
                                 <div style="position:absolute;top:8px;left:8px;z-index:3;background:#FEF9E7;color:#B7950B;border:1px solid #F9CA24;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;">
                                     Sponsored
@@ -299,7 +346,7 @@
                                 <div class="row">
                                     @foreach($bestSellers as $product)
                                     @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
-                                    <div class="col-12 col-sm-6 col-lg-4 mb-4">
+                                    <div class="col-6 col-sm-6 col-lg-4 mb-4">
                                         <div class="single-product-wrapper" style="position:relative;">
                                             {{-- Best seller rank badge --}}
                                             @php $loop_index = $loop->index + 1; @endphp
@@ -438,7 +485,7 @@
                     <div class="row">
                         @forelse($products as $product)
                         @php $img = $product->images->where('is_primary',true)->first() ?? $product->images->first(); @endphp
-                        <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="col-6 col-sm-6 col-lg-4">
                             <div class="single-product-wrapper">
                                 <div class="product-img">
                                     <a href="{{ route('product.show', $product->slug) }}">
@@ -554,6 +601,77 @@
     }
     .ord-tab-panel { display: none; }
     .ord-tab-panel.active { display: block; }
+
+    /* ── Mobile horizontal category scroll ── */
+    .mobile-cat-scroll-wrap {
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    .mobile-cat-scroll {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 10px 16px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .mobile-cat-scroll::-webkit-scrollbar { display: none; }
+
+    .mobile-cat-pill {
+        display: inline-block;
+        white-space: nowrap;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #555;
+        background: #f4f4f4;
+        border: 1.5px solid transparent;
+        text-decoration: none;
+        transition: all 0.18s;
+        flex-shrink: 0;
+    }
+    .mobile-cat-pill.active {
+        background: #2ECC71;
+        color: #fff;
+        border-color: #2ECC71;
+        font-weight: 700;
+    }
+    .mobile-cat-pill.sub {
+        font-size: 12px;
+        background: #eafaf1;
+        color: #27ae60;
+    }
+    .mobile-cat-pill.sub.active {
+        background: #27ae60;
+        color: #fff;
+    }
+
+    /* Mobile filter collapsible styles */
+    @media (max-width: 767.98px) {
+        .filter-widget .widget-title {
+            padding: 12px 0;
+            margin-bottom: 0 !important;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .filter-widget .filter-content {
+            padding: 12px 0;
+            display: block;
+        }
+        .filter-widget .filter-content.collapsed {
+            display: none;
+        }
+        .filter-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .filter-toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+    }
 </style>
 
 <script src="{{ asset('js/jquery/jquery-2.2.4.min.js') }}"></script>
@@ -572,8 +690,47 @@ function switchTab(tabId, btn) {
     var panel = document.getElementById('tab-' + tabId);
     if (panel) panel.classList.add('active');
 }
-</script>
-<script>
+
+// Mobile filter toggle functionality
+function toggleFilterSection(element) {
+    // Only work on mobile devices
+    if (window.innerWidth <= 767) {
+        const widget = element.closest('.filter-widget');
+        const content = widget.querySelector('.filter-content');
+        const icon = element.querySelector('.filter-toggle-icon');
+        
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            if (icon) icon.classList.remove('rotated');
+        } else {
+            content.classList.add('collapsed');
+            if (icon) icon.classList.add('rotated');
+        }
+    }
+}
+
+// Mobile sidebar toggle - hidden by default
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileToggle = document.getElementById('mobileFilterToggle');
+    const sidebar = document.getElementById('sidebarFilters');
+
+    if (mobileToggle && sidebar) {
+        // Hide sidebar only on mobile initially
+        if (window.innerWidth <= 767) {
+            sidebar.style.display = 'none';
+        }
+
+        mobileToggle.addEventListener('click', function() {
+            if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+                sidebar.style.display = 'block';
+                mobileToggle.innerHTML = '<i class="fa fa-filter me-2"></i> Hide Filters';
+            } else {
+                sidebar.style.display = 'none';
+                mobileToggle.innerHTML = '<i class="fa fa-filter me-2"></i> Show Filters';
+            }
+        });
+    }
+});
 document.querySelectorAll('.add-to-cart').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.preventDefault();

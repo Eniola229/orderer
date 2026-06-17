@@ -17,10 +17,6 @@ class GenerateSitemap extends Command
 
     protected $description = 'Auto-generate sitemap.xml from routes/web.php';
 
-    /**
-     * Routes to completely exclude (exact name or URI match).
-     * Add any auth-only, admin, or internal routes here.
-     */
     protected array $excludedNames = [
         'login',
         'logout',
@@ -49,13 +45,8 @@ class GenerateSitemap extends Command
         'livewire',
     ];
 
-    /**
-     * Priority & change frequency rules.
-     * Matched in order — first match wins.
-     * Keys are URI prefix patterns (supports * wildcard).
-     */
     protected array $routeRules = [
-        ''                          => ['priority' => '1.0', 'changefreq' => 'daily'],    // homepage
+        ''                          => ['priority' => '1.0', 'changefreq' => 'daily'],
         'shop'                      => ['priority' => '0.9', 'changefreq' => 'daily'],
         'product/'                  => ['priority' => '0.8', 'changefreq' => 'weekly'],
         'brands/'                   => ['priority' => '0.7', 'changefreq' => 'weekly'],
@@ -69,7 +60,6 @@ class GenerateSitemap extends Command
         'legal/'                    => ['priority' => '0.4', 'changefreq' => 'monthly'],
     ];
 
-    /** Default fallback rule */
     protected array $defaultRule = ['priority' => '0.5', 'changefreq' => 'monthly'];
 
     public function handle(): int
@@ -79,10 +69,8 @@ class GenerateSitemap extends Command
 
         $this->info("🗺  Generating sitemap for <{$baseUrl}>");
 
-        // Collect static routes from web.php
         $urls = $this->collectUrls($baseUrl);
 
-        // Collect dynamic URLs from the database
         $productUrls  = $this->collectProductUrls($baseUrl);
         $serviceUrls  = $this->collectServiceUrls($baseUrl);
         $propertyUrls = $this->collectPropertyUrls($baseUrl);
@@ -107,10 +95,6 @@ class GenerateSitemap extends Command
         return self::SUCCESS;
     }
 
-    // -------------------------------------------------------------------------
-    // Route collection
-    // -------------------------------------------------------------------------
-
     protected function collectUrls(string $baseUrl): array
     {
         $routes = Route::getRoutes();
@@ -118,7 +102,6 @@ class GenerateSitemap extends Command
         $seen   = [];
 
         foreach ($routes as $route) {
-            // Only GET routes are indexable
             if (! in_array('GET', $route->methods())) {
                 continue;
             }
@@ -126,25 +109,20 @@ class GenerateSitemap extends Command
             $uri  = $route->uri();
             $name = $route->getName() ?? '';
 
-            // Skip routes with dynamic segments {param}
             if (Str::contains($uri, '{')) {
                 continue;
             }
 
-            // Skip excluded route names
             if ($this->isExcludedName($name)) {
                 continue;
             }
 
-            // Skip excluded URI prefixes
             if ($this->isExcludedUri($uri)) {
                 continue;
             }
 
-            // Normalise URI
             $uri = ltrim($uri, '/');
 
-            // Deduplicate
             if (isset($seen[$uri])) {
                 continue;
             }
@@ -159,7 +137,6 @@ class GenerateSitemap extends Command
             ];
         }
 
-        // Sort: priority descending, then alphabetically
         usort($urls, fn($a, $b) =>
             $b['priority'] <=> $a['priority'] ?: $a['loc'] <=> $b['loc']
         );
@@ -167,19 +144,6 @@ class GenerateSitemap extends Command
         return $urls;
     }
 
-    // -------------------------------------------------------------------------
-    // Product URL collection (from database)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Loop through all published products and build /product/{slug} URLs.
-     *
-     * Assumptions:
-     *   - Your Product model lives at App\Models\Product
-     *   - The slug column is called `slug`  → change if yours differs (e.g. `url_key`)
-     *   - Published products have `status = 'active'` → adjust the scope below if needed
-     *   - Uses chunk() to avoid loading thousands of rows into memory at once
-     */
     protected function collectProductUrls(string $baseUrl): array
     {
         $urls = [];
@@ -187,16 +151,15 @@ class GenerateSitemap extends Command
         $this->info('   Scanning products table…');
 
         Product::query()
-            ->where('status', 'approved')         // matches your Product model status values
-            ->whereNotNull('slug')                 // skip any products with no slug
-            ->withoutTrashed()                     // respect SoftDeletes
-            ->select(['slug', 'updated_at'])       // only fetch what we need
+            ->where('status', 'approved')
+            ->whereNotNull('slug')
+            ->withoutTrashed()
+            ->select(['slug', 'updated_at'])
             ->orderBy('updated_at', 'desc')
             ->chunk(500, function ($products) use ($baseUrl, &$urls) {
                 foreach ($products as $product) {
                     $slug = trim($product->slug);
 
-                    // Skip if slug is empty or malformed
                     if (empty($slug)) {
                         continue;
                     }
@@ -204,8 +167,8 @@ class GenerateSitemap extends Command
                     $urls[] = [
                         'loc'        => $baseUrl . '/product/' . rawurlencode($slug),
                         'lastmod'    => $product->updated_at
-                                            ? $product->updated_at->toAtomString()
-                                            : now()->toAtomString(),
+                                            ? $product->updated_at->toDateString()
+                                            : now()->toDateString(),
                         'changefreq' => 'weekly',
                         'priority'   => '0.8',
                     ];
@@ -215,13 +178,6 @@ class GenerateSitemap extends Command
         return $urls;
     }
 
-    // -------------------------------------------------------------------------
-    // Service URL collection (from database)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Loop through all approved service listings → /services/{slug}
-     */
     protected function collectServiceUrls(string $baseUrl): array
     {
         $urls = [];
@@ -245,8 +201,8 @@ class GenerateSitemap extends Command
                     $urls[] = [
                         'loc'        => $baseUrl . '/services/' . rawurlencode($slug),
                         'lastmod'    => $service->updated_at
-                                            ? $service->updated_at->toAtomString()
-                                            : now()->toAtomString(),
+                                            ? $service->updated_at->toDateString()
+                                            : now()->toDateString(),
                         'changefreq' => 'weekly',
                         'priority'   => '0.8',
                     ];
@@ -256,13 +212,6 @@ class GenerateSitemap extends Command
         return $urls;
     }
 
-    // -------------------------------------------------------------------------
-    // Property URL collection (from database)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Loop through all approved property listings → /properties/{slug}
-     */
     protected function collectPropertyUrls(string $baseUrl): array
     {
         $urls = [];
@@ -286,8 +235,8 @@ class GenerateSitemap extends Command
                     $urls[] = [
                         'loc'        => $baseUrl . '/properties/' . rawurlencode($slug),
                         'lastmod'    => $property->updated_at
-                                            ? $property->updated_at->toAtomString()
-                                            : now()->toAtomString(),
+                                            ? $property->updated_at->toDateString()
+                                            : now()->toDateString(),
                         'changefreq' => 'weekly',
                         'priority'   => '0.8',
                     ];
@@ -322,7 +271,7 @@ class GenerateSitemap extends Command
     {
         foreach ($this->routeRules as $prefix => $rule) {
             if ($prefix === '' && $uri === '') {
-                return $rule; // homepage exact match
+                return $rule;
             }
             if ($prefix !== '' && Str::startsWith($uri, $prefix)) {
                 return $rule;
@@ -331,13 +280,9 @@ class GenerateSitemap extends Command
         return $this->defaultRule;
     }
 
-    // -------------------------------------------------------------------------
-    // XML generation
-    // -------------------------------------------------------------------------
-
     protected function buildXml(array $urls): string
     {
-        $now   = now()->toAtomString();
+        $now   = now()->toDateString();
         $items = '';
 
         foreach ($urls as $url) {
@@ -364,10 +309,6 @@ XML;
 </urlset>
 XML;
     }
-
-    // -------------------------------------------------------------------------
-    // File write
-    // -------------------------------------------------------------------------
 
     protected function writeFile(string $path, string $content): void
     {

@@ -623,7 +623,7 @@
             </div>
             @foreach($relatedProducts as $related)
             @php $rImg = $related->images->where('is_primary',true)->first() ?? $related->images->first(); @endphp
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+            <div class="col-6 col-sm-6 col-md-4 col-lg-3 mb-4">
                 <div class="single-product-wrapper">
                     <div class="product-img">
                         <a href="{{ route('product.show', $related->slug) }}">

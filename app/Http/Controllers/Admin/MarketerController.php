@@ -9,6 +9,8 @@ use App\Models\HouseListing;
 use App\Models\ServiceListing;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
+use App\Models\Order;
+use App\Models\DeliveryBooking;
 
 class MarketerController extends Controller
 {
@@ -28,108 +30,137 @@ class MarketerController extends Controller
         return view('admin.marketers.create');
     }
 
-    public function store(Request $request)
-    {
-        if (!auth('admin')->user()->canManageAdmins()) abort(403);
-
-        $request->validate([
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name'  => ['required', 'string', 'max:100'],
-            'email'      => ['required', 'email', 'unique:marketers,email'],
-            'password'   => ['required', 'confirmed', Password::min(8)],
-            'notes'      => ['nullable', 'string', 'max:500'],
-            'is_active'  => ['required', 'in:0,1'],
-        ]);
-
-        $marketer = Marketer::create([
-            'first_name'      => $request->first_name,
-            'last_name'       => $request->last_name,
-            'email'           => $request->email,
-            'password'        => $request->password,
-            'marketing_code'  => Marketer::generateMarketingCode(),
-            'is_active'       => $request->is_active,
-            'notes'           => $request->notes,
-        ]);
-
-        return redirect()->route('admin.marketers.index')
-            ->with('success', "Marketer account created. Code: {$marketer->marketing_code}");
-    }
-
     public function show(Request $request, Marketer $marketer)
     {
-        if (!auth('admin')->user()->canManageAdmins()) abort(403);
+        // ── Seller filters ─────────────────────────────────────────────────
+        $sellerSearch       = $request->input('seller_search', '');
+        $sellerDateFrom     = $request->input('seller_date_from', '');
+        $sellerDateTo       = $request->input('seller_date_to', '');
+        $verificationFilter = $request->input('verification_filter', 'all');
+        $statusFilter       = $request->input('status_filter', 'all');
 
-        // Get filter parameters
-        $dateFrom           = $request->get('date_from');
-        $dateTo             = $request->get('date_to');
-        $verificationFilter = $request->get('verification_filter', 'all');
-        $statusFilter       = $request->get('status_filter', 'all');
-        $sellerSearch       = $request->get('seller_search');
+        $sellerQuery = $marketer->referredSellers()->with('documents');
 
-        // Build sellers query
-        $sellersQuery = $marketer->referredSellers();
-
-        if ($dateFrom) {
-            $sellersQuery->whereDate('created_at', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $sellersQuery->whereDate('created_at', '<=', $dateTo);
-        }
-        if ($verificationFilter && $verificationFilter !== 'all') {
-            $sellersQuery->where('verification_status', $verificationFilter);
-        }
-        if ($statusFilter && $statusFilter !== 'all') {
-            $sellersQuery->where('is_approved', $statusFilter === 'approved');
-        }
         if ($sellerSearch) {
-            $sellersQuery->where(function ($q) use ($sellerSearch) {
-                $q->where('first_name', 'like', "%{$sellerSearch}%")
-                  ->orWhere('last_name', 'like', "%{$sellerSearch}%")
-                  ->orWhere('email', 'like', "%{$sellerSearch}%")
-                  ->orWhere('business_name', 'like', "%{$sellerSearch}%");
+            $sellerQuery->where(function ($q) use ($sellerSearch) {
+                $q->where('first_name',     'like', "%{$sellerSearch}%")
+                  ->orWhere('last_name',    'like', "%{$sellerSearch}%")
+                  ->orWhere('email',        'like', "%{$sellerSearch}%")
+                  ->orWhere('business_name','like', "%{$sellerSearch}%");
             });
         }
+        if ($sellerDateFrom) $sellerQuery->whereDate('created_at', '>=', $sellerDateFrom);
+        if ($sellerDateTo)   $sellerQuery->whereDate('created_at', '<=', $sellerDateTo);
 
-        $sellers   = $sellersQuery->get();
-        $sellerIds = $sellers->pluck('id');
+        if ($verificationFilter !== 'all') {
+            $sellerQuery->where('verification_status', $verificationFilter);
+        }
+        if ($statusFilter === 'approved') {
+            $sellerQuery->where('is_approved', true);
+        } elseif ($statusFilter === 'pending') {
+            $sellerQuery->where('is_approved', false);
+        }
 
-        // Count listings per seller using plain queries — no relation naming issues
-        $productCounts = Product::whereIn('seller_id', $sellerIds)
-            ->selectRaw('seller_id, count(*) as total')
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
+        $sellers = $sellerQuery->latest()->get();
 
-        $propertyCounts = HouseListing::whereIn('seller_id', $sellerIds)
-            ->selectRaw('seller_id, count(*) as total')
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
+        // Seller listing counts
+        $sellerIds      = $sellers->pluck('id');
+        $productCounts  = \App\Models\Product::whereIn('seller_id',  $sellerIds)
+                            ->selectRaw('seller_id, count(*) as total')
+                            ->groupBy('seller_id')->pluck('total', 'seller_id');
+        $propertyCounts = \App\Models\HouseListing::whereIn('seller_id', $sellerIds)
+                            ->selectRaw('seller_id, count(*) as total')
+                            ->groupBy('seller_id')->pluck('total', 'seller_id');
+        $serviceCounts  = \App\Models\ServiceListing::whereIn('seller_id',  $sellerIds)
+                            ->selectRaw('seller_id, count(*) as total')
+                            ->groupBy('seller_id')->pluck('total', 'seller_id');
 
-        $serviceCounts = ServiceListing::whereIn('seller_id', $sellerIds)
-            ->selectRaw('seller_id, count(*) as total')
-            ->groupBy('seller_id')
-            ->pluck('total', 'seller_id');
-
-        // Unfiltered stats for the overview cards
-        $referredSellerIds = $marketer->referredSellers()->pluck('id');
-
+        // ── Seller stats ──────────────────────────────────────────────────
+        $allSellers = $marketer->referredSellers();
         $stats = [
-            'total'            => $marketer->referredSellers()->count(),
-            'approved'         => $marketer->referredSellers()->where('is_approved', true)->count(),
-            'pending'          => $marketer->referredSellers()->where('is_approved', false)->count(),
-            'verified'         => $marketer->referredSellers()->where('verification_status', 'approved')->count(),
-            'unverified'       => $marketer->referredSellers()->where('verification_status', '!=', 'approved')->count(),
-            'total_products'   => Product::whereIn('seller_id', $referredSellerIds)->count(),
-            'total_properties' => HouseListing::whereIn('seller_id', $referredSellerIds)->count(),
-            'total_services'   => ServiceListing::whereIn('seller_id', $referredSellerIds)->count(),
+            'total'            => (clone $allSellers)->count(),
+            'approved'         => (clone $allSellers)->where('is_approved', true)->count(),
+            'pending'          => (clone $allSellers)->where('is_approved', false)->count(),
+            'verified'         => (clone $allSellers)->where('verification_status', 'approved')->count(),
+            'unverified'       => (clone $allSellers)->where('verification_status', '!=', 'approved')->count(),
+            'total_products'   => $productCounts->sum(),
+            'total_properties' => $propertyCounts->sum(),
+            'total_services'   => $serviceCounts->sum(),
         ];
 
+        // ── Buyer filters (NEW!) ─────────────────────────────────────────
+        $buyerSearch    = $request->input('buyer_search', '');
+        $buyerDateFrom  = $request->input('buyer_date_from', '');
+        $buyerDateTo    = $request->input('buyer_date_to', '');
+        $activityFilter = $request->input('activity_filter', 'all'); // all, ordered, booked, both
+
+        $buyerQuery = $marketer->referredBuyers();
+
+        if ($buyerSearch) {
+            $buyerQuery->where(function ($q) use ($buyerSearch) {
+                $q->where('first_name', 'like', "%{$buyerSearch}%")
+                  ->orWhere('last_name', 'like', "%{$buyerSearch}%")
+                  ->orWhere('email', 'like', "%{$buyerSearch}%");
+            });
+        }
+        if ($buyerDateFrom) $buyerQuery->whereDate('created_at', '>=', $buyerDateFrom);
+        if ($buyerDateTo)   $buyerQuery->whereDate('created_at', '<=', $buyerDateTo);
+
+        // Get buyer IDs for activity filtering
+        $buyerIds = (clone $buyerQuery)->pluck('id');
+        
+        if ($activityFilter !== 'all') {
+            $buyerIdsWithOrders   = Order::whereIn('user_id', $buyerIds)->distinct('user_id')->pluck('user_id');
+            $buyerIdsWithBookings = DeliveryBooking::whereIn('user_id', $buyerIds)->distinct('user_id')->pluck('user_id');
+            
+            if ($activityFilter === 'ordered') {
+                $buyerQuery->whereIn('id', $buyerIdsWithOrders);
+            } elseif ($activityFilter === 'booked') {
+                $buyerQuery->whereIn('id', $buyerIdsWithBookings);
+            } elseif ($activityFilter === 'both') {
+                $buyerQuery->whereIn('id', $buyerIdsWithOrders->intersect($buyerIdsWithBookings));
+            } elseif ($activityFilter === 'inactive') {
+                $activeBuyers = $buyerIdsWithOrders->merge($buyerIdsWithBookings)->unique();
+                $buyerQuery->whereNotIn('id', $activeBuyers);
+            }
+        }
+
+        $buyers = $buyerQuery->latest()->paginate(20, ['*'], 'buyers_page');
+
+        // ── Buyer stats (filtered) ────────────────────────────────────────
+        $allBuyerIds = $marketer->referredBuyers()->pluck('id');
+        $filteredBuyerIds = $buyers->pluck('id');
+
+        $buyerStats = [
+            'total'           => $allBuyerIds->count(),
+            'this_month'      => $marketer->referredBuyers()
+                                  ->whereMonth('created_at', now()->month)
+                                  ->whereYear('created_at', now()->year)
+                                  ->count(),
+            'with_orders'     => Order::whereIn('user_id', $allBuyerIds)->distinct('user_id')->count('user_id'),
+            'with_bookings'   => DeliveryBooking::whereIn('user_id', $allBuyerIds)->distinct('user_id')->count('user_id'),
+            'total_orders'    => Order::whereIn('user_id', $allBuyerIds)->count(),
+            'total_bookings'  => DeliveryBooking::whereIn('user_id', $allBuyerIds)->count(),
+        ];
+
+        // Activity counts for filtered buyers
+        $buyerOrderCounts   = Order::whereIn('user_id', $filteredBuyerIds)
+                                ->selectRaw('user_id, count(*) as total')
+                                ->groupBy('user_id')->pluck('total', 'user_id');
+        $buyerBookingCounts = DeliveryBooking::whereIn('user_id', $filteredBuyerIds)
+                                ->selectRaw('user_id, count(*) as total')
+                                ->groupBy('user_id')->pluck('total', 'user_id');
+
         return view('admin.marketers.show', compact(
-            'marketer', 'sellers', 'stats',
-            'dateFrom', 'dateTo', 'verificationFilter', 'statusFilter', 'sellerSearch',
-            'productCounts', 'propertyCounts', 'serviceCounts'
+            'marketer',
+            'sellers', 'stats',
+            'productCounts', 'propertyCounts', 'serviceCounts',
+            'sellerSearch', 'sellerDateFrom', 'sellerDateTo', 'verificationFilter', 'statusFilter',
+            'buyers', 'buyerStats', 'buyerOrderCounts', 'buyerBookingCounts',
+            'buyerSearch', 'buyerDateFrom', 'buyerDateTo', 'activityFilter'
         ));
     }
-
+    
     public function edit(Marketer $marketer)
     {
         if (!auth('admin')->user()->canManageAdmins()) abort(403);

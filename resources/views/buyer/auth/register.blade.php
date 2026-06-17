@@ -150,6 +150,22 @@
                     @enderror
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Referral Code<span class="text-danger">(Optional)</span></label><br>
+                    <input type="text"
+                           id="referral_code"
+                           name="referral_code"
+                           value="{{ request('ref') }}"
+                           placeholder="ORD-"
+                           class="form-control @error('referral_code') is-invalid @enderror">
+                        <small class="text-muted fs-12">
+                            If someone invited you, enter their code here.
+                        </small>
+                    @error('referral_code')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-6 mb-3">
                         <label class="form-label fw-bold">Password <span class="text-danger">*</span></label>

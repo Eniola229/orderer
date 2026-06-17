@@ -6,7 +6,7 @@
     <li class="breadcrumb-item active">{{ $marketer->full_name }}</li>
 @endsection
 
-@section('content')
+@section('content') 
 
 @if(!auth('admin')->user()->canManageAdmins())
 <div class="alert alert-danger">
@@ -182,10 +182,58 @@
                         </div>
                     </div>
                 </div>
+
+                <hr class="my-3">
+ 
+                <p class="text-muted fs-12 fw-semibold text-uppercase mb-2" style="letter-spacing:.5px;">
+                    Buyers Referred
+                </p>
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 bg-light text-center p-3">
+                            <div class="fs-24 fw-800" style="color:#7B1FA2;">{{ $buyerStats['total'] }}</div>
+                            <div class="text-muted fs-12">Total Buyers</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 text-center p-3" style="background:#f0fdf4;">
+                            <div class="fs-24 fw-800 text-success">{{ $buyerStats['with_orders'] }}</div>
+                            <div class="text-muted fs-12">Placed Orders</div>
+                            @if($buyerStats['total'] > 0)
+                            <div class="fs-11 text-success">
+                                {{ round(($buyerStats['with_orders'] / $buyerStats['total']) * 100, 1) }}%
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-4">
+                        <div class="card border-0 text-center p-3" style="background:#eff6ff;">
+                            <div class="fs-24 fw-800 text-primary">{{ $buyerStats['with_bookings'] }}</div>
+                            <div class="text-muted fs-12">Booked Delivery</div>
+                            @if($buyerStats['total'] > 0)
+                            <div class="fs-11 text-primary">
+                                {{ round(($buyerStats['with_bookings'] / $buyerStats['total']) * 100, 1) }}%
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6">
+                        <div class="card border-0 text-center p-3" style="background:#fff7ed;">
+                            <div class="fs-24 fw-800" style="color:#ea580c;">{{ $buyerStats['total_orders'] }}</div>
+                            <div class="text-muted fs-12">Total Orders Placed</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-6">
+                        <div class="card border-0 text-center p-3" style="background:#fef2f2;">
+                            <div class="fs-24 fw-800" style="color:#dc2626;">{{ $buyerStats['total_bookings'] }}</div>
+                            <div class="text-muted fs-12">Total Deliveries Booked</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        {{-- Filter Section --}}
+        {{-- Filter Section for Sellers --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
                 <h6 class="mb-0 fw-bold">Filter Sellers</h6>
@@ -198,34 +246,34 @@
                             <span class="input-group-text"><i class="feather-search"></i></span>
                             <input type="text" name="seller_search" class="form-control"
                                    placeholder="Search by name, email, or business name..."
-                                   value="{{ $sellerSearch }}">
+                                   value="{{ $sellerSearch ?? '' }}">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Date From</label>
-                        <input type="date" name="date_from" class="form-control form-control-sm"
-                               value="{{ $dateFrom }}">
+                        <input type="date" name="seller_date_from" class="form-control form-control-sm"
+                               value="{{ $sellerDateFrom ?? '' }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Date To</label>
-                        <input type="date" name="date_to" class="form-control form-control-sm"
-                               value="{{ $dateTo }}">
+                        <input type="date" name="seller_date_to" class="form-control form-control-sm"
+                               value="{{ $sellerDateTo ?? '' }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Verification Status</label>
                         <select name="verification_filter" class="form-select form-select-sm">
-                            <option value="all" {{ $verificationFilter == 'all' ? 'selected' : '' }}>All</option>
-                            <option value="pending" {{ $verificationFilter == 'pending' ? 'selected' : '' }}>Pending Verification</option>
-                            <option value="approved" {{ $verificationFilter == 'approved' ? 'selected' : '' }}>Verified</option>
-                            <option value="rejected" {{ $verificationFilter == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <option value="all" {{ ($verificationFilter ?? 'all') == 'all' ? 'selected' : '' }}>All</option>
+                            <option value="pending" {{ ($verificationFilter ?? 'all') == 'pending' ? 'selected' : '' }}>Pending Verification</option>
+                            <option value="approved" {{ ($verificationFilter ?? 'all') == 'approved' ? 'selected' : '' }}>Verified</option>
+                            <option value="rejected" {{ ($verificationFilter ?? 'all') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fs-13 fw-semibold">Approval Status</label>
                         <select name="status_filter" class="form-select form-select-sm">
-                            <option value="all" {{ $statusFilter == 'all' ? 'selected' : '' }}>All</option>
-                            <option value="approved" {{ $statusFilter == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="pending" {{ $statusFilter == 'pending' ? 'selected' : '' }}>Pending Approval</option>
+                            <option value="all" {{ ($statusFilter ?? 'all') == 'all' ? 'selected' : '' }}>All</option>
+                            <option value="approved" {{ ($statusFilter ?? 'all') == 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="pending" {{ ($statusFilter ?? 'all') == 'pending' ? 'selected' : '' }}>Pending Approval</option>
                         </select>
                     </div>
                     <div class="col-12">
@@ -235,17 +283,12 @@
                         <a href="{{ route('admin.marketers.show', $marketer) }}" class="btn btn-secondary btn-sm">
                             <i class="feather-rotate-ccw me-1"></i> Reset All Filters
                         </a>
-                        @if($sellerSearch || $dateFrom || $dateTo || ($verificationFilter && $verificationFilter != 'all') || ($statusFilter && $statusFilter != 'all'))
-                            <span class="text-muted fs-12 ms-2">
-                                <i class="feather-info me-1"></i> Showing {{ $sellers->count() }} result(s)
-                            </span>
-                        @endif
                     </div>
                 </form>
             </div>
         </div>
 
-        {{-- Referrals table --}}
+        {{-- Referrals table (Sellers) --}}
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold">Referred Sellers</h6>
@@ -258,12 +301,6 @@
                 <div class="text-center py-5">
                     <i class="feather-users" style="font-size:36px;color:#d1d5db;"></i>
                     <p class="text-muted mt-3 mb-0">No sellers found with the selected filters.</p>
-                    @if($sellerSearch || $dateFrom || $dateTo || ($verificationFilter && $verificationFilter != 'all') || ($statusFilter && $statusFilter != 'all'))
-                        <button class="btn btn-link btn-sm mt-2"
-                                onclick="window.location.href='{{ route('admin.marketers.show', $marketer) }}'">
-                            <i class="feather-rotate-ccw me-1"></i> Clear all filters
-                        </button>
-                    @endif
                 </div>
                 @else
                 <div class="table-responsive">
@@ -295,7 +332,7 @@
                                 <td class="text-muted fs-13">{{ $loop->iteration }}</td>
                                 <td>
                                     <div class="fw-semibold fs-14">{{ $seller->full_name }}</div>
-                                </td>
+                                 </td>
                                 <td class="fs-13">{{ $seller->business_name ?? 'N/A' }}</td>
                                 <td class="fs-13">{{ $seller->email }}</td>
                                 <td>
@@ -312,36 +349,36 @@
                                             <i class="feather-clock me-1"></i> Pending
                                         </span>
                                     @endif
-                                </td>
+                                 </td>
                                 <td>
                                     @if($seller->is_approved)
                                         <span class="badge bg-success-subtle text-success fw-semibold">Active</span>
                                     @else
                                         <span class="badge bg-warning-subtle text-warning fw-semibold">Pending</span>
                                     @endif
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-semibold" style="background:#dbeafe;color:#1d4ed8;min-width:32px;">
                                         {{ $productCounts[$seller->id] ?? 0 }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-semibold" style="background:#ede9fe;color:#6d28d9;min-width:32px;">
                                         {{ $propertyCounts[$seller->id] ?? 0 }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-semibold" style="background:#ffe4e6;color:#be123c;min-width:32px;">
                                         {{ $serviceCounts[$seller->id] ?? 0 }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td class="text-muted fs-13">{{ $seller->created_at->format('d M Y') }}</td>
                                 <td>
                                     <a href="{{ route('admin.sellers.show', $seller) }}"
                                        class="btn btn-sm btn-outline-secondary" title="View Seller">
                                         <i class="feather-eye"></i>
                                     </a>
-                                </td>
+                                 </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -349,27 +386,183 @@
                             <tr>
                                 <td colspan="6" class="text-end fw-semibold fs-13 text-muted">
                                     Totals (filtered view):
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-bold" style="background:#dbeafe;color:#1d4ed8;">
                                         {{ $sellers->sum(fn($s) => $productCounts[$s->id] ?? 0) }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-bold" style="background:#ede9fe;color:#6d28d9;">
                                         {{ $sellers->sum(fn($s) => $propertyCounts[$s->id] ?? 0) }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td class="text-center">
                                     <span class="badge fw-bold" style="background:#ffe4e6;color:#be123c;">
                                         {{ $sellers->sum(fn($s) => $serviceCounts[$s->id] ?? 0) }}
                                     </span>
-                                </td>
+                                 </td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Buyers Table with Filters --}}
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Referred Buyers</h6>
+                @if($buyers->total() > 0)
+                    <span class="badge bg-secondary">{{ $buyers->total() }} buyers</span>
+                @endif
+            </div>
+            <div class="card-body">
+                {{-- Buyer Filters --}}
+                <form method="GET" action="{{ route('admin.marketers.show', $marketer) }}" class="row g-3 mb-4">
+                    <input type="hidden" name="seller_search" value="{{ $sellerSearch ?? '' }}">
+                    <input type="hidden" name="seller_date_from" value="{{ $sellerDateFrom ?? '' }}">
+                    <input type="hidden" name="seller_date_to" value="{{ $sellerDateTo ?? '' }}">
+                    <input type="hidden" name="verification_filter" value="{{ $verificationFilter ?? 'all' }}">
+                    <input type="hidden" name="status_filter" value="{{ $statusFilter ?? 'all' }}">
+                    
+                    <div class="col-12">
+                        <label class="form-label fs-13 fw-semibold">Search Buyer</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="feather-search"></i></span>
+                            <input type="text" name="buyer_search" class="form-control"
+                                   placeholder="Search by name or email..."
+                                   value="{{ $buyerSearch ?? '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <label class="form-label fs-13 fw-semibold">Registered From</label>
+                        <input type="date" name="buyer_date_from" class="form-control form-control-sm"
+                               value="{{ $buyerDateFrom ?? '' }}">
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <label class="form-label fs-13 fw-semibold">Registered To</label>
+                        <input type="date" name="buyer_date_to" class="form-control form-control-sm"
+                               value="{{ $buyerDateTo ?? '' }}">
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <label class="form-label fs-13 fw-semibold">Activity Status</label>
+                        <select name="activity_filter" class="form-select form-select-sm">
+                            <option value="all" {{ ($activityFilter ?? 'all') == 'all' ? 'selected' : '' }}>All Buyers</option>
+                            <option value="ordered" {{ ($activityFilter ?? 'all') == 'ordered' ? 'selected' : '' }}>
+                                Placed Orders Only
+                            </option>
+                            <option value="booked" {{ ($activityFilter ?? 'all') == 'booked' ? 'selected' : '' }}>
+                                Booked Deliveries Only
+                            </option>
+                            <option value="both" {{ ($activityFilter ?? 'all') == 'both' ? 'selected' : '' }}>
+                                Both Orders & Bookings
+                            </option>
+                            <option value="inactive" {{ ($activityFilter ?? 'all') == 'inactive' ? 'selected' : '' }}>
+                                Inactive (No Activity)
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-5 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-sm me-2">
+                            <i class="feather-filter me-1"></i> Apply Filters
+                        </button>
+                        <a href="{{ route('admin.marketers.show', $marketer) }}" class="btn btn-secondary btn-sm">
+                            <i class="feather-rotate-ccw me-1"></i> Reset
+                        </a>
+                    </div>
+                </form>
+
+                {{-- Buyers Table --}}
+                @if($buyers->isEmpty())
+                <div class="text-center py-5">
+                    <i class="feather-users" style="font-size:36px;color:#d1d5db;"></i>
+                    <p class="text-muted mt-3 mb-0">No buyers found with the selected filters.</p>
+                </div>
+                @else
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Buyer</th>
+                                <th>Email</th>
+                                <th class="text-center">
+                                    <i class="feather-shopping-cart"></i> Orders
+                                </th>
+                                <th class="text-center">
+                                    <i class="feather-truck"></i> Bookings
+                                </th>
+                                <th>Activity</th>
+                                <th>Registered</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($buyers as $buyer)
+                            @php
+                                $orders = $buyerOrderCounts[$buyer->id] ?? 0;
+                                $bookings = $buyerBookingCounts[$buyer->id] ?? 0;
+                            @endphp
+                            <tr>
+                                <td class="text-muted fs-13">
+                                    {{ ($buyers->currentPage() - 1) * $buyers->perPage() + $loop->iteration }}
+                                </td>
+                                <td>
+                                    <div class="fw-semibold fs-14">{{ $buyer->full_name }}</div>
+                                </td>
+                                <td class="fs-13">{{ $buyer->email }}</td>
+                                <td class="text-center">
+                                    <span class="badge fw-semibold {{ $orders > 0 ? 'bg-success-subtle text-success' : 'bg-light text-muted' }}">
+                                        {{ $orders }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge fw-semibold {{ $bookings > 0 ? 'bg-primary-subtle text-primary' : 'bg-light text-muted' }}">
+                                        {{ $bookings }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($orders > 0 && $bookings > 0)
+                                        <span class="badge bg-success-subtle text-success">
+                                            <i class="feather-star me-1"></i> Fully Active
+                                        </span>
+                                    @elseif($orders > 0)
+                                        <span class="badge bg-warning-subtle text-warning">
+                                            <i class="feather-shopping-cart me-1"></i> Ordered
+                                        </span>
+                                    @elseif($bookings > 0)
+                                        <span class="badge bg-info-subtle text-info">
+                                            <i class="feather-truck me-1"></i> Booked Only
+                                        </span>
+                                    @else
+                                        <span class="badge bg-light text-muted">Registered Only</span>
+                                    @endif
+                                </td>
+                                <td class="text-muted fs-13">{{ $buyer->created_at->format('d M Y') }}</td>
+                                <td>
+                                    <a href="{{ route('admin.buyers.show', $buyer) }}"
+                                       class="btn btn-sm btn-outline-secondary" title="View Buyer">
+                                        <i class="feather-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if($buyers->hasPages())
+                <div class="mt-3">
+                    {{ $buyers->appends(request()->query())->links() }}
+                </div>
+                @endif
                 @endif
             </div>
         </div>

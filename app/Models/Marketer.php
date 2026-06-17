@@ -62,4 +62,10 @@ class Marketer extends Authenticatable
     {
         return $this->hasMany(Seller::class, 'marketer_id');
     }
+
+    public function referredBuyers()
+    {
+        return $this->hasMany(\App\Models\User::class, 'marketer_id');
+    }
+     
 }

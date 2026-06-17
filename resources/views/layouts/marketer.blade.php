@@ -35,6 +35,12 @@
         </div>
     </main>
 
-
+<script src="{{ asset('dashboard/assets/vendors/js/vendors.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/vendors/js/daterangepicker.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/vendors/js/apexcharts.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/vendors/js/circle-progress.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/js/common-init.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/js/dashboard-init.min.js') }}"></script>
+<script src="{{ asset('dashboard/assets/js/theme-customizer-init.min.js') }}"></script>
 </body>
 </html>

@@ -165,6 +165,81 @@
 .ord-search {
     overflow: visible !important;
 }
+@media (max-width: 575.98px) {
+    .single-product-wrapper .product-description .hover-content {
+        position: absolute !important;
+        top: -25px !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 4px 0 !important;
+        background: transparent !important;
+    }
+
+    .single-product-wrapper .product-description .hover-content .essence-btn,
+    .single-product-wrapper .product-description .hover-content a.essence-btn {
+        min-width: unset !important;
+        width: auto !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+        padding: 6px 10px !important;
+        font-size: 10px !important;
+        letter-spacing: 0 !important;
+    }
+}
+@media (max-width: 575.98px) {
+    /* Verified badge */
+    .single-product-wrapper .product-img .product-badge {
+        font-size: 9px !important;
+        height: 18px !important;
+        line-height: 18px !important;
+        padding: 0 6px !important;
+        top: 8px !important;
+        left: 8px !important;
+    }
+
+    /* Sale % badge */
+    .single-product-wrapper .product-img .product-badge.offer-badge {
+        top: 8px !important;
+        left: 8px !important;
+    }
+
+    /* New badge */
+    .single-product-wrapper .product-img .product-badge.new-badge {
+        top: 30px !important;
+        left: 8px !important;
+    }
+
+    /* Verified badge (inline style ones) */
+    .single-product-wrapper .product-img div[style*="background:#2ECC71"] {
+        font-size: 9px !important;
+        padding: 2px 5px !important;
+        top: 30px !important;
+        left: 8px !important;
+        gap: 2px !important;
+    }
+
+    /* Wishlist heart */
+    .single-product-wrapper .product-img .product-favourite a {
+        width: 28px !important;
+        height: 18px !important;
+        font-size: 10px !important;
+        line-height: 18px !important;
+        top: 8px !important;
+        right: 8px !important;
+    }
+
+    .product-description h6 {
+        font-size: 13px !important;
+    }
+    .product-price {
+        font-size: 11px !important;
+    }
+    .product-price .old-price {
+        font-size: 11px !important;
+    }
+}
 </style>
 
 

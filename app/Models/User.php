@@ -28,6 +28,7 @@ class User extends Authenticatable
         'email_verified_at',
         'last_login_at',
         'last_login_ip',
+        'marketer_id'
     ];
 
     protected $hidden = [

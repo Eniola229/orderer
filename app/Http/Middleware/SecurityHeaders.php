@@ -33,6 +33,7 @@ class SecurityHeaders
                 "cdnjs.cloudflare.com " .
                 "fonts.googleapis.com " .
                 "cdn.tiny.cloud " .
+                 "*.map " .
                 "https://*.monnify.com; " .
             // ── Fonts ────────────────────────────────────────────────────────
             "font-src 'self' " .
@@ -75,6 +76,9 @@ class SecurityHeaders
                 "https://sandbox.sdk.monnify.com " .
                 "https://www.google-analytics.com " .
                 "https://region1.google-analytics.com; " .
+                "https://www.google.com " .       
+                "https://googleads.g.doubleclick.net " .  
+                "https://www.googleadservices.com;", 
             // ── Frames ───────────────────────────────────────────────────────
             "frame-src 'self' " .
                 "https://*.monnify.com " .
