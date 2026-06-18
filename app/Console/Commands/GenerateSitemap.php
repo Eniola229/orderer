@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\HouseListing;
+use App\Models\Newsletter;
 use App\Models\Product;
 use App\Models\ServiceListing;
 use Illuminate\Console\Command;
@@ -54,6 +55,7 @@ class GenerateSitemap extends Command
         'services'                  => ['priority' => '0.8', 'changefreq' => 'weekly'],
         'properties'                => ['priority' => '0.8', 'changefreq' => 'weekly'],
         'rider'                     => ['priority' => '0.8', 'changefreq' => 'weekly'],
+        'blog'                      => ['priority' => '0.7', 'changefreq' => 'weekly'],
         'contact'                   => ['priority' => '0.6', 'changefreq' => 'monthly'],
         'seller/register'           => ['priority' => '0.7', 'changefreq' => 'monthly'],
         'seller/'                   => ['priority' => '0.5', 'changefreq' => 'monthly'],
@@ -64,18 +66,19 @@ class GenerateSitemap extends Command
 
     public function handle(): int
     {
-        $baseUrl = rtrim($this->option('base-url') ?: config('app.url'), '/');
+        $baseUrl    = rtrim($this->option('base-url') ?: config('app.url'), '/');
         $outputPath = base_path($this->option('output'));
 
         $this->info("🗺  Generating sitemap for <{$baseUrl}>");
 
         $urls = $this->collectUrls($baseUrl);
 
-        $productUrls  = $this->collectProductUrls($baseUrl);
-        $serviceUrls  = $this->collectServiceUrls($baseUrl);
-        $propertyUrls = $this->collectPropertyUrls($baseUrl);
+        $productUrls    = $this->collectProductUrls($baseUrl);
+        $serviceUrls    = $this->collectServiceUrls($baseUrl);
+        $propertyUrls   = $this->collectPropertyUrls($baseUrl);
+        $newsletterUrls = $this->collectNewsletterUrls($baseUrl);
 
-        $urls = array_merge($urls, $productUrls, $serviceUrls, $propertyUrls);
+        $urls = array_merge($urls, $productUrls, $serviceUrls, $propertyUrls, $newsletterUrls);
 
         if (empty($urls)) {
             $this->warn('No eligible routes found. Check your exclusion rules.');
@@ -86,10 +89,11 @@ class GenerateSitemap extends Command
         $this->writeFile($outputPath, $xml);
 
         $this->info("✅ Sitemap written to: {$outputPath}");
-        $this->info('   Static routes : ' . (count($urls) - count($productUrls) - count($serviceUrls) - count($propertyUrls)));
+        $this->info('   Static routes : ' . (count($urls) - count($productUrls) - count($serviceUrls) - count($propertyUrls) - count($newsletterUrls)));
         $this->info('   Products      : ' . count($productUrls));
         $this->info('   Services      : ' . count($serviceUrls));
         $this->info('   Properties    : ' . count($propertyUrls));
+        $this->info('   Blog posts    : ' . count($newsletterUrls));
         $this->info('   Total URLs    : ' . count($urls));
 
         return self::SUCCESS;
@@ -239,6 +243,32 @@ class GenerateSitemap extends Command
                                             : now()->toDateString(),
                         'changefreq' => 'weekly',
                         'priority'   => '0.8',
+                    ];
+                }
+            });
+
+        return $urls;
+    }
+
+    protected function collectNewsletterUrls(string $baseUrl): array
+    {
+        $urls = [];
+
+        $this->info('   Scanning newsletters table…');
+
+        Newsletter::query()
+            ->where('status', 'sent')
+            ->select(['id', 'updated_at', 'sent_at'])
+            ->orderBy('sent_at', 'desc')
+            ->chunk(500, function ($newsletters) use ($baseUrl, &$urls) {
+                foreach ($newsletters as $newsletter) {
+                    $urls[] = [
+                        'loc'        => $baseUrl . '/blog/' . $newsletter->id,
+                        'lastmod'    => $newsletter->updated_at
+                                            ? $newsletter->updated_at->toDateString()
+                                            : now()->toDateString(),
+                        'changefreq' => 'monthly',
+                        'priority'   => '0.6',
                     ];
                 }
             });

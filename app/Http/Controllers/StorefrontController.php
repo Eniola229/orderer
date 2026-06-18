@@ -14,6 +14,7 @@ use App\Models\NewsletterSubscriber;
 use App\Helpers\AdHelper;
 use Illuminate\Http\Request;
 use App\Models\Ad;
+use App\Models\Newsletter;
 
 class StorefrontController extends Controller
 { 
@@ -864,5 +865,21 @@ class StorefrontController extends Controller
         $product->save();
         
         return back()->with('success', 'Thank you for your review!');
+    }
+
+    public function newsletters()
+    {
+        $newsletters = Newsletter::where('status', 'sent')
+            ->orderByDesc('sent_at')
+            ->paginate(12);
+
+        return view('storefront.newsletters-index', compact('newsletters'));
+    }
+
+    public function newsletterShow($id)
+    {
+        $newsletter = Newsletter::where('status', 'sent')->findOrFail($id);
+
+        return view('storefront.newsletters-show', compact('newsletter'));
     }
 }

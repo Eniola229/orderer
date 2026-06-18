@@ -178,9 +178,9 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="product-topbar d-flex align-items-center justify-content-between">
-                                <div class="total-products">
+                             <!--    <div class="total-products">
                                     <p><span style="color: green;">{{ $products->total() }}</span> products found</p>
-                                </div>
+                                </div> -->
                                 <div class="product-sorting d-flex align-items-center">
                                     <p class="mb-0 mr-2">Sort by:</p>
                                     <form action="{{ request()->url() }}" method="GET">

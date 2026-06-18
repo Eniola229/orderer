@@ -291,6 +291,57 @@
         border-color: #2ECC71 !important;
         background: rgba(46,204,113,0.1) !important;
     }
+@media (max-width: 575.98px) {
+    .popular-products-slides .product-description h6 {
+        font-size: 12px !important;
+    }
+    .popular-products-slides .product-price,
+    .popular-products-slides .product-price .old-price {
+        font-size: 13px !important;
+    }
+    .popular-products-slides .product-img .product-badge {
+        font-size: 12px !important;
+        height: 25px !important;
+        line-height: 25px !important;
+        padding: 0 10px !important;
+        top: 20px !important;
+        left: 20px !important;
+    }
+    .popular-products-slides .product-img .product-favourite a {
+        width: 45px !important;
+        height: 25px !important;
+        font-size: 14px !important;
+        line-height: 25px !important;
+        top: 20px !important;
+        right: 20px !important;
+    }
+    .popular-products-slides .product-description .hover-content {
+        position: absolute !important;
+        top: -70px !important;
+        left: 20px !important;
+        right: 20px !important;
+        width: calc(100% - 40px) !important;
+    }
+    .popular-products-slides .product-description .hover-content .essence-btn,
+    .popular-products-slides .product-description .hover-content a.essence-btn {
+        min-width: 170px !important;
+        width: 100% !important;
+        height: 50px !important;
+        line-height: 50px !important;
+        padding: 0 40px !important;
+        font-size: 12px !important;
+        letter-spacing: 1.5px !important;
+    }
+}
+@media (max-width: 575.98px) {
+    .popular-products-slides .product-description h6 {
+        font-size: 14px !important;
+    }
+    .popular-products-slides .product-price,
+    .popular-products-slides .product-price .old-price {
+        font-size: 14px !important;
+    }
+}
 </style>
  
 @if(isset($heroBannerAds) && $heroBannerAds->count())
@@ -442,10 +493,10 @@
                         <a href="{{ route('shop.index') }}" class="btn essence-btn" style="background:#2ECC71;border:none;font-weight:700;">
                             Shop Now →
                         </a>
-                        <a href="{{ route('seller.register') }}" class="btn" style="border:2px solid rgba(255,255,255,0.4);color:#fff;padding:0 24px;border-radius:0;font-size:12px;font-weight:700;letter-spacing:1px;line-height:50px;height:50px;display:inline-block;">
+                 <!--        <a href="{{ route('seller.register') }}" class="btn" style="border:2px solid rgba(255,255,255,0.4);color:#fff;padding:0 24px;border-radius:0;font-size:12px;font-weight:700;letter-spacing:1px;line-height:50px;height:50px;display:inline-block;">
                             Sell With Us
                         </a>
-                    </div>
+ -->                    </div>
                     {{-- Live stats --}}
                     <div style="display:flex;gap:24px;margin-top:28px;flex-wrap:wrap;">
                         <div>
@@ -545,10 +596,10 @@
                         <a href="{{ route('shop.index') }}" class="btn essence-btn" style="background:#2ECC71;border:none;font-weight:700;">
                             Shop Now →
                         </a>
-                        <a href="{{ route('seller.register') }}" class="btn" style="border:2px solid rgba(255,255,255,0.4);color:#fff;padding:0 24px;border-radius:0;font-size:12px;font-weight:700;letter-spacing:1px;line-height:50px;height:50px;display:inline-block;">
+                 <!--        <a href="{{ route('seller.register') }}" class="btn" style="border:2px solid rgba(255,255,255,0.4);color:#fff;padding:0 24px;border-radius:0;font-size:12px;font-weight:700;letter-spacing:1px;line-height:50px;height:50px;display:inline-block;">
                             Sell With Us
                         </a>
-                    </div>
+ -->                    </div>
                     <div style="display:flex;gap:24px;margin-top:28px;flex-wrap:wrap;">
                         <div>
                             <p style="color:#2ECC71;font-size:20px;font-weight:800;margin:0;">10K+</p>

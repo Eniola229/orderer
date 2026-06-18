@@ -35,6 +35,8 @@ Route::get('/product/{slug}',       [StorefrontController::class, 'product'])->n
 Route::get('/search',               [StorefrontController::class, 'search'])->name('search');
 Route::get('/brands',               [StorefrontController::class, 'brands'])->name('brands.index');
 Route::get('/brands/{slug}',        [StorefrontController::class, 'brandShow'])->name('brands.show');
+Route::get('/blog', [StorefrontController::class, 'newsletters'])->name('newsletters.index');
+Route::get('/blog/{id}', [StorefrontController::class, 'newsletterShow'])->name('newsletters.show');
 Route::post('/newsletter',          [StorefrontController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
 Route::get('/search/suggestions', \App\Http\Controllers\SearchSuggestController::class)->name('search.suggestions');
 //Waitlist

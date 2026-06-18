@@ -264,6 +264,10 @@
             $pageTitle = $house->title;
         } elseif (request()->is('brands*')) {
             $pageTitle = 'Brands';
+        } elseif (request()->is('blog*') && isset($newsletter)) {
+            $pageTitle = $newsletter->subject;
+        } elseif (request()->is('blog*')) {
+            $pageTitle = 'Blog';
         } else {
             $pageTitle = 'Orderer -- Global E-commerce Marketplace';
         }

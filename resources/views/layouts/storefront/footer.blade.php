@@ -34,6 +34,7 @@
                         <li><a href="{{ route('services.index') }}">Services</a></li>
                         <li><a href="{{ route('houses.index') }}">Properties</a></li>
                         <li><a href="{{ route('rider.booking') }}">Book a Rider</a></li>
+                        <li><a href="{{ route('newsletters.index') }}">Blogs</a></li>
                         <li><a href="{{ route('contact') }}">Contact Us</a></li>
                     </ul>
                 </div>
