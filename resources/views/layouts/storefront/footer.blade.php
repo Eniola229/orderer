@@ -116,6 +116,61 @@
 
 
 <script>
+    // ── Location permission prompt (site-wide) ──────────────────────
+(function() {
+    const STORAGE_KEY = 'ord_location_coords';
+    const ASKED_KEY = 'ord_location_asked';
+
+    function saveCoords(lat, lng) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ lat, lng, ts: Date.now() }));
+    }
+
+    function showLocationBanner() {
+        if (localStorage.getItem(ASKED_KEY)) return; // already asked before
+        if (localStorage.getItem(STORAGE_KEY)) return; // already have it
+
+        const banner = document.createElement('div');
+        banner.id = 'ord-location-banner';
+        banner.style.cssText = `
+            position: fixed; bottom: 20px; left: 20px; right: 20px; max-width: 420px;
+            margin: 0 auto; background: #fff; border: 1px solid #dee2e6; border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12); padding: 16px; z-index: 9998;
+            display: flex; align-items: flex-start; gap: 12px; font-size: 14px;
+        `;
+        banner.innerHTML = `
+            <i class="fa fa-map-marker" style="font-size:20px;color:#2ECC71;margin-top:2px;"></i>
+            <div style="flex:1;">
+                <p style="margin:0 0 4px;font-weight:600;">Enable location?</p>
+                <p style="margin:0 0 10px;color:#666;font-size:13px;">We'll use it to auto-fill your delivery address at checkout.</p>
+                <div>
+                    <button id="ord-loc-allow" style="background:#2ECC71;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:13px;margin-right:8px;cursor:pointer;">Allow</button>
+                    <button id="ord-loc-dismiss" style="background:transparent;color:#888;border:none;padding:6px 14px;font-size:13px;cursor:pointer;">Not now</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(banner);
+
+        document.getElementById('ord-loc-allow').addEventListener('click', function() {
+            localStorage.setItem(ASKED_KEY, '1');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => { saveCoords(pos.coords.latitude, pos.coords.longitude); },
+                    err => { console.warn('Location denied/error', err); }
+                );
+            }
+            banner.remove();
+        });
+
+        document.getElementById('ord-loc-dismiss').addEventListener('click', function() {
+            localStorage.setItem(ASKED_KEY, '1');
+            banner.remove();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(showLocationBanner, 1500); // small delay so it doesn't feel jarring
+    });
+})();
 document.addEventListener('DOMContentLoaded', function() {
     // Handle all newsletter forms in footer with AJAX
     const newsletterForms = document.querySelectorAll('.ord-footer-newsletter');

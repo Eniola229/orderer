@@ -196,11 +196,19 @@ del, .strikethrough {
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="required-field">Full Address</label> <br>
-                            <small>No, Street, city, state, country - We advice copying your address directly from google map, also  make sure to add country</small>
+                    <div class="mb-3">
+                        <label class="required-field">Full Address</label> <br>
+                        <small>No, Street, city, state, country - We advice copying your address directly from google map, also make sure to add country</small>
+                        <div class="d-flex align-items-center" style="gap:8px;">
                             <input type="text" class="form-control" id="shipping_address" name="shipping_address" placeholder="House number, street name, city, state, country" required>
                         </div>
+                        <button type="button" id="useMyLocationBtn" class="btn btn-sm btn-outline-success mt-2" style="display:none;">
+                            <i class="fa fa-map-marker mr-1"></i> Use my current location
+                        </button>
+                        <div id="locationLoading" class="small text-muted mt-1" style="display:none;">
+                            <i class="fa fa-spinner fa-spin mr-1"></i> Getting your location...
+                        </div>
+                    </div>
 
                         <div class="row">
                             <div class="col-md-4 mb-3">
@@ -654,6 +662,111 @@ function initAutocomplete() {
         }
     });
 }
+
+// ── Use my current location ──────────────────────────────────────
+(function() {
+    const STORAGE_KEY = 'ord_location_coords';
+    const btn = document.getElementById('useMyLocationBtn');
+    const loadingEl = document.getElementById('locationLoading');
+    if (!btn) return;
+
+    // Show the button if we already have stored coords, or if geolocation exists at all
+    function maybeShowButton() {
+        if (navigator.geolocation) {
+            btn.style.display = 'inline-block';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', maybeShowButton);
+
+    function fillFromGeocodeResult(result) {
+        let streetNumber = '', route = '', city = '', state = '', country = '', zip = '';
+
+        result.address_components.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number')) streetNumber = component.long_name;
+            if (types.includes('route')) route = component.long_name;
+            if (types.includes('locality') || types.includes('administrative_area_level_2')) city = component.long_name;
+            if (types.includes('administrative_area_level_1')) state = component.long_name;
+            if (types.includes('country')) country = component.long_name;
+            if (types.includes('postal_code')) zip = component.long_name;
+        });
+
+        let fullAddress = '';
+        if (streetNumber) fullAddress += streetNumber + ' ';
+        if (route) fullAddress += route + ', ';
+        if (city) fullAddress += city + ', ';
+        if (state) fullAddress += state + ', ';
+        if (country) fullAddress += country;
+        if (zip) fullAddress += ', ' + zip;
+
+        const addressInput  = document.getElementById('shipping_address');
+        const cityInput     = document.getElementById('shipping_city');
+        const stateInput    = document.getElementById('shipping_state');
+        const countrySelect = document.getElementById('countrySelect');
+        const zipInput      = document.querySelector('[name="shipping_zip"]');
+
+        addressInput.value = result.formatted_address || fullAddress;
+        if (city) cityInput.value = city;
+        if (state) stateInput.value = state;
+        if (zip && zipInput) zipInput.value = zip;
+
+        if (country && countrySelect) {
+            const match = Array.from(countrySelect.options).find(o =>
+                o.value.toLowerCase() === country.toLowerCase() ||
+                o.textContent.toLowerCase() === country.toLowerCase()
+            );
+            if (match) countrySelect.value = match.value;
+        }
+
+        [addressInput, cityInput, stateInput, countrySelect].forEach(el => {
+            if (el) el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        clearTimeout(fetchTimeout);
+        fetchTimeout = setTimeout(fetchShippingRates, 600);
+    }
+
+    function reverseGeocode(lat, lng) {
+        loadingEl.style.display = 'block';
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            loadingEl.style.display = 'none';
+            if (status === 'OK' && results && results[0]) {
+                fillFromGeocodeResult(results[0]);
+            } else {
+                alert('Could not determine your address. Please type it in manually.');
+            }
+        });
+    }
+
+    btn.addEventListener('click', function() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            const { lat, lng } = JSON.parse(stored);
+            reverseGeocode(lat, lng);
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now()
+                }));
+                reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+            },
+            err => {
+                loadingEl.style.display = 'none';
+                alert('Location permission denied. Please type your address manually.');
+            }
+        );
+    });
+})();
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof google !== 'undefined') {

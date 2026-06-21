@@ -168,6 +168,34 @@ class MarketerController extends Controller
         return view('admin.marketers.edit', compact('marketer'));
     }
 
+    public function store(Request $request)
+    {
+        if (!auth('admin')->user()->canManageAdmins()) abort(403);
+
+        $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name'  => ['required', 'string', 'max:100'],
+            'email'      => ['required', 'email', 'unique:marketers,email'],
+            'password'   => ['required', 'confirmed', Password::min(8)],
+            'notes'      => ['nullable', 'string', 'max:500'],
+            'is_active'  => ['required', 'in:0,1'],
+        ]);
+
+        $marketer = Marketer::create([
+            'first_name'      => $request->first_name,
+            'last_name'       => $request->last_name,
+            'email'           => $request->email,
+            'password'        => $request->password,
+            'notes'           => $request->notes,
+            'is_active'       => $request->is_active,
+            'marketing_code'  => Marketer::generateMarketingCode(),
+        ]);
+
+        return redirect()
+            ->route('admin.marketers.show', $marketer)
+            ->with('success', "Marketer created. Code: {$marketer->marketing_code}");
+    }
+    
     public function update(Request $request, Marketer $marketer)
     {
         if (!auth('admin')->user()->canManageAdmins()) abort(403);
