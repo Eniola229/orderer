@@ -37,6 +37,7 @@ class Seller extends Authenticatable
         'referral_code',
         'referred_by',
         'email_verified_at',
+        'phone_verified_at',
         'last_login_at',
         'last_login_ip',
         'rejection_reason',
@@ -54,6 +55,7 @@ class Seller extends Authenticatable
 
     protected $casts = [
         'email_verified_at'    => 'datetime',
+        'phone_verified_at'    => 'datetime',
         'last_login_at'        => 'datetime',
         'is_active'            => 'boolean',
         'is_approved'          => 'boolean',

@@ -62,4 +62,23 @@ class VerificationController extends Controller
     {
         app(\App\Services\BrevoMailService::class)->sendSellerVerification($seller);
     }
+
+    public function updateEmail(Request $request)
+    {
+        $seller = auth('seller')->user();
+
+        $request->validate([
+            'email' => ['required', 'email', 'max:255', 'unique:sellers,email,' . $seller->id],
+        ]);
+
+        $seller->update([
+            'email'             => $request->email,
+            'email_verified_at' => null,
+        ]);
+
+        self::sendVerificationEmail($seller);
+
+        return redirect()->route('seller.verification.notice')
+            ->with('success', 'Email updated! We sent a new verification link to ' . $request->email);
+    }
 }

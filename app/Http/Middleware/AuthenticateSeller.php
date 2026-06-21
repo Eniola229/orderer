@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware; 
 
 use Closure;
 use Illuminate\Http\Request;
@@ -28,11 +28,20 @@ class AuthenticateSeller
             'seller.verification.notice',
             'seller.verification.verify',
             'seller.verification.resend',
+            'seller.verification.update-email',
+            'seller.phone-verification.notice',
+            'seller.phone-verification.send',
+            'seller.phone-verification.verify',
+            'seller.phone-verification.update-phone',
             'seller.logout',
         ];
 
         if (!$seller->email_verified_at && !in_array($request->route()->getName(), $verificationRoutes)) {
             return redirect()->route('seller.verification.notice');
+        }
+
+        if (!$seller->phone_verified_at && !in_array($request->route()->getName(), $verificationRoutes)) {
+            return redirect()->route('seller.phone-verification.notice');
         }
 
         $allowedRoutes = ['seller.pending', 'seller.resubmit'];

@@ -99,6 +99,33 @@
                 </button>
             </form>
 
+            {{-- Change email button --}}
+            <button type="button" id="changeEmailBtn" class="btn btn-outline-secondary btn-lg w-100 mb-3">
+                <i class="feather-edit-2 me-2"></i> Change Email Address
+            </button>
+
+            {{-- Change email modal --}}
+            <div id="changeEmailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
+                <div style="background:#fff;border-radius:12px;max-width:380px;width:90%;padding:24px;">
+                    <h5 class="fw-bold mb-3">Change Email Address</h5>
+                    <form action="{{ route('seller.verification.update-email') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">New Email</label>
+                            <input type="email" name="email" class="form-control" required
+                                   placeholder="you@example.com" value="{{ old('email') }}">
+                            @error('email')
+                                <small class="text-danger d-block mt-1">{{ $message }}</small>
+                            @enderror
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="cancelChangeEmailBtn" class="btn btn-light w-100">Cancel</button>
+                            <button type="submit" class="btn btn-primary w-100">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             {{-- Logout link --}}
             <form action="{{ route('seller.logout') }}" method="POST" class="text-center mt-3">
                 @csrf
@@ -112,4 +139,22 @@
     </div>
 
 </div>
+
+<script>
+const changeEmailBtn = document.getElementById('changeEmailBtn');
+const changeEmailModal = document.getElementById('changeEmailModal');
+const cancelChangeEmailBtn = document.getElementById('cancelChangeEmailBtn');
+
+if (changeEmailBtn && changeEmailModal) {
+    changeEmailBtn.addEventListener('click', () => changeEmailModal.style.display = 'flex');
+    cancelChangeEmailBtn.addEventListener('click', () => changeEmailModal.style.display = 'none');
+    changeEmailModal.addEventListener('click', (e) => {
+        if (e.target === changeEmailModal) changeEmailModal.style.display = 'none';
+    });
+}
+
+@if ($errors->has('email'))
+    changeEmailModal.style.display = 'flex';
+@endif
+</script>
 @endsection

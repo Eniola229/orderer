@@ -46,6 +46,16 @@ Route::prefix('seller')->name('seller.')->group(function () {
         Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
         Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify')->withoutMiddleware('auth.seller');
         Route::post('/email/verification-resend', [VerificationController::class, 'resend'])->name('verification.resend');
+        Route::post('/verify-phone/update', [\App\Http\Controllers\Seller\Auth\PhoneVerificationController::class, 'updatePhone'])->name('phone-verification.update-phone');
+
+        //Phone Number Verification
+        Route::get('/verify-phone', [\App\Http\Controllers\Seller\Auth\PhoneVerificationController::class, 'notice'])
+            ->name('phone-verification.notice');
+        Route::post('/verify-phone/send', [\App\Http\Controllers\Seller\Auth\PhoneVerificationController::class, 'send'])
+            ->name('phone-verification.send');
+        Route::post('/verify-phone/verify', [\App\Http\Controllers\Seller\Auth\PhoneVerificationController::class, 'verify'])
+            ->name('phone-verification.verify');
+            Route::post('/verify-email/update', [\App\Http\Controllers\Seller\Auth\VerificationController::class, 'updateEmail'])->name('verification.update-email');
 
         Route::post('/logout',   [SellerLoginController::class, 'logout'])->name('logout');
         Route::get('/pending',   fn() => view('seller.auth.pending'))->name('pending');

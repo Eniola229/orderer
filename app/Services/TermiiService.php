@@ -167,4 +167,67 @@ class TermiiService
             'message' => $result['errors'][0] ?? ($result['sent'] > 0 ? 'Sent successfully' : 'Failed to send'),
         ];
     }
+
+
+    public function sendOtp(string $phone): array
+    {
+        $number = $this->standardizeNumber($phone);
+        if (!$number) {
+            return ['success' => false, 'message' => 'Invalid phone number.'];
+        }
+
+        try {
+            $response = Http::timeout(30)->post("{$this->baseUrl}/api/sms/otp/send", [
+                'api_key'          => $this->apiKey,
+                'message_type'     => 'NUMERIC',
+                'to'               => $number,
+                'from'             => $this->senderId,
+                'channel'          => $this->channel,
+                'pin_attempts'     => 3,
+                'pin_time_to_live' => 10,
+                'pin_length'       => 6,
+                'pin_placeholder'  => '< 123456 >',
+                'message_text'     => 'Your Orderer verification code is < 123456 >. It expires in 10 minutes.',
+                'pin_type'         => 'NUMERIC',
+            ]);
+
+            $body = $response->json();
+
+            if ($response->successful() && !empty($body['pinId'])) {
+                return ['success' => true, 'pin_id' => $body['pinId']];
+            }
+
+            Log::warning('Termii sendOtp failed', ['response' => $body]);
+            return ['success' => false, 'message' => $body['message'] ?? 'Could not send verification code.'];
+
+        } catch (\Throwable $e) {
+            Log::error('Termii sendOtp exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not send verification code. Please try again.'];
+        }
+    }
+
+    public function verifyOtp(string $pinId, string $pin): array
+    {
+        try {
+            $response = Http::timeout(30)->post("{$this->baseUrl}/api/sms/otp/verify", [
+                'api_key' => $this->apiKey,
+                'pin_id'  => $pinId,
+                'pin'     => $pin,
+            ]);
+
+            $body = $response->json();
+
+            $verified = $body['verified'] ?? false;
+            if ($response->successful() && ($verified === true || $verified === 'True' || $verified === 'true')) {
+                return ['success' => true];
+            }
+
+            Log::warning('Termii verifyOtp failed', ['response' => $body]);
+            return ['success' => false, 'message' => $body['msg'] ?? 'Invalid or expired code.'];
+
+        } catch (\Throwable $e) {
+            Log::error('Termii verifyOtp exception: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not verify code. Please try again.'];
+        }
+    }
 }
