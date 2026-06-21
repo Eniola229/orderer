@@ -61,11 +61,11 @@ class TikTokEventService
                 'Content-Type' => 'application/json',
             ])->post($this->apiUrl, $payload);
 
-            Log::info("TikTok [{$eventName}] event sent", [
-                'event_id' => $payload['data'][0]['event_id'],
-                'status'   => $response->status(),
-                'body'     => $response->json(),
-            ]);
+            // Log::info("TikTok [{$eventName}] event sent", [
+            //     'event_id' => $payload['data'][0]['event_id'],
+            //     'status'   => $response->status(),
+            //     'body'     => $response->json(),
+            // ]);
         } catch (\Throwable $e) {
             // Never block the user flow for a tracking failure
             Log::error("TikTok [{$eventName}] event failed", [

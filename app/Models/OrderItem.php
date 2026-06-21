@@ -14,10 +14,10 @@ class OrderItem extends Model
         'order_id', 'seller_id', 'orderable_type', 'orderable_id',
         'item_name', 'item_image', 'unit_price', 'quantity',
         'total_price', 'commission_rate', 'commission_amount',
-        'seller_earnings', 'status',
+        'seller_earnings', 'status', 'shipping_fee',
         // Tracking fields 
         'shipbubble_shipment_id', 'courier_id', 'tracking_number',
-        'tracking_url', 'shipping_status', 'estimated_delivery_date', 'delivered_at', 'selected_options',
+        'tracking_url', 'shipping_status', 'estimated_delivery_date', 'delivered_at', 'selected_options', ''
     ];
 
     protected $casts = [
@@ -26,6 +26,7 @@ class OrderItem extends Model
         'commission_rate'    => 'decimal:2',
         'commission_amount'  => 'decimal:2',
         'seller_earnings'    => 'decimal:2',
+        'shipping_fee'       => 'decimal:2',
         'delivered_at'       => 'datetime',
         'selected_options' => 'array',
     ];

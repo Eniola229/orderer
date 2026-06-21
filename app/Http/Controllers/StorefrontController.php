@@ -35,7 +35,7 @@ class StorefrontController extends Controller
         $newArrivals = Product::where('status', 'approved')
             ->with(['images', 'seller'])
             ->latest()
-            ->take(8)
+            ->take(12)
             ->get();
 
         // ── Best Sellers ──────────────────────────────────────────
@@ -120,7 +120,7 @@ class StorefrontController extends Controller
             default:           $query->latest(); break;
         }
 
-        $products = $query->paginate(30)->withQueryString();
+        $products = $query->paginate(50)->withQueryString();
 
         // ── Best Sellers & Top Rated with filters applied ───────────
         $bestSellersQuery = Product::where('status', 'approved')

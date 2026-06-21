@@ -240,6 +240,43 @@
         font-size: 11px !important;
     }
 }
+/* ── Force hamburger to always render on mobile ── */
+@media (max-width: 991px) {
+    .ord-hamburger {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 4px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 30px !important;
+        height: 24px !important;
+        flex-shrink: 0 !important;
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+        cursor: pointer !important;
+        z-index: 10000 !important;
+        position: relative !important;
+    }
+
+    .ord-hamburger span {
+        display: block !important;
+        width: 100% !important;
+        height: 2px !important;
+        background-color: #111 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+        transition: transform .2s, opacity .2s;
+    }
+
+    /* Optional: animate to an X when nav is open */
+    .ord-hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    .ord-hamburger.open span:nth-child(2) { opacity: 0; }
+    .ord-hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+}
 </style>
 
 

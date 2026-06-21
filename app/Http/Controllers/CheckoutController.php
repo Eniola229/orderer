@@ -93,7 +93,6 @@ class CheckoutController extends Controller
         ]);
 
         $cartModel = $this->getCart();
-        // CHANGED: include selected_options in the cart items query
         $cartItems = $cartModel->items()->with(['product.images', 'product.category'])->get();
 
         if ($cartItems->isEmpty()) {
@@ -117,7 +116,7 @@ class CheckoutController extends Controller
                 'cartItem'         => [
                     'price'            => $item->price,
                     'quantity'         => $item->quantity,
-                    'selected_options' => $item->selected_options, 
+                    'selected_options' => $item->selected_options,
                 ],
                 'total'            => $totalPrice,
             ];
@@ -146,11 +145,38 @@ class CheckoutController extends Controller
 
         $shippingFee = max(0, $quotedShippingFee - $freeShippingDiscount);
         $total       = $subtotal + $shippingFee;
-        $total         = $subtotal + $shippingFee;
         $isMultiSeller = collect($items)->pluck('product.seller_id')->unique()->count() > 1;
 
         if ($request->payment_method === 'wallet' && $user->wallet_balance < $total) {
             return back()->with('error', 'Insufficient wallet balance.');
+        }
+
+        // ── Split shipping fee across sellers, proportional to each seller's
+        //    quoted courier rate, with the free-shipping discount applied
+        //    proportionally too — so sum(item shipping_fee) === order shipping_fee.
+        $shippingRateData = json_decode($request->shipping_rate_data ?? '{}', true) ?: [];
+
+        $sellerRawFees = [];
+        foreach (collect($items)->pluck('product.seller_id')->unique() as $sid) {
+            $sellerRawFees[$sid] = (float) ($shippingRateData[(string) $sid]['total'] ?? 0);
+        }
+
+        $totalRawFee = array_sum($sellerRawFees);
+        // Fallback: single-seller orders, or if rate data didn't carry a 'total' per seller
+        if ($totalRawFee <= 0) {
+            $sellerIds = array_keys($sellerRawFees);
+            if (count($sellerIds) === 1) {
+                $sellerRawFees[$sellerIds[0]] = $quotedShippingFee;
+                $totalRawFee = $quotedShippingFee;
+            }
+        }
+
+        $sellerShippingFees = [];
+        foreach ($sellerRawFees as $sid => $rawFee) {
+            $sellerDiscount = $totalRawFee > 0
+                ? $freeShippingDiscount * ($rawFee / $totalRawFee)
+                : 0;
+            $sellerShippingFees[$sid] = round(max(0, $rawFee - $sellerDiscount), 2);
         }
 
         DB::beginTransaction();
@@ -178,7 +204,7 @@ class CheckoutController extends Controller
                 'package_weight'        => $totalWeight,
                 'declared_value'        => $subtotal,
                 'is_multi_seller'       => $isMultiSeller,
-                'shipping_rate_data'    => json_decode($request->shipping_rate_data ?? '{}', true),
+                'shipping_rate_data'    => $shippingRateData,
                 'free_shipping_discount' => $freeShippingDiscount,
                 'free_shipping_rule_id'  => $freeShippingRuleId,
             ]);
@@ -205,8 +231,9 @@ class CheckoutController extends Controller
                     'commission_rate'   => $commissionRate,
                     'commission_amount' => $commissionAmt,
                     'seller_earnings'   => $sellerEarnings,
+                    'shipping_fee'      => $sellerShippingFees[$product->seller_id] ?? 0,
                     'status'            => 'pending',
-                    'selected_options'  => $cartItem['selected_options'], 
+                    'selected_options'  => $cartItem['selected_options'],
                 ]);
 
                 $product->decrement('stock', $cartItem['quantity']);
@@ -232,20 +259,20 @@ class CheckoutController extends Controller
                     $order->id
                 );
 
-                    foreach ($items as $item) {
-                        $product = $item['product'];
-                        $quantity = $item['cartItem']['quantity'];
-                        
-                        $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
-                            ->where('is_active', true)
-                            ->where('starts_at', '<=', now())
-                            ->where('ends_at', '>=', now())
-                            ->first();
-                        
-                        if ($flashSale) {
-                            $flashSale->increment('quantity_sold', $quantity);
-                        }
+                foreach ($items as $item) {
+                    $product = $item['product'];
+                    $quantity = $item['cartItem']['quantity'];
+
+                    $flashSale = \App\Models\FlashSale::where('product_id', $product->id)
+                        ->where('is_active', true)
+                        ->where('starts_at', '<=', now())
+                        ->where('ends_at', '>=', now())
+                        ->first();
+
+                    if ($flashSale) {
+                        $flashSale->increment('quantity_sold', $quantity);
                     }
+                }
 
                 $this->walletService->holdEscrow($order);
                 $this->bookShipmentForOrder($order, $user, $totalWeight, $subtotal);
@@ -713,7 +740,7 @@ class CheckoutController extends Controller
                         $termii = app(\App\Services\TermiiService::class);
                         $termii->sendBulk(
                             [ltrim($seller->phone, '+')],
-                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to process it."
+                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to confirm it. Orders not confirmed within 3 days will be cancelled."
                         );
                     }
 

@@ -129,24 +129,27 @@
                                 <th class="fs-11 text-uppercase text-muted fw-semibold">Date</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($transactions as $txn)
-                            @php $isCredit = in_array($txn->type, ['credit','escrow_refund','referral_credit']); @endphp
-                            <tr>
-                                <td><code class="fs-12">{{ Str::limit($txn->reference, 18) }}</code></td>
-                                <td>
-                                    <span class="badge orderer-badge {{ $isCredit ? 'badge-approved' : 'badge-pending' }}">
-                                        {{ str_replace('_', ' ', ucfirst($txn->type)) }}
-                                    </span>
-                                </td>
-                                <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
-                                    {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
-                                </td>
-                                <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
-                                <td class="text-muted fs-12">{{ $txn->created_at->format('M d, Y H:i') }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
+                            <tbody>
+                                @foreach($transactions as $txn)
+                                @php
+                                    $isCredit = in_array($txn->type, ['credit','escrow_refund','referral_credit']);
+                                    $label = $txn->type === 'escrow_refund' ? 'Refund' : str_replace('_', ' ', ucfirst($txn->type));
+                                @endphp
+                                <tr>
+                                    <td><code class="fs-12">{{ Str::limit($txn->reference, 18) }}</code></td>
+                                    <td>
+                                        <span class="badge orderer-badge {{ $isCredit ? 'badge-approved' : 'badge-pending' }}">
+                                            {{ $label }}
+                                        </span>
+                                    </td>
+                                    <td class="fw-bold {{ $isCredit ? 'text-success' : 'text-danger' }}">
+                                        {{ $isCredit ? '+' : '-' }}₦{{ number_format($txn->amount, 2) }}
+                                    </td>
+                                    <td class="fw-semibold">₦{{ number_format($txn->balance_after, 2) }}</td>
+                                    <td class="text-muted fs-12">{{ $txn->created_at->format('M d, Y H:i') }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
                     </table>
                 </div>
                 <div class="p-3">{{ $transactions->links() }}</div>

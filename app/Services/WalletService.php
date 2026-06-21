@@ -139,7 +139,7 @@ class WalletService
                     'seller_earnings'   => $sellerAmount,
                 ]);
 
-                \Log::info("holdEscrow — created escrow for item '{$item->item_name}' seller #{$item->seller_id}, amount ₦{$item->total_price}");
+                // \Log::info("holdEscrow — created escrow for item '{$item->item_name}' seller #{$item->seller_id}, amount ₦{$item->total_price}");
             }
         });
     }
@@ -185,7 +185,7 @@ class WalletService
                 'delivered_at' => now(),
             ]);
 
-            \Log::info("releaseEscrowForItem — ₦{$escrow->seller_amount} released to seller #{$seller->id} for item '{$item->item_name}'");
+            // \Log::info("releaseEscrowForItem — ₦{$escrow->seller_amount} released to seller #{$seller->id} for item '{$item->item_name}'");
 
             // Check if ALL items are now delivered/completed
             $order->load('items');
@@ -270,16 +270,38 @@ class WalletService
             if (!$escrow) {
                 throw new \Exception("No held escrow found for item '{$item->item_name}'. Cannot refund.");
             }
-            
-            $refundAmount = (float) $escrow->amount;
 
-            \Log::info("cancelItemEscrow — refunding ₦{$refundAmount} to buyer #{$buyer->id} for item '{$item->item_name}' on order #{$order->order_number}");
+            $itemRefund = (float) $escrow->amount;
+
+            // ── Shipping fee only refunds once the LAST active item from this seller
+            //    in this order is being cancelled. Shipping is booked per seller/shipment,
+            //    not per item, so refunding it early (while siblings are still active)
+            //    would refund money for a shipment that's still going out.
+            $otherActiveItemsFromSameSeller = OrderItem::where('order_id', $order->id)
+                ->where('seller_id', $item->seller_id)
+                ->where('id', '!=', $item->id)
+                ->whereNotIn('status', ['cancelled', 'delivered', 'completed'])
+                ->count();
+
+            $shippingRefund = 0.0;
+            if ($otherActiveItemsFromSameSeller === 0 && (float) $item->shipping_fee > 0) {
+                $shippingRefund = (float) $item->shipping_fee;
+            }
+
+            $totalRefund = $itemRefund + $shippingRefund;
+
+            $description = "Refund for cancelled item '{$item->item_name}' in order #{$order->order_number}";
+            if ($shippingRefund > 0) {
+                $description .= " (incl. ₦" . number_format($shippingRefund, 2) . " shipping fee)";
+            }
+
+            // \Log::info("cancelItemEscrow — refunding ₦{$totalRefund} (item ₦{$itemRefund} + shipping ₦{$shippingRefund}) to buyer #{$buyer->id} for item '{$item->item_name}' on order #{$order->order_number}");
 
             $this->credit(
                 $buyer,
-                $refundAmount,
+                $totalRefund,
                 'escrow_refund',
-                "Refund for cancelled item '{$item->item_name}' in order #{$order->order_number}",
+                $description,
                 'order_item',
                 $item->id
             );

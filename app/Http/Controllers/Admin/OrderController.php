@@ -365,7 +365,7 @@ class OrderController extends Controller
         // ── Log ──────────────────────────────────────────────────────────────
         $note = "Item '{$item->item_name}' cancelled by admin. ₦" . number_format($item->total_price, 2) . " refunded to buyer.";
         if ($shipbubbleCancelled) {
-            $note .= " Shipment {$item->shipbubble_shipment_id} cancelled (no other items from this seller).";
+            $note .= " Shipment {$item->shipbubble_shipment_id} cancelled, shipment fee also refunded with item amount(no other items from this seller).";
         } elseif ($shipbubbleError) {
             $note .= " Shipment cancel failed: {$shipbubbleError} — may need manual handling.";
         } else {

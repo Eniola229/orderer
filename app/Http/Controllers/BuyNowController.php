@@ -249,6 +249,7 @@ class BuyNowController extends Controller
                 'commission_rate'   => $commissionRate,
                 'commission_amount' => $commissionAmt,
                 'seller_earnings'   => $sellerEarnings,
+                'shipping_fee'      => $shippingFee,
                 'status'            => 'pending',
                 'selected_options'  => $selectedOptions,
             ]);
@@ -736,7 +737,7 @@ class BuyNowController extends Controller
                         $termii = app(\App\Services\TermiiService::class);
                         $termii->sendBulk(
                             [ltrim($seller->phone, '+')],
-                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to process it."
+                            "Hi {$seller->business_name}, you have a new order #{$order->order_number} waiting for you. Log in to your dashboard to confirm it. Orders not confirmed within 3 days will be cancelled."
                         );
                     }
 

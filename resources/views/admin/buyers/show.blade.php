@@ -146,8 +146,23 @@
                                 </td>
                                 <td class="fw-bold">₦{{ number_format($order->total, 2) }}</td>
                                 <td>
-                                    <span class="badge orderer-badge badge-{{ $order->status }}">
-                                        {{ ucfirst($order->status) }}
+                                    @php
+                                        $orderStatusColors = [
+                                            'pending'           => 'badge-pending',
+                                            'confirmed'         => 'badge-pending',
+                                            'processing'        => 'badge-pending',
+                                            'shipped'           => 'badge-pending',
+                                            'delivered'         => 'badge-approved',
+                                            'completed'         => 'badge-approved',
+                                            'cancelled'         => 'badge-rejected',
+                                            'refunded'          => 'badge-rejected',
+                                            'refund_requested'  => 'badge-rejected',
+                                            'dispute'           => 'badge-rejected',
+                                        ];
+                                        $orderStatusClass = $orderStatusColors[$order->status] ?? 'badge-pending';
+                                    @endphp
+                                    <span class="badge orderer-badge {{ $orderStatusClass }}">
+                                        {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                     </span>
                                 </td>
                                 <td class="text-muted fs-12">

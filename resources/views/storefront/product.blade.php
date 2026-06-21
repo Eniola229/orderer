@@ -388,10 +388,10 @@
                     {{-- Trust badges --}}
                     <div class="d-flex gap-3 flex-wrap mt-3 trust-badges">
                         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;">
-                            <i class="fa fa-lock" style="color:#2ECC71;"></i> Escrow Protection
+                            <i class="fa fa-lock" style="color:#2ECC71;"></i> Payment Protection 
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;">
-                            <i class="fa fa-truck" style="color:#2ECC71;"></i> Worldwide Delivery
+                            <i class="fa fa-truck" style="color:#2ECC71;"></i> Worldwide Delivery 
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;">
                             <i class="fa fa-refresh" style="color:#2ECC71;"></i> Return Policy
